@@ -1,0 +1,94 @@
+[step1] step1_10k.parquet: 9,119,324 rows, 9,793 players, 21,899 beatmaps
+[step0] step0_10k.parquet: 13,359,355 rows, 9,812 players, 21,899 beatmaps
+pair universe = step0: 7,784,519 ordered pairs -> test 2,334,078 (29.98%)
+train plays = 6,384,278 (step1)   test plays = 4,007,074 (step0)   test pairs' step1 rows = 2,735,046
+train vocab: 9,776 entities, 21,870 items
+train rows in vocab = 6,384,278/6,384,278   test rows covered = 4,006,975/4,007,074 (100.00%)
+  [bias] epoch  20  test RMSE(step0) = 1.37319  (22.2s)
+  [bias] epoch  40  test RMSE(step0) = 1.37462  (44.1s)
+  [bias] epoch  60  test RMSE(step0) = 1.37271  (66.8s)
+bias     step0 rmse=1.37271 cov=1.000
+  [mf_dot] epoch  20  test RMSE(step0) = 1.33339  (153.2s)
+  [mf_dot] epoch  40  test RMSE(step0) = 1.33502  (310.0s)
+  [mf_dot] epoch  60  test RMSE(step0) = 1.33268  (466.9s)
+mf_dot   step0 rmse=1.33268 cov=1.000
+  [mirt] epoch  20  test RMSE(step0) = 1.33273  (241.8s)
+  [mirt] epoch  40  test RMSE(step0) = 1.33304  (415.5s)
+  [mirt] epoch  60  test RMSE(step0) = 1.33313  (587.3s)
+mirt     step0 rmse=1.33313 cov=1.000
+
+wrote npz per model + step2_10k_summary_loss.json (1142.1s total)
+{
+  "bias|step0": {
+    "n_scored": 4006975,
+    "coverage": 0.999975,
+    "rmse": 1.372706,
+    "mae": 1.07166,
+    "spearman": 0.687431,
+    "pp_p50": 0.615096,
+    "pp_p90": 4.106298,
+    "pp_mean": 1.57727,
+    "pp_gt1_frac": 0.401791,
+    "pp_gt5_frac": 0.070613
+  },
+  "bias|step1": {
+    "n_scored": 2734970,
+    "coverage": 0.999972,
+    "rmse": 1.151081,
+    "mae": 0.882453,
+    "spearman": 0.812904,
+    "pp_p50": 0.430325,
+    "pp_p90": 2.920402,
+    "pp_mean": 1.03328,
+    "pp_gt1_frac": 0.317511,
+    "pp_gt5_frac": 0.028505
+  },
+  "mf_dot|step0": {
+    "n_scored": 4006975,
+    "coverage": 0.999975,
+    "rmse": 1.332683,
+    "mae": 1.03107,
+    "spearman": 0.707873,
+    "pp_p50": 0.590132,
+    "pp_p90": 4.038317,
+    "pp_mean": 1.546642,
+    "pp_gt1_frac": 0.393516,
+    "pp_gt5_frac": 0.068954
+  },
+  "mf_dot|step1": {
+    "n_scored": 2734970,
+    "coverage": 0.999972,
+    "rmse": 1.076102,
+    "mae": 0.821495,
+    "spearman": 0.838089,
+    "pp_p50": 0.40547,
+    "pp_p90": 2.796681,
+    "pp_mean": 0.986733,
+    "pp_gt1_frac": 0.305184,
+    "pp_gt5_frac": 0.026058
+  },
+  "mirt|step0": {
+    "n_scored": 4006975,
+    "coverage": 0.999975,
+    "rmse": 1.333129,
+    "mae": 1.020848,
+    "spearman": 0.709583,
+    "pp_p50": 0.583857,
+    "pp_p90": 3.941904,
+    "pp_mean": 1.5127,
+    "pp_gt1_frac": 0.389305,
+    "pp_gt5_frac": 0.065914
+  },
+  "mirt|step1": {
+    "n_scored": 2734970,
+    "coverage": 0.999972,
+    "rmse": 1.044413,
+    "mae": 0.791911,
+    "spearman": 0.845581,
+    "pp_p50": 0.395062,
+    "pp_p90": 2.643639,
+    "pp_mean": 0.942966,
+    "pp_gt1_frac": 0.297566,
+    "pp_gt5_frac": 0.022247
+  }
+}

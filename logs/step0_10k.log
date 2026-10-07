@@ -1,0 +1,33 @@
+[step0_10k] 4K mania beatmaps: 21,949
+  kept=1,000,000 seen=2,672,389 8s
+  kept=2,000,000 seen=4,762,819 16s
+  kept=3,000,000 seen=6,718,963 23s
+  kept=4,000,000 seen=8,506,194 29s
+  kept=5,000,000 seen=10,223,014 36s
+  kept=6,000,000 seen=11,865,766 42s
+  kept=7,000,000 seen=13,460,534 49s
+  kept=8,000,000 seen=15,071,411 55s
+  kept=9,000,000 seen=16,651,760 62s
+  kept=10,000,000 seen=18,283,130 68s
+  kept=11,000,000 seen=19,824,444 75s
+  kept=12,000,000 seen=21,289,727 81s
+  kept=13,000,000 seen=22,699,856 87s
+[extract] seen=22,924,358 kept=13,162,197 in 88s
+[step0_10k] raw kept rows: 13,162,197
+[step0_10k] sorted+cumcount 109s
+Traceback (most recent call last):
+  File "D:\workstation\Projects\MusicGame\DenseConstantRegressor\scripts\step0_preprocess_10k.py", line 162, in <module>
+    main()
+    ~~~~^^
+  File "D:\workstation\Projects\MusicGame\DenseConstantRegressor\scripts\step0_preprocess_10k.py", line 142, in main
+    result = plays[COLS].copy()
+             ~~~~~^^^^^^
+  File "C:\Users\储文皓\.workbuddy-ai\binaries\python\envs\default\Lib\site-packages\pandas\core\frame.py", line 4384, in __getitem__
+    indexer = self.columns._get_indexer_strict(key, "columns")[1]
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\储文皓\.workbuddy-ai\binaries\python\envs\default\Lib\site-packages\pandas\core\indexes\base.py", line 6302, in _get_indexer_strict
+    self._raise_if_missing(keyarr, indexer, axis_name)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\储文皓\.workbuddy-ai\binaries\python\envs\default\Lib\site-packages\pandas\core\indexes\base.py", line 6355, in _raise_if_missing
+    raise KeyError(f"{not_found} not in index")
+KeyError: "['timestamp'] not in index"

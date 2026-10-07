@@ -1,0 +1,35 @@
+[step0] neutral mods (canonicalised to 'off'): MR PF SD   [legacy mask 0x40004020]
+[step0] mod whitelist (post-canonical): CL
+[step0] chart-neutral but REJECTED (not canonicalised): NF
+[step0] legacy bit decode: NF=1 SD=32 PF=16384 MR=1073741824
+[step0] 3 / 4K beatmaps: 21949 (scanned 235061 rows, 0 too short, from data\raw\extracted\2026_09_01_performance_mania_top_1000)
+[step0] meta rows=21949 dup(beatmap_id)=0 star 0.054..10.369 median 3.142
+[step0] meta approved counts: 1:19187 3:59 4:2703
+[step0] wrote data\processed\beatmap_meta_1k.csv
+[step0] modern: kept 1026950 of 1531094 4K rows (dedup set 1026844)  59s
+[step0] legacy: kept 372665 of 1918989 4K rows (dropped 1026840 dup)  86s
+[step0] modern kept, as the source spelled it (1026950 rows):
+          CL                898304  87.473%
+          CL+MR             106922  10.412%
+          CL+PF               9798   0.954%
+          CL+SD               9432   0.918%
+          CL+MR+SD            1350   0.131%
+          CL+MR+PF            1144   0.111%
+[step0] modern kept, after canonicalisation:
+          CL               1026950  100.000%
+[step0] legacy kept, as the source spelled it (372665 rows):
+          CL                339363  91.064%
+          CL+MR              32329   8.675%
+          CL+PF                506   0.136%
+          CL+SD                305   0.082%
+          CL+MR+SD              91   0.024%
+          CL+MR+PF              71   0.019%
+[step0] legacy kept, after canonicalisation:
+          CL                372665  100.000%
+[step0] union plays: 1399615
+[step0] rows=1399615 players=990 beatmaps=20655 cells=866616
+[step0] dup(playcount_cur)=0 | contiguous 1..n=True | pc>=1=True | loss<0=True
+[step0] timestamp 2013-02-14 11:10:49 .. 2026-08-31 18:50:54
+[step0] loss mean -5.6457 sd 2.1435 | playcount_cur mean 2.253 max 125
+[step0] meta dup=0 | sorted=True | star/count/bpm>0=True | hit<=total=True | play-beatmaps missing from meta=0
+[step0] wrote data\processed\step0_1k.csv  total 118s

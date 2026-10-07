@@ -1,0 +1,162 @@
+# ==============================================================================
+# DenseConstantRegressor — .gitignore
+# ==============================================================================
+# 本仓库只收录「代码 + 文档 + 图 + 日志」。
+# 原始 dump 与全部中间产物（约 14 GB）一律不入库，见 README「数据获取」一节。
+# This repository tracks code, docs, figures and run logs ONLY.
+# Raw dumps and every intermediate artifact (~14 GB) are excluded on purpose.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 数据 / Data —— 约 14 GB，绝不入库 (never commit)
+# ------------------------------------------------------------------------------
+# 骨架用 .gitkeep 保留：raw/{extracted,extracted_10k}/, processed/, legacy/
+data/**
+!data/**/
+!data/**/.gitkeep
+
+# 数据格式兜底（万一放到 data/ 之外也不误传）
+# Format-level safety net in case artifacts are ever written outside data/
+*.parquet
+*.npz
+*.npy
+*.feather
+*.h5
+*.hdf5
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql
+*.tar.bz2
+*.tar.gz
+*.zip
+*.7z
+
+# 大体积 / 模型权重 (large blobs & model weights)
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.bin
+
+# ------------------------------------------------------------------------------
+# 第三方仓库 / Third-party checkouts
+# ------------------------------------------------------------------------------
+# external/bobert 是 token03/bobert 的独立克隆（自带 .git），只作参考资料。
+# 不 vendor 他人代码：按 README「参考资料」一节自行 clone。
+# external/bobert is a standalone clone of token03/bobert (it has its own .git).
+# Deliberately not vendored — clone it yourself, see README "References".
+external/
+
+# ------------------------------------------------------------------------------
+# Python
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 虚拟环境 / Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.python-version
+
+# 测试与类型检查缓存 / Test & type-check caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ------------------------------------------------------------------------------
+# 编辑器与 IDE / Editors & IDEs
+# ------------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.*.swp
+.spyderproject
+.spyproject
+.ropeproject
+tags
+TAGS
+
+# ------------------------------------------------------------------------------
+# 操作系统 / OS
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------------------------
+# 工具链 / Agent tooling
+# ------------------------------------------------------------------------------
+# .workbuddy-ai/ 是 AI 助手的过程记忆（面向工具上下文，非项目交付物）；
+# 技术结论已整理进 docs/。
+# .workbuddy-ai/ holds agent working memory (tool-facing, not a deliverable);
+# its technical conclusions are curated into docs/.
+.workbuddy-ai/
+
+# ------------------------------------------------------------------------------
+# 环境变量与密钥 / Env vars & secrets
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# ------------------------------------------------------------------------------
+# 本地上传凭据提示 / Local upload-credential note (never commit)
+# ------------------------------------------------------------------------------
+.github_push_code.txt
+
+# ------------------------------------------------------------------------------
+# 临时文件 / Scratch files
+# ------------------------------------------------------------------------------
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.part
+.cache/
+
+# 本地上传助手（不入库）/ Local upload helper
+upload_to_github.sh

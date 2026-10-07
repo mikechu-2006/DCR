@@ -1,0 +1,328 @@
+
+===== --models mirt --drop-bias both =====
+Sun Oct  4 05:44:29 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [mirt] epoch  20  test RMSE(step0) = 1.48017  (15.8s)
+  [mirt] epoch  40  test RMSE(step0) = 1.50942  (33.1s)
+  [mirt] epoch  60  test RMSE(step0) = 1.50700  (49.8s)
+mirt     step0 rmse=1.50700 cov=0.996
+  [check] PASS  coverage_reported: 2 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: mirt:ok
+
+wrote npz per model + step2_1k_summary_loss.json (54.3s total)
+{
+  "mirt|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.507001,
+    "mae": 1.106139,
+    "spearman": 0.746954,
+    "pp_p50": 0.242101,
+    "pp_p90": 2.949599,
+    "pp_mean": 1.062408,
+    "pp_gt1_frac": 0.271645,
+    "pp_gt5_frac": 0.040828
+  },
+  "mirt|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.040117,
+    "mae": 0.792877,
+    "spearman": 0.880479,
+    "pp_p50": 0.141964,
+    "pp_p90": 1.814353,
+    "pp_mean": 0.608547,
+    "pp_gt1_frac": 0.184079,
+    "pp_gt5_frac": 0.013174
+  }
+}
+
+===== --models mirt_exp --drop-bias both =====
+Sun Oct  4 05:45:26 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+mechanism: p_drift=none (P_eff = P + Pc*ln(playcount_cur))  d_constraint=none  d_logit_wd=None
+note: mirt_exp = b0 + ln(sum_i D_mi*exp(-(P_ui-C_mi))); D is forced positive (softplus) because a free D can make the sum negative, and its log undefined
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [mirt_exp] d_constraint=nonneg  d_logit_wd=0
+  [mirt_exp] epoch  20  test RMSE(step0) = 1.53013  (25.1s)
+  [mirt_exp] epoch  40  test RMSE(step0) = 1.52207  (45.5s)
+  [mirt_exp] epoch  60  test RMSE(step0) = 1.51659  (64.3s)
+mirt_exp step0 rmse=1.51659 cov=0.996
+  [check] PASS  coverage_reported: 2 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: mirt_exp:ok
+
+wrote npz per model + step2_1k_summary_loss.json (69.0s total)
+{
+  "mirt_exp|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.51659,
+    "mae": 1.072025,
+    "spearman": 0.742059,
+    "pp_p50": 0.253157,
+    "pp_p90": 2.887107,
+    "pp_mean": 1.042826,
+    "pp_gt1_frac": 0.269997,
+    "pp_gt5_frac": 0.03909
+  },
+  "mirt_exp|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.037238,
+    "mae": 0.756797,
+    "spearman": 0.876168,
+    "pp_p50": 0.155492,
+    "pp_p90": 1.777349,
+    "pp_mean": 0.602754,
+    "pp_gt1_frac": 0.183892,
+    "pp_gt5_frac": 0.011958
+  }
+}
+
+===== --models mirt --drop-bias u =====
+Sun Oct  4 05:46:38 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [mirt] epoch  20  test RMSE(step0) = 1.47933  (17.4s)
+  [mirt] epoch  40  test RMSE(step0) = 1.50817  (33.6s)
+  [mirt] epoch  60  test RMSE(step0) = 1.50652  (49.3s)
+mirt     step0 rmse=1.50652 cov=0.996
+  [check] PASS  coverage_reported: 2 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: mirt:ok
+
+wrote npz per model + step2_1k_summary_loss.json (54.1s total)
+{
+  "mirt|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.506516,
+    "mae": 1.105478,
+    "spearman": 0.746909,
+    "pp_p50": 0.242711,
+    "pp_p90": 2.954617,
+    "pp_mean": 1.063072,
+    "pp_gt1_frac": 0.271384,
+    "pp_gt5_frac": 0.040921
+  },
+  "mirt|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.040751,
+    "mae": 0.792709,
+    "spearman": 0.88016,
+    "pp_p50": 0.142265,
+    "pp_p90": 1.814953,
+    "pp_mean": 0.608621,
+    "pp_gt1_frac": 0.183629,
+    "pp_gt5_frac": 0.013281
+  }
+}
+
+===== --models mirt --drop-bias m =====
+Sun Oct  4 05:47:35 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [mirt] epoch  20  test RMSE(step0) = 1.44485  (15.2s)
+  [mirt] epoch  40  test RMSE(step0) = 1.45800  (31.3s)
+  [mirt] epoch  60  test RMSE(step0) = 1.45774  (46.2s)
+mirt     step0 rmse=1.45774 cov=0.996
+  [check] PASS  coverage_reported: 2 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: mirt:ok
+
+wrote npz per model + step2_1k_summary_loss.json (51.1s total)
+{
+  "mirt|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.457736,
+    "mae": 1.058226,
+    "spearman": 0.763479,
+    "pp_p50": 0.242611,
+    "pp_p90": 2.864889,
+    "pp_mean": 1.036692,
+    "pp_gt1_frac": 0.266478,
+    "pp_gt5_frac": 0.039023
+  },
+  "mirt|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.008135,
+    "mae": 0.75887,
+    "spearman": 0.886241,
+    "pp_p50": 0.147433,
+    "pp_p90": 1.742542,
+    "pp_mean": 0.586504,
+    "pp_gt1_frac": 0.178477,
+    "pp_gt5_frac": 0.011321
+  }
+}
+
+===== --models bias --drop-bias both =====
+Sun Oct  4 05:48:29 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [bias] epoch  20  test RMSE(step0) = 2.16982  (4.4s)
+  [bias] epoch  40  test RMSE(step0) = 2.16907  (7.9s)
+  [bias] epoch  60  test RMSE(step0) = 2.16993  (11.8s)
+Traceback (most recent call last):
+  File "/home/mikechu/Documents/Projects/DenseConstantRegressor/scripts/step2_predict.py", line 678, in <module>
+    main()
+    ~~~~^^
+  File "/home/mikechu/Documents/Projects/DenseConstantRegressor/scripts/step2_predict.py", line 544, in main
+    results[f"{kind}|step0"] = report(pv, te_y_np, len(test))
+                               ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mikechu/Documents/Projects/DenseConstantRegressor/scripts/step2_predict.py", line 123, in report
+    "spearman": round(spearman(pred, y), 6),
+                      ~~~~~~~~^^^^^^^^^
+  File "/home/mikechu/Documents/Projects/DenseConstantRegressor/scripts/step2_predict.py", line 108, in spearman
+    a, b = _ranks(pred), _ranks(y)
+           ~~~~~~^^^^^^
+  File "/home/mikechu/Documents/Projects/DenseConstantRegressor/scripts/step2_predict.py", line 102, in _ranks
+    r = np.empty(len(x), dtype=np.float64)
+                 ~~~^^^
+TypeError: len() of unsized object
+
+===== --models mirt,mirt_exp --drop-bias both --features F1 --p-drift logpc =====
+Sun Oct  4 05:48:47 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+mechanism: p_drift=logpc (P_eff = P + Pc*ln(playcount_cur))  d_constraint=none  d_logit_wd=None
+note: mirt_exp = b0 + ln(sum_i D_mi*exp(-(P_ui-C_mi))); D is forced positive (softplus) because a free D can make the sum negative, and its log undefined
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [mirt] epoch  20  test RMSE(step0) = 1.44291  (18.0s)
+  [mirt] epoch  40  test RMSE(step0) = 1.47414  (36.5s)
+  [mirt] epoch  60  test RMSE(step0) = 1.46979  (53.3s)
+mirt     step0 rmse=1.46979 cov=0.996
+  [mirt_exp] d_constraint=nonneg  d_logit_wd=0
+  [mirt_exp] epoch  20  test RMSE(step0) = 1.47366  (20.5s)
+  [mirt_exp] epoch  40  test RMSE(step0) = 1.46364  (40.0s)
+  [mirt_exp] epoch  60  test RMSE(step0) = 1.45602  (60.3s)
+mirt_exp step0 rmse=1.45602 cov=0.996
+  [check] PASS  coverage_reported: 4 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: mirt:ok mirt_exp:ok
+
+wrote npz per model + step2_1k_summary_loss.json (118.9s total)
+{
+  "mirt|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.469791,
+    "mae": 1.074435,
+    "spearman": 0.759894,
+    "pp_p50": 0.233525,
+    "pp_p90": 2.897736,
+    "pp_mean": 1.04507,
+    "pp_gt1_frac": 0.266951,
+    "pp_gt5_frac": 0.040066
+  },
+  "mirt|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.029483,
+    "mae": 0.781379,
+    "spearman": 0.883397,
+    "pp_p50": 0.138255,
+    "pp_p90": 1.790296,
+    "pp_mean": 0.602531,
+    "pp_gt1_frac": 0.181683,
+    "pp_gt5_frac": 0.013267
+  },
+  "mirt_exp|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.456017,
+    "mae": 1.029779,
+    "spearman": 0.762152,
+    "pp_p50": 0.241027,
+    "pp_p90": 2.784894,
+    "pp_mean": 1.013004,
+    "pp_gt1_frac": 0.261283,
+    "pp_gt5_frac": 0.037552
+  },
+  "mirt_exp|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.017528,
+    "mae": 0.741832,
+    "spearman": 0.882234,
+    "pp_p50": 0.148327,
+    "pp_p90": 1.707949,
+    "pp_mean": 0.585313,
+    "pp_gt1_frac": 0.175846,
+    "pp_gt5_frac": 0.011377
+  }
+}
+
+ALL_DONE
+Sun Oct  4 05:50:49 PM CST 2026

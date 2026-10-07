@@ -1,0 +1,601 @@
+
+===== --models bias,mf_dot,mirt =====
+Sun Oct  4 06:17:44 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [bias] epoch  20  test RMSE(step0) = 1.52078  (4.3s)
+  [bias] epoch  40  test RMSE(step0) = 1.52521  (8.5s)
+  [bias] epoch  60  test RMSE(step0) = 1.52356  (12.6s)
+bias     step0 rmse=1.52356 cov=0.996
+  [mf_dot] epoch  20  test RMSE(step0) = 1.44265  (9.7s)
+  [mf_dot] epoch  40  test RMSE(step0) = 1.45625  (18.2s)
+  [mf_dot] epoch  60  test RMSE(step0) = 1.45484  (26.3s)
+mf_dot   step0 rmse=1.45484 cov=0.996
+  [mirt] epoch  20  test RMSE(step0) = 1.44461  (11.5s)
+  [mirt] epoch  40  test RMSE(step0) = 1.45822  (23.0s)
+  [mirt] epoch  60  test RMSE(step0) = 1.45823  (34.4s)
+mirt     step0 rmse=1.45823 cov=0.996
+  [check] PASS  coverage_reported: 6 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: bias:ok mf_dot:ok mirt:ok
+
+wrote npz per model + step2_1k_summary_loss.json (78.1s total)
+{
+  "bias|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.523563,
+    "mae": 1.176477,
+    "spearman": 0.733,
+    "pp_p50": 0.271681,
+    "pp_p90": 3.271377,
+    "pp_mean": 1.159416,
+    "pp_gt1_frac": 0.294187,
+    "pp_gt5_frac": 0.047128
+  },
+  "bias|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.198787,
+    "mae": 0.938573,
+    "spearman": 0.843506,
+    "pp_p50": 0.170757,
+    "pp_p90": 2.252039,
+    "pp_mean": 0.733555,
+    "pp_gt1_frac": 0.215782,
+    "pp_gt5_frac": 0.020818
+  },
+  "mf_dot|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.454837,
+    "mae": 1.059649,
+    "spearman": 0.763243,
+    "pp_p50": 0.242601,
+    "pp_p90": 2.903473,
+    "pp_mean": 1.047379,
+    "pp_gt1_frac": 0.266901,
+    "pp_gt5_frac": 0.040147
+  },
+  "mf_dot|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.012624,
+    "mae": 0.763959,
+    "spearman": 0.885605,
+    "pp_p50": 0.148428,
+    "pp_p90": 1.759955,
+    "pp_mean": 0.595193,
+    "pp_gt1_frac": 0.178979,
+    "pp_gt5_frac": 0.012332
+  },
+  "mirt|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.458235,
+    "mae": 1.058534,
+    "spearman": 0.763327,
+    "pp_p50": 0.242867,
+    "pp_p90": 2.865346,
+    "pp_mean": 1.037285,
+    "pp_gt1_frac": 0.266304,
+    "pp_gt5_frac": 0.039085
+  },
+  "mirt|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.00869,
+    "mae": 0.758998,
+    "spearman": 0.886107,
+    "pp_p50": 0.147303,
+    "pp_p90": 1.740419,
+    "pp_mean": 0.586517,
+    "pp_gt1_frac": 0.178103,
+    "pp_gt5_frac": 0.011328
+  }
+}
+
+===== --models bias --drop-bias both =====
+Sun Oct  4 06:19:04 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [bias] epoch  20  test RMSE(step0) = 2.16982  (3.4s)
+  [bias] epoch  40  test RMSE(step0) = 2.16907  (6.6s)
+  [bias] epoch  60  test RMSE(step0) = 2.16993  (9.5s)
+bias     step0 rmse=2.16993 cov=0.996
+  [check] PASS  coverage_reported: 2 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: bias:ok
+
+wrote npz per model + step2_1k_summary_loss.json (13.7s total)
+{
+  "bias|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 2.169932,
+    "mae": 1.8971,
+    "spearman": 0.091251,
+    "pp_p50": 0.290143,
+    "pp_p90": 4.219417,
+    "pp_mean": 1.513198,
+    "pp_gt1_frac": 0.357741,
+    "pp_gt5_frac": 0.071652
+  },
+  "bias|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 2.134304,
+    "mae": 1.860705,
+    "spearman": 0.095716,
+    "pp_p50": 0.244431,
+    "pp_p90": 3.551713,
+    "pp_mean": 1.133401,
+    "pp_gt1_frac": 0.298858,
+    "pp_gt5_frac": 0.048814
+  }
+}
+
+===== --models mirt,mf_dot,mirt_exp --dim 2 =====
+Sun Oct  4 06:19:20 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+mechanism: p_drift=none (P_eff = P + Pc*ln(playcount_cur))  d_constraint=none  d_logit_wd=None
+note: mirt_exp = b0 + ln(sum_i D_mi*exp(-(P_ui-C_mi))); D is forced positive (softplus) because a free D can make the sum negative, and its log undefined
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [mirt] epoch  20  test RMSE(step0) = 1.46762  (6.9s)
+  [mirt] epoch  40  test RMSE(step0) = 1.47851  (13.2s)
+  [mirt] epoch  60  test RMSE(step0) = 1.47815  (19.6s)
+mirt     step0 rmse=1.47815 cov=0.996
+  [mf_dot] epoch  20  test RMSE(step0) = 1.46253  (5.2s)
+  [mf_dot] epoch  40  test RMSE(step0) = 1.47764  (10.9s)
+  [mf_dot] epoch  60  test RMSE(step0) = 1.47767  (16.3s)
+mf_dot   step0 rmse=1.47767 cov=0.996
+  [mirt_exp] d_constraint=nonneg  d_logit_wd=0
+  [mirt_exp] epoch  20  test RMSE(step0) = 1.52584  (7.7s)
+  [mirt_exp] epoch  40  test RMSE(step0) = 1.53529  (15.7s)
+  [mirt_exp] epoch  60  test RMSE(step0) = 1.53277  (24.2s)
+mirt_exp step0 rmse=1.53277 cov=0.996
+  [check] PASS  coverage_reported: 6 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: mirt:ok mf_dot:ok mirt_exp:ok
+
+wrote npz per model + step2_1k_summary_loss.json (64.9s total)
+{
+  "mirt|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.47815,
+    "mae": 1.079859,
+    "spearman": 0.754359,
+    "pp_p50": 0.254607,
+    "pp_p90": 2.923425,
+    "pp_mean": 1.058757,
+    "pp_gt1_frac": 0.272678,
+    "pp_gt5_frac": 0.040269
+  },
+  "mirt|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.03789,
+    "mae": 0.785227,
+    "spearman": 0.877968,
+    "pp_p50": 0.155654,
+    "pp_p90": 1.821419,
+    "pp_mean": 0.614741,
+    "pp_gt1_frac": 0.187472,
+    "pp_gt5_frac": 0.012893
+  },
+  "mf_dot|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.477674,
+    "mae": 1.081658,
+    "spearman": 0.753896,
+    "pp_p50": 0.254534,
+    "pp_p90": 2.958448,
+    "pp_mean": 1.067586,
+    "pp_gt1_frac": 0.272893,
+    "pp_gt5_frac": 0.041112
+  },
+  "mf_dot|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.040674,
+    "mae": 0.788546,
+    "spearman": 0.877538,
+    "pp_p50": 0.155869,
+    "pp_p90": 1.846791,
+    "pp_mean": 0.621723,
+    "pp_gt1_frac": 0.187704,
+    "pp_gt5_frac": 0.013603
+  },
+  "mirt_exp|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.532771,
+    "mae": 1.111371,
+    "spearman": 0.741577,
+    "pp_p50": 0.260118,
+    "pp_p90": 3.029511,
+    "pp_mean": 1.110385,
+    "pp_gt1_frac": 0.280235,
+    "pp_gt5_frac": 0.042962
+  },
+  "mirt_exp|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.07283,
+    "mae": 0.806576,
+    "spearman": 0.872303,
+    "pp_p50": 0.159,
+    "pp_p90": 1.978085,
+    "pp_mean": 0.689741,
+    "pp_gt1_frac": 0.19764,
+    "pp_gt5_frac": 0.01819
+  }
+}
+
+===== --models mirt,mf_dot,mirt_exp --dim 3 =====
+Sun Oct  4 06:20:28 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+mechanism: p_drift=none (P_eff = P + Pc*ln(playcount_cur))  d_constraint=none  d_logit_wd=None
+note: mirt_exp = b0 + ln(sum_i D_mi*exp(-(P_ui-C_mi))); D is forced positive (softplus) because a free D can make the sum negative, and its log undefined
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [mirt] epoch  20  test RMSE(step0) = 1.45441  (8.2s)
+  [mirt] epoch  40  test RMSE(step0) = 1.46852  (15.5s)
+  [mirt] epoch  60  test RMSE(step0) = 1.46885  (23.5s)
+mirt     step0 rmse=1.46885 cov=0.996
+  [mf_dot] epoch  20  test RMSE(step0) = 1.45573  (6.2s)
+  [mf_dot] epoch  40  test RMSE(step0) = 1.46762  (12.4s)
+  [mf_dot] epoch  60  test RMSE(step0) = 1.46743  (18.4s)
+mf_dot   step0 rmse=1.46743 cov=0.996
+  [mirt_exp] d_constraint=nonneg  d_logit_wd=0
+  [mirt_exp] epoch  20  test RMSE(step0) = 1.51548  (9.1s)
+  [mirt_exp] epoch  40  test RMSE(step0) = 1.52294  (17.7s)
+  [mirt_exp] epoch  60  test RMSE(step0) = 1.51979  (25.5s)
+mirt_exp step0 rmse=1.51979 cov=0.996
+  [check] PASS  coverage_reported: 6 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: mirt:ok mf_dot:ok mirt_exp:ok
+
+wrote npz per model + step2_1k_summary_loss.json (72.0s total)
+{
+  "mirt|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.468849,
+    "mae": 1.069246,
+    "spearman": 0.758689,
+    "pp_p50": 0.249339,
+    "pp_p90": 2.893843,
+    "pp_mean": 1.049227,
+    "pp_gt1_frac": 0.269343,
+    "pp_gt5_frac": 0.039605
+  },
+  "mirt|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.021557,
+    "mae": 0.771183,
+    "spearman": 0.882565,
+    "pp_p50": 0.151857,
+    "pp_p90": 1.778251,
+    "pp_mean": 0.601444,
+    "pp_gt1_frac": 0.182614,
+    "pp_gt5_frac": 0.011934
+  },
+  "mf_dot|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.467428,
+    "mae": 1.07096,
+    "spearman": 0.758336,
+    "pp_p50": 0.249557,
+    "pp_p90": 2.928116,
+    "pp_mean": 1.058105,
+    "pp_gt1_frac": 0.270033,
+    "pp_gt5_frac": 0.040518
+  },
+  "mf_dot|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.025098,
+    "mae": 0.775539,
+    "spearman": 0.882049,
+    "pp_p50": 0.152461,
+    "pp_p90": 1.808886,
+    "pp_mean": 0.60948,
+    "pp_gt1_frac": 0.183604,
+    "pp_gt5_frac": 0.01281
+  },
+  "mirt_exp|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.519794,
+    "mae": 1.08015,
+    "spearman": 0.744002,
+    "pp_p50": 0.255677,
+    "pp_p90": 2.889485,
+    "pp_mean": 1.058578,
+    "pp_gt1_frac": 0.271836,
+    "pp_gt5_frac": 0.039577
+  },
+  "mirt_exp|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.032985,
+    "mae": 0.76422,
+    "spearman": 0.878734,
+    "pp_p50": 0.15738,
+    "pp_p90": 1.809663,
+    "pp_mean": 0.627476,
+    "pp_gt1_frac": 0.186994,
+    "pp_gt5_frac": 0.01325
+  }
+}
+
+===== --models mirt,mf_dot,mirt_exp --dim 4 =====
+Sun Oct  4 06:21:43 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+mechanism: p_drift=none (P_eff = P + Pc*ln(playcount_cur))  d_constraint=none  d_logit_wd=None
+note: mirt_exp = b0 + ln(sum_i D_mi*exp(-(P_ui-C_mi))); D is forced positive (softplus) because a free D can make the sum negative, and its log undefined
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [mirt] epoch  20  test RMSE(step0) = 1.45140  (7.7s)
+  [mirt] epoch  40  test RMSE(step0) = 1.46492  (16.0s)
+  [mirt] epoch  60  test RMSE(step0) = 1.46522  (23.8s)
+mirt     step0 rmse=1.46521 cov=0.996
+  [mf_dot] epoch  20  test RMSE(step0) = 1.44872  (6.2s)
+  [mf_dot] epoch  40  test RMSE(step0) = 1.46285  (12.2s)
+  [mf_dot] epoch  60  test RMSE(step0) = 1.46282  (18.3s)
+mf_dot   step0 rmse=1.46283 cov=0.996
+  [mirt_exp] d_constraint=nonneg  d_logit_wd=0
+  [mirt_exp] epoch  20  test RMSE(step0) = 1.50544  (9.0s)
+  [mirt_exp] epoch  40  test RMSE(step0) = 1.50373  (18.2s)
+  [mirt_exp] epoch  60  test RMSE(step0) = 1.50014  (27.6s)
+mirt_exp step0 rmse=1.50014 cov=0.996
+  [check] PASS  coverage_reported: 6 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: mirt:ok mf_dot:ok mirt_exp:ok
+
+wrote npz per model + step2_1k_summary_loss.json (74.5s total)
+{
+  "mirt|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.465215,
+    "mae": 1.065262,
+    "spearman": 0.760381,
+    "pp_p50": 0.247428,
+    "pp_p90": 2.882894,
+    "pp_mean": 1.044497,
+    "pp_gt1_frac": 0.268543,
+    "pp_gt5_frac": 0.03924
+  },
+  "mirt|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.016155,
+    "mae": 0.766505,
+    "spearman": 0.88403,
+    "pp_p50": 0.150298,
+    "pp_p90": 1.758627,
+    "pp_mean": 0.595972,
+    "pp_gt1_frac": 0.18142,
+    "pp_gt5_frac": 0.011588
+  },
+  "mf_dot|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.462825,
+    "mae": 1.066225,
+    "spearman": 0.76019,
+    "pp_p50": 0.246568,
+    "pp_p90": 2.91126,
+    "pp_mean": 1.05345,
+    "pp_gt1_frac": 0.269169,
+    "pp_gt5_frac": 0.040157
+  },
+  "mf_dot|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.018997,
+    "mae": 0.770064,
+    "spearman": 0.883645,
+    "pp_p50": 0.150965,
+    "pp_p90": 1.792023,
+    "pp_mean": 0.603514,
+    "pp_gt1_frac": 0.182396,
+    "pp_gt5_frac": 0.01244
+  },
+  "mirt_exp|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.500137,
+    "mae": 1.063156,
+    "spearman": 0.751351,
+    "pp_p50": 0.250586,
+    "pp_p90": 2.844751,
+    "pp_mean": 1.038667,
+    "pp_gt1_frac": 0.268159,
+    "pp_gt5_frac": 0.038309
+  },
+  "mirt_exp|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.012508,
+    "mae": 0.746262,
+    "spearman": 0.88383,
+    "pp_p50": 0.153493,
+    "pp_p90": 1.751377,
+    "pp_mean": 0.604105,
+    "pp_gt1_frac": 0.181901,
+    "pp_gt5_frac": 0.011813
+  }
+}
+
+===== --models mirt,mf_dot,mirt_exp --dim 8 =====
+Sun Oct  4 06:23:00 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+mechanism: p_drift=none (P_eff = P + Pc*ln(playcount_cur))  d_constraint=none  d_logit_wd=None
+note: mirt_exp = b0 + ln(sum_i D_mi*exp(-(P_ui-C_mi))); D is forced positive (softplus) because a free D can make the sum negative, and its log undefined
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [mirt] epoch  20  test RMSE(step0) = 1.44591  (10.0s)
+  [mirt] epoch  40  test RMSE(step0) = 1.45799  (19.7s)
+  [mirt] epoch  60  test RMSE(step0) = 1.45824  (29.3s)
+mirt     step0 rmse=1.45824 cov=0.996
+  [mf_dot] epoch  20  test RMSE(step0) = 1.44169  (6.7s)
+  [mf_dot] epoch  40  test RMSE(step0) = 1.45555  (14.0s)
+  [mf_dot] epoch  60  test RMSE(step0) = 1.45556  (21.2s)
+mf_dot   step0 rmse=1.45556 cov=0.996
+  [mirt_exp] d_constraint=nonneg  d_logit_wd=0
+  [mirt_exp] epoch  20  test RMSE(step0) = 1.50827  (11.3s)
+  [mirt_exp] epoch  40  test RMSE(step0) = 1.50128  (22.7s)
+  [mirt_exp] epoch  60  test RMSE(step0) = 1.49812  (33.7s)
+mirt_exp step0 rmse=1.49812 cov=0.996
+  [check] PASS  coverage_reported: 6 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: mirt:ok mf_dot:ok mirt_exp:ok
+
+wrote npz per model + step2_1k_summary_loss.json (88.9s total)
+{
+  "mirt|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.458237,
+    "mae": 1.058508,
+    "spearman": 0.763276,
+    "pp_p50": 0.242725,
+    "pp_p90": 2.864078,
+    "pp_mean": 1.03766,
+    "pp_gt1_frac": 0.266531,
+    "pp_gt5_frac": 0.039075
+  },
+  "mirt|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.00907,
+    "mae": 0.759284,
+    "spearman": 0.885987,
+    "pp_p50": 0.147691,
+    "pp_p90": 1.737842,
+    "pp_mean": 0.587009,
+    "pp_gt1_frac": 0.178456,
+    "pp_gt5_frac": 0.011415
+  },
+  "mf_dot|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.455562,
+    "mae": 1.059621,
+    "spearman": 0.762974,
+    "pp_p50": 0.242721,
+    "pp_p90": 2.892637,
+    "pp_mean": 1.046515,
+    "pp_gt1_frac": 0.266906,
+    "pp_gt5_frac": 0.039968
+  },
+  "mf_dot|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.012292,
+    "mae": 0.763653,
+    "spearman": 0.885535,
+    "pp_p50": 0.148262,
+    "pp_p90": 1.76192,
+    "pp_mean": 0.594731,
+    "pp_gt1_frac": 0.179117,
+    "pp_gt5_frac": 0.012197
+  },
+  "mirt_exp|step0": {
+    "n_scored": 418856,
+    "coverage": 0.996325,
+    "rmse": 1.498124,
+    "mae": 1.058033,
+    "spearman": 0.753544,
+    "pp_p50": 0.245109,
+    "pp_p90": 2.813158,
+    "pp_mean": 1.020583,
+    "pp_gt1_frac": 0.264821,
+    "pp_gt5_frac": 0.037779
+  },
+  "mirt_exp|step1": {
+    "n_scored": 288833,
+    "coverage": 0.996041,
+    "rmse": 1.003647,
+    "mae": 0.738148,
+    "spearman": 0.886161,
+    "pp_p50": 0.149757,
+    "pp_p90": 1.709214,
+    "pp_mean": 0.583725,
+    "pp_gt1_frac": 0.176998,
+    "pp_gt5_frac": 0.011076
+  }
+}
+
+ALL_DONE
+Sun Oct  4 06:24:31 PM CST 2026

@@ -1,0 +1,43 @@
+===== re-verify free-D main table after optimizer refactor =====
+Sun Oct  4 03:43:14 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+[step1] step1_1k.parquet: 964,417 rows, 990 players, 20,376 beatmaps
+[step0] step0_1k.csv: 1,399,615 rows, 990 players, 20,655 beatmaps
+pair universe = step0: 866,616 ordered pairs -> test 259,500 (29.94%)
+train plays = 674,436 (step1)   test plays = 420,401 (step0)   test pairs' step1 rows = 289,981
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 404,944 / test 259,500 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 29.9441% vs target 30.00% (tolerance 1%)
+train vocab: 987 entities, 19,636 items
+train rows in vocab = 674,436/674,436   test rows covered = 418,856/420,401 (99.63%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,636 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [bias] epoch  20  test RMSE(step0) = 1.52078  (4.1s)
+  [bias] epoch  40  test RMSE(step0) = 1.52521  (7.8s)
+  [bias] epoch  60  test RMSE(step0) = 1.52356  (12.1s)
+bias     step0 rmse=1.52356 cov=0.996
+  [mf_dot] epoch  20  test RMSE(step0) = 1.44265  (9.4s)
+  [mf_dot] epoch  40  test RMSE(step0) = 1.45625  (18.6s)
+  [mf_dot] epoch  60  test RMSE(step0) = 1.45484  (27.3s)
+mf_dot   step0 rmse=1.45484 cov=0.996
+  [mirt] epoch  20  test RMSE(step0) = 1.44461  (13.4s)
+  [mirt] epoch  40  test RMSE(step0) = 1.45822  (26.4s)
+  [mirt] epoch  60  test RMSE(step0) = 1.45823  (39.6s)
+mirt     step0 rmse=1.45823 cov=0.996
+  [check] PASS  coverage_reported: 6 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,436; of those on a held-out pair = 0; test tensors never enter the optimiser
+Traceback (most recent call last):
+  File "/home/mikechu/Documents/Projects/DenseConstantRegressor/scripts/step2_predict.py", line 640, in <module>
+    main()
+    ~~~~^^
+  File "/home/mikechu/Documents/Projects/DenseConstantRegressor/scripts/step2_predict.py", line 572, in main
+    D=model.export_D(),                        # effective D (constraint applied)
+      ~~~~~~~~~~~~~~^^
+  File "/home/mikechu/Documents/Projects/DenseConstantRegressor/scripts/step2_predict.py", line 229, in export_D
+    Z = self.p["D"].detach()
+        ~~~~~~^^^^^
+KeyError: 'D'
+
+ALL_DONE
+Sun Oct  4 03:44:43 PM CST 2026

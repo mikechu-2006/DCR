@@ -1,0 +1,132 @@
+===== 10k main table (bias,mf_dot,mirt / F0 / batch 32768) =====
+Sun Oct  4 02:34:01 PM CST 2026
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+[step1] step1_10k.parquet: 9,119,324 rows, 9,793 players, 21,899 beatmaps
+[step0] step0_10k.parquet: 13,359,355 rows, 9,812 players, 21,899 beatmaps
+pair universe = step0: 7,784,519 ordered pairs -> test 2,334,078 (29.98%)
+train plays = 6,384,278 (step1)   test plays = 4,007,074 (step0)   test pairs' step1 rows = 2,735,046
+  [check] PASS  pair_never_crosses_split: 0 ordered pairs on both sides (train 3,601,856 / test 2,334,078 unique pairs)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 4,007,074/4,007,074
+  [check] PASS  test_pair_frac: 29.9836% vs target 30.00% (tolerance 1%)
+train vocab: 9,776 entities, 21,870 items
+train rows in vocab = 6,384,278/6,384,278   test rows covered = 4,006,975/4,007,074 (100.00%)
+  [check] PASS  loss_in_range: test(10k) loss in [-12.4663, -0.1935], expected [-12.4663, -0.1358]
+  [check] PASS  vocab_from_train_only: 9,776 entities / 21,870 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [bias] epoch  20  test RMSE(step0) = 1.37319  (41.6s)
+  [bias] epoch  40  test RMSE(step0) = 1.37462  (75.7s)
+  [bias] epoch  60  test RMSE(step0) = 1.37271  (109.0s)
+bias     step0 rmse=1.37271 cov=1.000
+  [mf_dot] epoch  20  test RMSE(step0) = 1.33339  (71.4s)
+  [mf_dot] epoch  40  test RMSE(step0) = 1.33502  (138.3s)
+  [mf_dot] epoch  60  test RMSE(step0) = 1.33268  (208.3s)
+mf_dot   step0 rmse=1.33268 cov=1.000
+  [mirt] epoch  20  test RMSE(step0) = 1.33273  (91.8s)
+  [mirt] epoch  40  test RMSE(step0) = 1.33303  (180.1s)
+  [mirt] epoch  60  test RMSE(step0) = 1.33314  (267.8s)
+mirt     step0 rmse=1.33314 cov=1.000
+  [check] PASS  coverage_reported: 6 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 6,384,278; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: bias:ok mf_dot:ok mirt:ok
+
+wrote npz per model + step2_10k_summary_loss.json (623.8s total)
+{
+  "bias|step0": {
+    "n_scored": 4006975,
+    "coverage": 0.999975,
+    "rmse": 1.372706,
+    "mae": 1.07166,
+    "spearman": 0.687431,
+    "pp_p50": 0.615096,
+    "pp_p90": 4.106298,
+    "pp_mean": 1.57727,
+    "pp_gt1_frac": 0.401791,
+    "pp_gt5_frac": 0.070613
+  },
+  "bias|step1": {
+    "n_scored": 2734970,
+    "coverage": 0.999972,
+    "rmse": 1.151081,
+    "mae": 0.882453,
+    "spearman": 0.812904,
+    "pp_p50": 0.430325,
+    "pp_p90": 2.920402,
+    "pp_mean": 1.03328,
+    "pp_gt1_frac": 0.317511,
+    "pp_gt5_frac": 0.028505
+  },
+  "mf_dot|step0": {
+    "n_scored": 4006975,
+    "coverage": 0.999975,
+    "rmse": 1.332683,
+    "mae": 1.03107,
+    "spearman": 0.707873,
+    "pp_p50": 0.590133,
+    "pp_p90": 4.038317,
+    "pp_mean": 1.546642,
+    "pp_gt1_frac": 0.393516,
+    "pp_gt5_frac": 0.068954
+  },
+  "mf_dot|step1": {
+    "n_scored": 2734970,
+    "coverage": 0.999972,
+    "rmse": 1.076102,
+    "mae": 0.821495,
+    "spearman": 0.838089,
+    "pp_p50": 0.405471,
+    "pp_p90": 2.796681,
+    "pp_mean": 0.986733,
+    "pp_gt1_frac": 0.305184,
+    "pp_gt5_frac": 0.026058
+  },
+  "mirt|step0": {
+    "n_scored": 4006975,
+    "coverage": 0.999975,
+    "rmse": 1.333143,
+    "mae": 1.020878,
+    "spearman": 0.709594,
+    "pp_p50": 0.583941,
+    "pp_p90": 3.94246,
+    "pp_mean": 1.512786,
+    "pp_gt1_frac": 0.389339,
+    "pp_gt5_frac": 0.065918
+  },
+  "mirt|step1": {
+    "n_scored": 2734970,
+    "coverage": 0.999972,
+    "rmse": 1.044401,
+    "mae": 0.791922,
+    "spearman": 0.845591,
+    "pp_p50": 0.395075,
+    "pp_p90": 2.643702,
+    "pp_mean": 0.943048,
+    "pp_gt1_frac": 0.297619,
+    "pp_gt5_frac": 0.02225
+  }
+}
+	Command being timed: "python3 scripts/step2_predict.py --tag 10k --models bias,mf_dot,mirt --epochs 60 --batch 32768"
+	User time (seconds): 2483.83
+	System time (seconds): 400.52
+	Percent of CPU this job got: 460%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 10:26.89
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 3137060
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 10
+	Minor (reclaiming a frame) page faults: 3083407
+	Voluntary context switches: 1648
+	Involuntary context switches: 5200589
+	Swaps: 0
+	File system inputs: 375120
+	File system outputs: 25560
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+
+ALL_DONE
+Sun Oct  4 02:44:28 PM CST 2026
