@@ -33,6 +33,12 @@ data/**
 *.zip
 *.7z
 
+# 例外 / exception —— CM3P 混用探针的参考向量：
+#   256 张已发布谱面的 512 维 CM3P 向量（float32，约 0.5 MB），是 scripts/step0e_validate_mix.py
+#   的**测试夹具**，不是数据产物。没有它，远程机器就必须先下 615 MB 的 244K 表才能回答
+#   "no-audio 的行能不能和已发布的行混用"。见 docs/cm3p_remote_runbook.md。
+!manifests/cm3p_probe_1k.npz
+
 # 大体积 / 模型权重 (large blobs & model weights)
 *.safetensors
 *.ckpt

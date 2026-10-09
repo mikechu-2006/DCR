@@ -31,6 +31,18 @@ section 10 run on every invocation (the npz/summary files are only written when 
 
     --p-drift logpc   adds a per-player, per-dimension drift rate Pc (n_ent, dim):
         P_eff = P[u] + Pc[u] * ln(playcount_cur)   x1 = ln(playcount_cur), Pc starts at 0
+    --p-drift time    the same drift rate, but along REAL calendar time instead of practice
+        count:  P_eff = P[u] + Pc[u] * t,  t = (timestamp - t_ref) / 365.25 days, so Pc is
+        "how much this player's latent vector moves per year".  t_ref is the mean training
+        timestamp and Pc starts at 0, so the model starts drift-free.
+
+    --chart-content cm3p  replaces the free per-chart table C (a one-hot lookup) by a FROZEN
+        content vector, and makes P live in that same space:
+            C[m] = content[m]                       buffer, never a parameter, never in Adam
+            P    : (n_ent, d) with d = --content-dim (--dim is forced to d)
+        The interaction is still a plain dot product <P[u], C[m]>; the only per-chart free
+        parameter left is bm.  Charts without a content row are dropped from BOTH tables
+        BEFORE the split -- filtering after would silently move the test set.
     --d-constraint    constrains mirt's discrimination vector D (per chart):
         none    : D free (default; current behaviour)
         nonneg  : D = softplus(Z)                  -> D > 0, no sum constraint
@@ -145,9 +157,14 @@ class EmbeddingModel(nn.Module):
     """
 
     def __init__(self, kind, n_ent, n_item, dim, features, seed=0, device=torch.device("cpu"),
-                 p_drift="none", d_constraint="none", d_init_std=None, drop_bias="none"):
+                 p_drift="none", d_constraint="none", d_init_std=None, drop_bias="none",
+                 content="none", chart_feats=None):
         super().__init__()
-        self.kind, self.dim, self.features = kind, dim, features
+        if content != "none" and chart_feats is None:
+            raise ValueError("content != 'none' needs chart_feats (n_item, dim)")
+        if content != "none" and kind == "bias":
+            raise ValueError("content has no effect on the bias model")
+        self.kind, self.dim, self.features, self.content = kind, dim, features, content
         if kind == "mirt_exp" and d_constraint == "none":
             d_constraint = "nonneg"        # ln(sum D e^-S) needs D > 0; scale lives in b0
         self.d_constraint = d_constraint
@@ -166,7 +183,13 @@ class EmbeddingModel(nn.Module):
         if drop_bias not in ("m", "both"):      # b_m: per-item main effect
             self.p["bm"] = nn.Parameter(torch.zeros(n_item, dtype=torch.float32, device=device))
         self.p["P"] = nn.Parameter(draw((n_ent, dim)))
-        self.p["C"] = nn.Parameter(draw((n_item, dim)))
+        if content == "none":
+            self.p["C"] = nn.Parameter(draw((n_item, dim)))
+        else:
+            # Frozen chart content.  A buffer: it never reaches Adam and never gets a
+            # weight-decay pull, so the GL(K) gauge that made a *prior* on C meaningless
+            # (diag_step2_gauge.py) has nothing to act on -- C is a constant here.
+            self.register_buffer("C_feat", chart_feats.to(device=device, dtype=torch.float32))
         if kind in ("mirt", "mirt_exp"):
             # simplex starts from a *spread* softmax (all charts identical at Z=0 would be a
             # symmetry sink: the softmax Jacobian is only ~1/dim there, so D never differentiates)
@@ -176,8 +199,9 @@ class EmbeddingModel(nn.Module):
                 # start from D ~ 0.05 like the free model: Z = softplus_inv(0.05) + N(0, 0.05)
                 with torch.no_grad():
                     self.p["D"].add_(float(np.log(np.expm1(0.05))))
-        if p_drift == "logpc" and kind != "bias":
-            # drift rate, same shape as P; starts at 0 so the model starts drift-free
+        if p_drift in ("logpc", "time") and kind != "bias":
+            # drift rate, same shape as P; starts at 0 so the model starts drift-free.
+            # "logpc" drifts along ln(playcount_cur), "time" along calendar years.
             self.p["Pc"] = nn.Parameter(torch.zeros((n_ent, dim), dtype=torch.float32, device=device))
         if features == "F2":
             self.p["V"] = nn.Parameter(torch.zeros((n_ent, dim), dtype=torch.float32, device=device))
@@ -187,10 +211,12 @@ class EmbeddingModel(nn.Module):
         # only the parameters this model actually uses (the rest are never handed to Adam)
         self.active = [k for k in ("b0", "bu", "bm") if k in self.p]
         if kind != "bias":
-            self.active += ["P", "C"]
+            self.active += ["P"]
+            if content == "none":
+                self.active += ["C"]        # with content there is no free chart table
         if kind in ("mirt", "mirt_exp"):
             self.active += ["D"]
-        if p_drift == "logpc" and kind != "bias":
+        if p_drift in ("logpc", "time") and kind != "bias":
             self.active += ["Pc"]
         if features == "F2":
             self.active += ["V"]
@@ -206,11 +232,13 @@ class EmbeddingModel(nn.Module):
             return F.softplus(Z)                    # D > 0
         return Z
 
-    def forward(self, u, m, x1=None, tau=None):
+    def forward(self, u, m, x1=None, tau=None, t=None):
         p = self.p
         P = p["P"][u]
         if self.p_drift == "logpc":
             P = P + p["Pc"][u] * x1.unsqueeze(1)    # per-player drift along ln(playcount_cur)
+        elif self.p_drift == "time":
+            P = P + p["Pc"][u] * t.unsqueeze(1)     # per-player drift along calendar years
         if self.features == "F2":
             P = P + (tau - 0.5).unsqueeze(1) * p["V"][u]
         # materialise a (B,) vector: with every intercept dropped the model can be a bare scalar
@@ -223,7 +251,7 @@ class EmbeddingModel(nn.Module):
             out = out + p["w1"][0] * x1
         if self.kind == "bias":
             return out
-        C = p["C"][m]
+        C = self.C_feat[m] if self.content != "none" else p["C"][m]
         if self.kind == "mf_dot":
             return out + (P * C).sum(1)
         D = self.D_matrix(m)
@@ -234,14 +262,20 @@ class EmbeddingModel(nn.Module):
         return out + ((P - C) * D).sum(1)
 
     @torch.no_grad()
-    def predict(self, u, m, x1=None, tau=None) -> np.ndarray:
-        return self.forward(u, m, x1, tau).detach().to("cpu").numpy()
+    def predict(self, u, m, x1=None, tau=None, t=None) -> np.ndarray:
+        return self.forward(u, m, x1, tau, t).detach().to("cpu").numpy()
 
     def np_array(self, name, fallback=None):
         """Parameter as a numpy array; fallback (e.g. zeros_like) when the model has none."""
         if name in self.p:
             return self.p[name].detach().to("cpu").numpy()
         return fallback
+
+    def chart_matrix(self) -> np.ndarray:
+        """The effective per-chart matrix C the model actually used (n_item, dim)."""
+        if self.content != "none":
+            return self.C_feat.detach().to("cpu").numpy()
+        return self.np_array("C")
 
     def export_D(self) -> np.ndarray:
         """Effective D (after the constraint transform) for the whole chart vocabulary."""
@@ -318,8 +352,22 @@ def parse_args(argv=None):
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out-prefix", default="step2")
     ap.add_argument("--eval-every", type=int, default=20)
-    ap.add_argument("--p-drift", default="none", choices=["none", "logpc"],
-                    help="player-side drift: P_eff = P[u] + Pc[u] * ln(playcount_cur), Pc starts at 0")
+    ap.add_argument("--p-drift", default="none", choices=["none", "logpc", "time"],
+                    help="player-side drift: 'logpc' -> P_eff = P[u] + Pc[u]*ln(playcount_cur); "
+                         "'time' -> P_eff = P[u] + Pc[u]*t with t in calendar years since the mean "
+                         "training timestamp.  Pc starts at 0, so the model starts drift-free.")
+    ap.add_argument("--chart-content", default="none", choices=["none", "cm3p"],
+                    help="replace the free per-chart table C by a FROZEN content vector")
+    ap.add_argument("--restrict-to-content", default="off", choices=["off", "on"],
+                    help="filter both play tables to the charts that HAVE a content row, but do "
+                         "not use the vectors.  This is how the 1-hot baseline is run on exactly "
+                         "the same chart subset, so the two are comparable.")
+    ap.add_argument("--content-path", default=str(PROC / "chart_content_cm3p.parquet"))
+    ap.add_argument("--content-dim", type=int, default=64,
+                    help="dimension of the frozen content vector -- and therefore of P")
+    ap.add_argument("--content-reduce", default="pca", choices=["pca", "raw"],
+                    help="pca: whiten to --content-dim on TRAIN charts only; raw: use the "
+                         "table's own dimension (then --content-dim must equal it)")
     ap.add_argument("--d-constraint", default="none", choices=["none", "nonneg", "simplex"],
                     help="mirt's D: none (free) / nonneg (softplus, D>0) / "
                          "simplex (softmax, D>=0 and sum_i D_i = 1)")
@@ -339,6 +387,54 @@ def parse_args(argv=None):
                     help="torch.set_num_threads(); 0 = leave the default.  Reproducibility "
                          "across machines needs the same thread count (parallel reductions)")
     return ap.parse_args(argv)
+
+
+# ------------------------------------------------------------------- chart content
+def load_content_table(path) -> tuple:
+    """(ids int64[n], E float32[n, d_raw]) from pipeline A's parquet."""
+    p = Path(path)
+    if not p.exists():
+        raise SystemExit(f"{p} not found -- run scripts/step0c_chart_content.py first")
+    df = pd.read_parquet(p, columns=["beatmap_id", "embedding"])
+    ids = df["beatmap_id"].to_numpy(np.int64)
+    E = np.stack([np.asarray(e, dtype=np.float32) for e in df["embedding"].to_numpy()])
+    print(f"[content] {p.name}: {len(ids):,} charts, raw dim {E.shape[1]}", flush=True)
+    return ids, E
+
+
+def align_content(ids, E, item_ids, dim, reduce_mode):
+    """Frozen content aligned to the training item order, then reduced.
+
+    Alignment is the one step in this pipeline that fails silently: C[i] must belong to
+    item_ids[i], so a missing chart is a hard error here rather than a wrong number later.
+    The PCA basis is fitted on the TRAINING charts only (these rows), never on the table.
+    """
+    pos = pd.Index(ids).get_indexer(item_ids)
+    if (pos < 0).any():
+        raise SystemExit(f"{int((pos < 0).sum())} training charts have no content row; "
+                         f"the play tables must be filtered to covered charts first")
+    X = np.ascontiguousarray(E[pos], dtype=np.float32)          # (n_item, d_raw)
+    if reduce_mode == "raw":
+        if dim != X.shape[1]:
+            raise SystemExit(f"--content-reduce raw needs --content-dim {X.shape[1]}, got {dim}")
+        Z, info = X, {"reduce": "raw"}
+    else:
+        mu = X.mean(0)
+        Xc = X - mu
+        Vt = np.linalg.svd(Xc, full_matrices=False)[2]
+        d = min(dim, Vt.shape[0])
+        if d != dim:
+            print(f"[content] only {d} components available, --content-dim {dim} truncated", flush=True)
+        Z = Xc @ Vt[:d].T
+        Z = Z / (Z.std(0) + 1e-12)                              # whiten
+        info = {"reduce": "pca", "pca_mean": mu, "pca_components": Vt[:d],
+                "pca_scale": Z.std(0), "fitted_on": "train_charts"}
+    nrm = np.linalg.norm(Z, axis=1, keepdims=True)
+    Z = (Z / np.maximum(nrm, 1e-12)).astype(np.float32)         # unit norm, like raw CM3P
+    ev = float(np.var(Z, axis=0).sum())
+    print(f"[content] {Z.shape[0]:,} x {Z.shape[1]}  mode={reduce_mode}  "
+          f"row-norm=1  var-sum={ev:.3f}", flush=True)
+    return Z, info
 
 
 def pick_device(name: str) -> torch.device:
@@ -368,12 +464,33 @@ def main():
               flush=True)
 
     need_pc = args.features in ("F1", "F2") or args.p_drift == "logpc"
-    need_ts = args.features == "F2" or args.entity == "player-year"
+    need_ts = args.features == "F2" or args.entity == "player-year" or args.p_drift == "time"
     cols = BASE_COLS + [args.target] \
         + (["playcount_cur"] if need_pc else []) + (["timestamp"] if need_ts else [])
 
     tr_all = load_play_table(args.tag, "step1", cols)
     te_all = load_play_table(args.tag, "step0", cols)
+
+    # ------------------------------------------------- content availability filter
+    # BEFORE the split, always.  Dropping charts after the split would change which pairs
+    # are held out, so the run would no longer be comparable with the 1-hot baseline.
+    content_ids = content_E = None
+    content_drop = {"step1_rows_dropped": 0, "step0_rows_dropped": 0,
+                    "step1_rows_total": None, "step0_rows_total": None}
+    if args.chart_content != "none" or args.restrict_to_content == "on":
+        content_ids, content_E = load_content_table(args.content_path)
+        have = set(content_ids.tolist())
+        n_tr, n_te = len(tr_all), len(te_all)
+        tr_all = tr_all[tr_all.beatmap_id.isin(have)].reset_index(drop=True)
+        te_all = te_all[te_all.beatmap_id.isin(have)].reset_index(drop=True)
+        content_drop = {"step1_rows_dropped": n_tr - len(tr_all), "step0_rows_dropped": n_te - len(te_all),
+                        "step1_rows_total": n_tr, "step0_rows_total": n_te}
+        print(f"[content] charts with a vector: {len(have):,} of {args.tag} whitelist; dropped "
+              f"{n_tr - len(tr_all):,}/{n_tr:,} step1 rows, "
+              f"{n_te - len(te_all):,}/{n_te:,} step0 rows", flush=True)
+        if len(tr_all) == 0 or len(te_all) == 0:
+            raise SystemExit("no plays left after the content filter")
+
     universe = te_all if args.pair_universe == "step0" else tr_all
     k = int(universe.beatmap_id.max()) + 1
 
@@ -446,17 +563,46 @@ def main():
     items = {m: i for i, m in enumerate(item_ids)}
     print(f"train vocab: {len(ents):,} entities, {len(items):,} items", flush=True)
 
+    # ----------------------------------------------------------- frozen content matrix
+    chart_feats, content_info = None, None
+    if content_ids is not None and args.chart_content == "none":
+        print("[content] restricted to the covered charts, but the vectors are NOT used "
+              "(--chart-content none): this is the 1-hot baseline on the same subset", flush=True)
+    if content_ids is not None and args.chart_content != "none":
+        Z, content_info = align_content(content_ids, content_E, item_ids,
+                                        args.content_dim, args.content_reduce)
+        args.dim = int(Z.shape[1])          # P lives in the content space, so --dim follows
+        chart_feats = torch.as_tensor(Z, dtype=torch.float32, device=device)
+        n_free = len(ents) * args.dim
+        print(f"[content] P becomes ({len(ents):,}, {args.dim}) = {n_free:,} free player "
+              f"parameters; per-chart free parameters left: bm only ({len(items):,})", flush=True)
+
+    # ------------------------------------------------------- calendar-time drift axis
+    # t is in years CE; t_ref is the MEAN TRAINING timestamp, so Pc is "how far this
+    # player's latent vector moves per calendar year" and the model starts drift-free.
+    t_ref = 0.0
+    if args.p_drift == "time":
+        t_ref = float(pd.to_datetime(train.timestamp).to_numpy(dtype="datetime64[D]")
+                      .astype(np.float64).mean() / 365.25)
+        yr = pd.to_datetime(train.timestamp).dt.year
+        print(f"[time-drift] t_ref = {t_ref:.3f} yr CE (mean train timestamp, "
+              f"{yr.min()}-{yr.max()}); Pc = latent displacement per YEAR", flush=True)
+
     def encode(df):
         e = map_ids(df.entity.to_numpy(), ent_ids)
         i = map_ids(df.beatmap_id.to_numpy(), item_ids)
         x1 = np.log(df.playcount_cur.to_numpy(np.float64)).astype(np.float32) if need_pc else None
         tau = ((pd.to_datetime(df.timestamp).dt.dayofyear.to_numpy() - 1) / 365.0).astype(np.float32) \
             if args.features == "F2" else None
-        return e, i, x1, tau, df[args.target].to_numpy(np.float32)
+        tv = None
+        if args.p_drift == "time":
+            days = pd.to_datetime(df.timestamp).to_numpy(dtype="datetime64[D]").astype(np.float64)
+            tv = (days / 365.25 - t_ref).astype(np.float32)
+        return e, i, x1, tau, tv, df[args.target].to_numpy(np.float32)
 
-    tr_e, tr_i, tr_x, tr_tau, tr_y = encode(train)
-    te_e, te_i, te_x, te_tau, te_y = encode(test)
-    tc_e, tc_i, tc_x, tc_tau, tc_y = encode(test_clean)
+    tr_e, tr_i, tr_x, tr_tau, tr_t, tr_y = encode(train)
+    te_e, te_i, te_x, te_tau, te_t, te_y = encode(test)
+    tc_e, tc_i, tc_x, tc_tau, tc_t, tc_y = encode(test_clean)
     tr_ok = (tr_e >= 0) & (tr_i >= 0)
     te_ok = (te_e >= 0) & (te_i >= 0)
     tc_ok = (tc_e >= 0) & (tc_i >= 0)
@@ -478,6 +624,18 @@ def main():
               f"{ent_ids.size:,} entities / {item_ids.size:,} items == unique train ids")
     chk.check("determinism_selftest", determinism_selftest(device),
               "same seed -> bitwise identical parameters on a synthetic training path")
+    if chart_feats is not None:
+        # C[i] must belong to item_ids[i].  A silent misalignment here would poison every
+        # downstream number, so it is asserted rather than eyeballed.
+        step = max(1, len(item_ids) // 64)
+        probe = np.arange(len(item_ids))[::step][:64]
+        pos = pd.Index(content_ids).get_indexer(item_ids[probe])
+        norms = chart_feats.norm(dim=1)
+        chk.check("content_aligned_with_item_ids",
+                  bool((pos >= 0).all()) and len(chart_feats) == len(item_ids)
+                  and bool(torch.allclose(norms, torch.ones_like(norms), atol=1e-4)),
+                  f"{len(item_ids):,} train charts; {len(probe)} probe ids all resolve; "
+                  f"row norm in [{float(norms.min()):.4f}, {float(norms.max()):.4f}]")
 
     # ----------------------------------------------------------------------- tensors
     def dev(a):
@@ -487,16 +645,20 @@ def main():
     tr_y_t = dev(tr_y)
     tr_x_t = dev(tr_x) if tr_x is not None else None
     tr_tau_t = dev(tr_tau) if tr_tau is not None else None
+    tr_t_t = dev(tr_t) if tr_t is not None else None
     te_e_t, te_i_t = dev(te_e[te_ok]), dev(te_i[te_ok])
     te_y_np = te_y[te_ok]
     te_x_t = dev(te_x[te_ok]) if te_x is not None else None
     te_tau_t = dev(te_tau[te_ok]) if te_tau is not None else None
+    te_t_t = dev(te_t[te_ok]) if te_t is not None else None
     tc_e_t, tc_i_t = dev(tc_e[tc_ok]), dev(tc_i[tc_ok])
     tc_y_np = tc_y[tc_ok]
     tc_x_t = dev(tc_x[tc_ok]) if tc_x is not None else None
     tc_tau_t = dev(tc_tau[tc_ok]) if tc_tau is not None else None
+    tc_t_t = dev(tc_t[tc_ok]) if tc_t is not None else None
     idx_tr = np.flatnonzero(tr_ok).astype(np.int64)
-    del tr_e, tr_i, tr_x, tr_tau, tr_y, te_e, te_i, te_x, te_tau, te_y, tc_e, tc_i, tc_x, tc_tau, tc_y
+    del tr_e, tr_i, tr_x, tr_tau, tr_t, tr_y, te_e, te_i, te_x, te_tau, te_t, te_y, \
+        tc_e, tc_i, tc_x, tc_tau, tc_t, tc_y
     gc.collect()
 
     # ---------------------------------------------------------------------- training
@@ -504,7 +666,8 @@ def main():
     for kind in models_wanted:
         model = EmbeddingModel(kind, len(ents), len(items), args.dim, args.features,
                                args.seed, device, args.p_drift, args.d_constraint,
-                               args.d_init_std, args.drop_bias)
+                               args.d_init_std, args.drop_bias,
+                               content=args.chart_content, chart_feats=chart_feats)
         if args.p_drift != "none" and kind == "bias":
             print("note: --p-drift has no effect on bias (it has no P vector)", flush=True)
         # per model: a constrained D gets no wd on its logits by default (Adam's wd pulls the
@@ -532,19 +695,20 @@ def main():
                 b = torch.as_tensor(idx_tr[perm[s:s + args.batch]], device=device)
                 x1 = tr_x_t[b] if tr_x_t is not None else None
                 tau = tr_tau_t[b] if tr_tau_t is not None else None
+                tt = tr_t_t[b] if tr_t_t is not None else None
                 opt.zero_grad(set_to_none=True)
-                pred = model.forward(tr_e_t[b], tr_i_t[b], x1, tau)
+                pred = model.forward(tr_e_t[b], tr_i_t[b], x1, tau, tt)
                 ((pred - tr_y_t[b]) ** 2).mean().backward()
                 opt.step()
             if args.eval_every and (ep + 1) % args.eval_every == 0:
-                pv = model.predict(te_e_t, te_i_t, te_x_t, te_tau_t)
+                pv = model.predict(te_e_t, te_i_t, te_x_t, te_tau_t, te_t_t)
                 print(f"  [{kind}] epoch {ep+1:3d}  test RMSE(step0) = "
                       f"{np.sqrt(((pv - te_y_np) ** 2).mean()):.5f}  ({time.time()-t0:.1f}s)",
                       flush=True)
-        pv = model.predict(te_e_t, te_i_t, te_x_t, te_tau_t)
+        pv = model.predict(te_e_t, te_i_t, te_x_t, te_tau_t, te_t_t)
         results[f"{kind}|step0"] = report(pv, te_y_np, len(test))
         if tc_ok.any():
-            pc = model.predict(tc_e_t, tc_i_t, tc_x_t, tc_tau_t)
+            pc = model.predict(tc_e_t, tc_i_t, tc_x_t, tc_tau_t, tc_t_t)
             results[f"{kind}|step1"] = report(pc, tc_y_np, len(test_clean))
         fitted[kind] = model
         print(f"{kind:8s} step0 rmse={results[f'{kind}|step0']['rmse']:.5f} "
@@ -574,7 +738,11 @@ def main():
     if args.pair_universe != "step0":
         variant += f"_{args.pair_universe}"
     if args.p_drift != "none":
-        variant += "_pd"
+        variant += {"logpc": "_pd", "time": "_pdt"}[args.p_drift]
+    if args.chart_content != "none":
+        variant += f"_cm3p{args.dim}" + ("" if args.content_reduce == "pca" else "raw")
+    elif args.restrict_to_content == "on":
+        variant += "_cov"
     if args.d_constraint != "none":
         variant += f"_d{args.d_constraint}"
     if args.d_init_std is not None:
@@ -590,8 +758,10 @@ def main():
     npz_paths = {}
     for kind, model in fitted.items():
         path = PROC / f"{args.out_prefix}_{args.tag}_{kind}_{args.features}" \
+                      f"{'' if args.chart_content != 'none' else ('_cov' if args.restrict_to_content == 'on' else '')}" \
+                      f"{'' if args.chart_content == 'none' else '_cm3p'}" \
                       f"{'' if args.dim == 16 else '_dim' + str(args.dim)}" \
-                      f"{'' if args.p_drift == 'none' else '_pd'}" \
+                      f"{'' if args.p_drift == 'none' else ('_pd' if args.p_drift == 'logpc' else '_pdt')}" \
                       f"{'' if args.d_constraint == 'none' else '_d' + args.d_constraint}" \
                       f"{'' if args.entity == 'player' else '_py'}" \
                       f"{'' if args.pair_universe == 'step0' else '_u' + args.pair_universe}" \
@@ -601,14 +771,15 @@ def main():
             extra["Pc"] = model.np_array("Pc")
         if model.d_constraint != "none":
             extra["D_raw"] = model.np_array("D")        # logits, so the constraint is reproducible
+        C_eff = model.chart_matrix()        # frozen content when --chart-content, else the table
         np.savez(path,
                  entity_ids=entity_ids,
                  beatmap_ids=beatmap_ids,
                  P=model.np_array("P"),
                  V=model.np_array("V", np.zeros_like(model.np_array("P"))),
-                 C=model.np_array("C"),
+                 C=C_eff,
                  # effective D (constraint applied); bias/mf_dot have no D -> zeros like C
-                 D=model.export_D() if "D" in model.p else np.zeros_like(model.np_array("C")),
+                 D=model.export_D() if "D" in model.p else np.zeros_like(C_eff),
                  b0=model.np_array("b0"),
                  bu=model.np_array("bu", np.zeros(len(ents), np.float32)),
                  bm=model.np_array("bm", np.zeros(len(items), np.float32)),
@@ -667,6 +838,16 @@ def main():
                   "n_entities": len(ents), "n_items": len(items),
                   "train_rows_in_vocab": int(tr_ok.sum()),
                   "test_rows_covered": int(te_ok.sum())},
+        "content": None if args.chart_content == "none" else {
+            "mode": args.chart_content, "path": str(args.content_path),
+            "dim": args.dim, "reduce": args.content_reduce,
+            "n_charts_with_vector": int(len(content_ids)),
+            "dropped": content_drop,
+        },
+        "time_drift": None if args.p_drift != "time" else {
+            "t_ref_year_ce": round(t_ref, 4), "unit": "years",
+            "definition": "P_eff = P[u] + Pc[u] * (timestamp - t_ref) / 365.25d",
+        },
         "results": results,
         "checks": chk.items,
         "seconds": round(time.time() - t_start, 1),

@@ -41,10 +41,13 @@ Data source: osu!mania 4K (official data.ppy.sh dumps).
 ```
 README.md               本文档（中英双语）
 .gitignore              排除 14 GB 数据 / 第三方克隆 / 缓存
-docs/                   9 篇技术文档 + figs/ 38 张图
-logs/                   25 份运行日志（可追溯性）
-scripts/                32 个当前脚本
+docs/                   14 篇技术文档 + figs/ 38 张图
+logs/                   26 份运行日志（可追溯性）
+manifests/              CM3P 远程任务清单 + 探针夹具（约 1 MB，入库）
+scripts/                35 个当前脚本
   ├── step0_preprocess.py  step1_clean.py  step2_predict.py   三步主线
+  ├── step0c_chart_content.py  step0d_fetch_osu.py  step0e_validate_mix.py  CM3P 内容管线
+  ├── remote_cm3p_run.sh   远程一键脚本（clone + 下 .osu + 探针 + 推理）
   ├── probe_*.py (4)      step0 的取证脚本（mod / NF）
   ├── diag_step2_*.py (15) step2 的可辨识性 / 规范 / 容量诊断
   ├── learning_rate_variance.py  forgetting_curve.py
@@ -362,6 +365,12 @@ $PY scripts/step2_predict.py --tag 10k --models bias,mf_dot,mirt --batch 32768
 | 练习 vs 时间 | **练习 ≈80–90%**，日历漂移 10–20%（cell 内 γ≈0.146±0.045 pp/年）；冷启动首把 ≈1.0–1.1 pp/年（视奏） | [docs/practice_vs_time.md](practice_vs_time.md) |
 | 清洗方案 | 判据修订与 1k 实验矩阵 | [docs/cleaning_plan.md](cleaning_plan.md) |
 | 谱面嵌入（规划） | 引入 token03/bobert 预训练编码器 | [docs/beatmap_embedding_plan.md](beatmap_embedding_plan.md) |
+| 谱面嵌入（接入方案） | CM3P 冻结向量 + 纯点积替换 1-hot 谱面表；覆盖 11,877/21,949 张（54.11%） | [docs/cm3p_step2_integration_plan.md](cm3p_step2_integration_plan.md) |
+| 谱面嵌入（实测） | 覆盖子集上内容 `d=32` = **1.57595** vs 1-hot **1.58147**，且谱面侧自由参数 −179,424；512 维原样最差 | [docs/cm3p_step2_results.md](cm3p_step2_results.md) |
+| **真实时间漂移** | `P_eff = P + Pc·t`（t = 日历时间/年）：1k 全表 1.4548 → **1.3717（−5.7%）**；练习次数轴只 −1.5% | [docs/step2_prediction.md](step2_prediction.md) §7f |
+| 远程补全 | 剩余 10,072 张谱面的 CM3P 向量：清单 + 下载器 + 混用探针 + 一键脚本 | [docs/cm3p_remote_runbook.md](cm3p_remote_runbook.md) |
+| **维度容量诊断** | 自由低秩交互 **K≈2 见顶**，K≥4 显著退化（3 seed，t=−24.7）；筛掉稀疏谱面（人数>20）所有 K 都改善但**峰值不变**；换内容锚定 FM 后 15,904 参数拿到 **1.5028**（自由低秩最优 1.5527） | [docs/step2_capacity_dim_sweep.md](step2_capacity_dim_sweep.md) |
+| 谱面稀疏度 | 训练侧中位 **7 个不同玩家** / 9 条 play；人数<4 的谱面占 17.7% 却只占 1.2% 的玩家-谱面次 | [docs/step2_capacity_dim_sweep.md](step2_capacity_dim_sweep.md) §4 |
 
 <p align="center">
   <img src="figs/order_10k_1_percentile.png" width="48%" alt="Learning curve by percentile">

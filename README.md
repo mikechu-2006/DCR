@@ -62,9 +62,10 @@ python scripts/step2_predict.py --tag 1k --models bias,mf_dot,mirt
 ### 目录结构
 
 ```
-scripts/   32 个当前脚本 + legacy/ 60 个退役脚本（旧 v2 管线）
-docs/      9 篇技术文档 + figs/ 38 张图
-logs/      25 份运行日志
+scripts/   35 个当前脚本 + legacy/ 60 个退役脚本（旧 v2 管线）
+docs/      14 篇技术文档 + figs/ 38 张图
+logs/      26 份运行日志
+manifests/ CM3P 远程任务的 id 清单 + 256×512 探针夹具（约 1 MB，入库）
 data/      仅目录骨架 —— 约 14 GB 实际数据不入库
 ```
 
@@ -81,6 +82,10 @@ data/      仅目录骨架 —— 约 14 GB 实际数据不入库
 | [docs/practice_vs_time.md](docs/practice_vs_time.md) | 练习 vs 日历时间 |
 | [docs/cleaning_plan.md](docs/cleaning_plan.md) | 清洗方案与修订记录 |
 | [docs/beatmap_embedding_plan.md](docs/beatmap_embedding_plan.md) | 谱面嵌入规划 |
+| [docs/cm3p_step2_integration_plan.md](docs/cm3p_step2_integration_plan.md) | **CM3P 接入 step2（v2）**：冻结内容向量 + 纯点积，管线与 transformer 解耦 |
+| [docs/cm3p_step2_results.md](docs/cm3p_step2_results.md) | **CM3P 接入实测**：内容 vs 1-hot、`d` 扫描、真实时间漂移消融 |
+| [docs/step2_capacity_dim_sweep.md](docs/step2_capacity_dim_sweep.md) | **维度扫描与容量诊断**：自由低秩 K 的真实上限、稀疏谱面筛选对照、内容锚定 FM 对照、可辨识性 |
+| [docs/cm3p_remote_runbook.md](docs/cm3p_remote_runbook.md) | **远程执行手册**：补齐剩余 10,072 张谱面的 CM3P 向量（下载 → 推理 → 混用探针 → 合并） |
 | [docs/overview.md](docs/overview.md) | **完整技术总览**（含全部实测数字） |
 
 ### 说明
@@ -151,9 +156,10 @@ The test set is 30% of the `(player, beatmap)` ordered pairs; metrics are RMSE /
 ### Repository layout
 
 ```
-scripts/   32 current scripts + legacy/ 60 retired scripts (old v2 pipeline)
-docs/      9 technical documents + figs/ 38 figures
-logs/      25 run logs
+scripts/   35 current scripts + legacy/ 60 retired scripts (old v2 pipeline)
+docs/      14 technical documents + figs/ 38 figures
+logs/      26 run logs
+manifests/ CM3P remote-run id manifests + a 256x512 probe fixture (~1 MB, tracked)
 data/      directory skeleton only — the ~14 GB of actual data is not tracked
 ```
 
@@ -170,6 +176,10 @@ data/      directory skeleton only — the ~14 GB of actual data is not tracked
 | [docs/practice_vs_time.md](docs/practice_vs_time.md) | Practice vs calendar time |
 | [docs/cleaning_plan.md](docs/cleaning_plan.md) | Cleaning design and revision record |
 | [docs/beatmap_embedding_plan.md](docs/beatmap_embedding_plan.md) | Beatmap embedding plan |
+| [docs/cm3p_step2_integration_plan.md](docs/cm3p_step2_integration_plan.md) | **Wiring CM3P into step2 (v2)**: frozen content vector + plain dot product, decoupled from the transformer run |
+| [docs/cm3p_step2_results.md](docs/cm3p_step2_results.md) | **CM3P wiring, measured**: content vs 1-hot, dimension sweep, real-time drift ablation |
+| [docs/cm3p_remote_runbook.md](docs/cm3p_remote_runbook.md) | **Remote runbook**: fill in the remaining 10,072 charts (fetch to inference to mix probe to merge) |
+| [docs/step2_capacity_dim_sweep.md](docs/step2_capacity_dim_sweep.md) | **Dimension sweep and capacity diagnosis**: the real ceiling of free low-rank K, sparse-chart filter control, content-anchored FM control, identifiability |
 | [docs/overview.md](docs/overview.md) | **Full technical overview** (with every measured number) |
 
 ### Notes

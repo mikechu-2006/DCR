@@ -557,6 +557,48 @@ test_clean= step1 rows with pair ∈  test_pairs        # 次要口径，见 §6
    16 可能仍有意义（待定）。
 6. 非默认维度会写进 variant 与文件名（`..._dim8...`），不会覆盖 dim 16 的规范产物。
 
+### 1k — CM3P 冻结内容向量 与 真实时间漂移（2026-10-09 新增）
+
+完整报告：[docs/cm3p_step2_results.md](cm3p_step2_results.md)。两个新开关：
+
+* `--chart-content cm3p`：把 per-chart 自由表 `C` 换成**冻结**的 CM3P 向量，`P` 与它同维；
+* `--p-drift time`：`P_eff = P[u] + Pc[u]·t`，`t` = 真实日历时间（年，t_ref = 训练集平均时间戳）；
+* `--restrict-to-content on`：只把两张 play 表过滤到"有向量"的谱面（11,877 / 21,949 = **54.11%**）而不用向量，
+  即**同子集** 1-hot baseline。过滤发生在 split **之前**。
+
+**全表（对照 §7e 的 dim 扫描最优 1.454837）**
+
+| 变体 | dim | 漂移 | step0 RMSE | Spearman |
+|---|---|---|---|---|
+| `mf_dot`（= 扫描最优，已复现） | 16 | none | 1.45484 | 0.7632 |
+| **`mf_dot` + `--p-drift time`** | **16** | **time** | **1.37173** | **0.7919** |
+| `mf_dot` + `--p-drift time` | 8 | time | 1.37368 | 0.7912 |
+
+⇒ 真实时间漂移把 1k 全表从 **1.4548 推到 1.3717（−5.7%）**，同时低于此前总最好 **1.4216**
+（`mirt` F1+`--p-drift logpc` dim8）。Spearman 0.7632 → 0.7919。
+
+**覆盖子集（54.11% 的图）**
+
+| 模型 | step0 RMSE |
+|---|---|
+| `bias` | 1.63750 |
+| 1-hot `mf_dot` d8 / d16 | 1.58147 / 1.58314 |
+| **CM3P 内容 `d=32`** | **1.57595** |
+| CM3P 内容 d16 / d64 | 1.57956 / 1.57984 |
+| CM3P 内容 d128 / d512（raw） | 1.58787 / **1.59759（全局最差）** |
+| 1-hot d16 + `--p-drift time` | **1.48710** |
+| CM3P d16 + `--p-drift time` | 1.51879 |
+
+* 覆盖子集整体比全表差 ~0.13，**与内容无关**：常数预测器两边相同（2.1699 / 2.1702），
+  但纯加性 `b0+b_u+b_m` 从 1.5177 退化到 **1.6486** —— 因为 step1 规则二（删每玩家最早 30%）
+  删掉的早期游玩集中在老图上：覆盖子集的 step0 行只有 **60.67%** 进入 step1，被排除的 2024+ 图有 **83.39%**。
+  **跨口径比数字没有意义，A/B 必须落在同一子集上。**
+* 内容在 `d ∈ {16,32,64}` 上优于 1-hot，最好 `d=32`；
+  且**谱面侧自由参数从 11,214×16 = 179,424 降到 11,214**（只剩 `b_m`）。
+* `d` 有内部最优，**512 维原样使用是全局最差**（方案 §4.3 的参数量预判被证实）。
+* **漂移的"轴"比"有没有漂移项"重要**：同为 `mf_dot` dim16、同一子集，
+  `--p-drift time` **−6.06%**，`--p-drift logpc` 只有 **−1.52%**。
+
 ### 10k
 
 划分（同 `--pair-universe step0`，`--batch 32768`，60 epoch，3 模型合计 **624 s**
@@ -699,7 +741,12 @@ bm            f32    (n_charts,)
 | `--split-seed` | 20260928 | 划分 seed |
 | `--seed` | 0 | 训练 seed（初始化 / 打乱） |
 | `--eval-every` | 20 | 每多少个 epoch 打印一次测试 RMSE（仅监控） |
-| `--p-drift` | `none` | `none / logpc`：`P_eff = P + Pc·ln(playcount_cur)`（§4.4a） |
+| `--p-drift` | `none` | `none / logpc / time`：`logpc` = `P_eff = P + Pc·ln(playcount_cur)`（§4.4a）；`time` = `P_eff = P + Pc·t`，t = 距训练集平均时间戳的年数（§7f） |
+| `--chart-content` | `none` | `none / cm3p`：用**冻结**的 CM3P 谱面向量替换 per-chart 自由表 C，`P` 与它同维（§7f） |
+| `--content-path` | `data/processed/chart_content_cm3p.parquet` | 内容表（管线 A 的产物，见 `scripts/step0c_chart_content.py`） |
+| `--content-dim` | 64 | 内容向量维度 = `P` 的维度（PCA 白化到该维，只在 train 谱面上拟合） |
+| `--content-reduce` | `pca` | `pca / raw`：`raw` = 用表里原始 512 维 |
+| `--restrict-to-content` | `off` | 只过滤到"有内容向量"的谱面但不用向量 = **同子集** 1-hot baseline（过滤在 split 之前） |
 | `--d-constraint` | `none` | `none / nonneg / simplex`：D 的 softplus / softmax 重参数化（§4.4b） |
 | `--drop-bias` | `none` | `none / u / m / both`：去掉 `b_u`、`b_m` 主效应（§7d） |
 | `--d-logit-wd` | 约束开启时 0，否则同 `--wd` | 原始 D logits 的 weight decay（§4.4b 的实测注意） |
