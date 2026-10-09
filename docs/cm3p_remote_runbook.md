@@ -38,6 +38,21 @@
 
 ---
 
+## 1.5 已经本地验证过的前提（2026-10-09）
+
+用清单里第一张图（@@BT@@beatmap_id=222593@@BT@@）实测过下载路径，三条假设全部成立：
+
+| 假设 | 实测 |
+|---|---|
+| @@BT@@https://osu.ppy.sh/osu/{id}@@BT@@ 免鉴权可下 | ✅ HTTP 200，50,405 字节，@@BT@@osu file format v14@@BT@@ |
+| 下载到的 @@BT@@.osu@@BT@@ 带 @@BT@@BeatmapID@@BT@@（上游 @@BT@@BeatmapFilesDataset@@BT@@ 解析时需要，缺了会抛异常） | ✅ @@BT@@BeatmapID:222593@@BT@@ / @@BT@@BeatmapSetID:79839@@BT@@ |
+| md5 与 2026-09-01 快照一致（**否则说明谱面被改过**） | ✅ @@BT@@425e8fc376f35e65ac2153264aad8b3a@@BT@@，与清单逐位相同 |
+
+⇒ 下下来的就是当年被玩的那个版本，@@BT@@checksum_ok=True@@BT@@ 会成立。少数被 mapper 更新过的图会标 False，
+**保留并单独统计，不静默丢**。
+
+---
+
 ## 2. 依赖（只装推理侧，**不要**装 requirements.txt）
 
 `requirements.txt` 把 torch 钉在 CPU 版，而这里要 GPU。最小集合：

@@ -174,7 +174,7 @@ def from_hf_precomputed(src: Path, want: pd.DataFrame, rev: str, batch: int) -> 
 def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
                  device: str) -> pd.DataFrame:
     """Run the CM3P beatmap tower on local .osu/.osz files (upstream dataset + model)."""
-    root = Path("external/cm3p").resolve()
+    root = Path(os.environ.get("CM3P_ROOT", "external/cm3p")).resolve()
     if not (root / "cm3p").is_dir():
         raise SystemExit(f"{root} not found -- git clone https://github.com/OliBomby/CM3P there")
     sys.path.insert(0, str(root))
@@ -194,7 +194,11 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
     print(f"[osu] device={device}  audio={audio}  dirs={[str(d) for d in dirs]}")
     processor = CM3PProcessor.from_pretrained(rev)
     model = CM3PModel.from_pretrained(rev, trust_remote_code=True, revision="main")
-    model = model.to(device).eval()
+    # bf16 on CUDA is what upstream's extract_beatmap_embeddings.py used for the published
+    # table, so it is also the faithful choice here; fp32 on CPU.
+    mdt = torch.bfloat16 if device == "cuda" else torch.float32
+    model = model.to(device=device, dtype=mdt).eval()
+    print(f"[osu] model dtype {mdt}", flush=True)
 
     ds = BeatmapFilesDataset([str(d) for d in dirs], processor=processor,
                              include_audio=audio, include_beatmap=True, include_metadata=False)
