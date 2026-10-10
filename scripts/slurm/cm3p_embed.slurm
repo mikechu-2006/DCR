@@ -80,6 +80,32 @@ missing = [p for p in ("manifests/cm3p_todo_1k.csv", "manifests/cm3p_probe_1k.np
 assert not missing, f"missing inputs: {missing} -- submit from the repo root"
 EOF
 
+# ---- stage 0 (optional): fetch the .osu files from the compute node ----------
+# Only set FETCH_FIRST=1 if the compute nodes DO have outbound network.  If they do not
+# (the usual case), fetch on the login node first -- see docs/cm3p_hpc_slurm.md section 2.
+if [ "${FETCH_FIRST:-0}" = "1" ]; then
+  echo; echo "=== stage 0: fetching .osu (FETCH_FIRST=1) ==="
+  "$PY" scripts/step0d_fetch_osu.py --ids-file manifests/cm3p_todo_1k.csv \
+      --out-dir "$OSU_CACHE" --workers "${WORKERS:-4}" || exit 1
+  "$PY" scripts/step0d_fetch_osu.py --ids-file manifests/cm3p_probe_1k.csv \
+      --out-dir "$OSU_CACHE" --workers "${WORKERS:-4}" || exit 1
+fi
+
+n_osu="$(ls "$OSU_CACHE"/*.osu 2>/dev/null | wc -l)"
+if [ "$n_osu" -lt 100 ]; then
+  cat >&2 <<EOF
+ERROR: only $n_osu .osu files in $OSU_CACHE -- nothing to encode yet.
+
+The .osu bodies are NOT in the uploaded folder (data/ is a skeleton on purpose).
+Do ONE of these, then re-submit:
+  a) compute nodes have internet:  FETCH_FIRST=1 sbatch scripts/slurm/cm3p_embed.slurm
+  b) they do not (usual case):     run this on the LOGIN node, then re-submit
+       python scripts/step0d_fetch_osu.py --ids-file manifests/cm3p_todo_1k.csv  --out-dir $OSU_CACHE --workers 4
+       python scripts/step0d_fetch_osu.py --ids-file manifests/cm3p_probe_1k.csv --out-dir $OSU_CACHE --workers 4
+EOF
+  exit 1
+fi
+
 # ---- stage 1: the mix gate (256 charts, ~1 min) -----------------------------
 if [ "${SKIP_PROBE:-0}" != "1" ]; then
   echo; echo "=== stage 1/2: PROBE (no-audio vs published vectors) ==="
