@@ -5,6 +5,8 @@
 > 前置方案：[docs/cm3p_step2_integration_plan.md](cm3p_step2_integration_plan.md)；
 > 已有实测：[docs/cm3p_step2_results.md](cm3p_step2_results.md)。
 > **本手册里的程序在本机只编写、未执行**；计算全部在远程 GPU 机器上做。
+> **如果远程是 Slurm 集群（文件夹上传、无 git）**，直接看 [docs/cm3p_hpc_slurm.md](cm3p_hpc_slurm.md)：
+> 作业脚本在 `scripts/slurm/`。
 
 ---
 
