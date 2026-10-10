@@ -35,9 +35,13 @@
 
     # ① 依赖：只装推理侧。不要装 requirements.txt（它把 torch 钉在 CPU 版）
     $PY -m pip install --user "transformers>=4.48" accelerate numpy pandas pyarrow
-    $PY -m pip install --user "slider @ git+https://github.com/OliBomby/slider.git@gedagedigedagedaoh"
     # 若无 CUDA 版 torch：
     $PY -m pip install --user torch --index-url https://download.pytorch.org/whl/cu124
+
+    # ⚠️ slider 不要走 GitHub（集群连不上），也不要 `pip install slider`（PyPI 上是另一个项目）。
+    #    仓库自带编好的 wheel，直接本地装：
+    $PY -m pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl
+    $PY -c "import slider; print('slider', slider.__file__)"
 
     # ② CM3P checkout（已上传就跳过）
     ls external/cm3p/cm3p >/dev/null 2>&1 || \
@@ -163,7 +167,7 @@
 | 现象 | 原因 / 处理 |
 |---|---|
 | `no GPU visible` | `--gres=gpu:1` 漏了，或站点要先 `module load cuda` |
-| `ModuleNotFoundError: slider` | 依赖装在登录节点但没生效：确认用的是同一个 `$PY`，或加 `--user` 后检查 `PYTHONPATH` |
+| `ModuleNotFoundError: slider` | **集群连不上 GitHub，所以不能用 `pip install "slider @ git+..."`**；PyPI 上的 `slider` 还是另一个项目。装仓库自带的 wheel：`pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl`（作业会自己试一次，失败则解包到 `vendor/_unpacked` 挂 PYTHONPATH） |
 | `OSError: We couldn't connect to huggingface.co` | 计算节点离线且权重没预热（§1③），或 `HF_HOME` 提交时和预热时不一致 |
 | `no such file: manifests/...` | 没在仓库根目录提交；脚本会自动 `cd` 到脚本上两级的目录，但输入清单必须在那儿 |
 | CUDA OOM | `INFER_BATCH=4`（或 2）重投；只影响吞吐，不影响结果 |

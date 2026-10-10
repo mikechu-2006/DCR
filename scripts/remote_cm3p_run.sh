@@ -58,8 +58,11 @@ else
   # deliberately NOT 'pip install -r requirements.txt': that pins a CPU torch, and this box
   # needs the CUDA build.  Only the inference-side deps are installed here.
   $PY -m pip install --upgrade "transformers>=4.48" "huggingface_hub>=0.26" accelerate
-  $PY -m pip install "slider @ git+https://github.com/OliBomby/slider.git@gedagedigedagedaoh"
   $PY -m pip install numpy pandas pyarrow
+  # slider: NOT from GitHub (the cluster cannot reach it) and NOT "pip install slider"
+  # (PyPI's slider is a different project).  The wheel is vendored in vendor/.
+  $PY -m pip install --user --no-index --no-deps vendor/slider-*.whl \
+    || $PY -c "import zipfile,glob;zipfile.ZipFile(glob.glob('vendor/slider-*.whl')[0]).extractall('vendor/_unpacked')"
 fi
 
 say "3/6 fetch .osu files (resumable, md5-checked)"

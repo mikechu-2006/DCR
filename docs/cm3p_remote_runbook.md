@@ -42,15 +42,15 @@
 
 ## 1.5 已经本地验证过的前提（2026-10-09）
 
-用清单里第一张图（@@BT@@beatmap_id=222593@@BT@@）实测过下载路径，三条假设全部成立：
+用清单里第一张图（`beatmap_id=222593`）实测过下载路径，三条假设全部成立：
 
 | 假设 | 实测 |
 |---|---|
-| @@BT@@https://osu.ppy.sh/osu/{id}@@BT@@ 免鉴权可下 | ✅ HTTP 200，50,405 字节，@@BT@@osu file format v14@@BT@@ |
-| 下载到的 @@BT@@.osu@@BT@@ 带 @@BT@@BeatmapID@@BT@@（上游 @@BT@@BeatmapFilesDataset@@BT@@ 解析时需要，缺了会抛异常） | ✅ @@BT@@BeatmapID:222593@@BT@@ / @@BT@@BeatmapSetID:79839@@BT@@ |
-| md5 与 2026-09-01 快照一致（**否则说明谱面被改过**） | ✅ @@BT@@425e8fc376f35e65ac2153264aad8b3a@@BT@@，与清单逐位相同 |
+| `https://osu.ppy.sh/osu/{id}` 免鉴权可下 | ✅ HTTP 200，50,405 字节，`osu file format v14` |
+| 下载到的 `.osu` 带 `BeatmapID`（上游 `BeatmapFilesDataset` 解析时需要，缺了会抛异常） | ✅ `BeatmapID:222593` / `BeatmapSetID:79839` |
+| md5 与 2026-09-01 快照一致（**否则说明谱面被改过**） | ✅ `425e8fc376f35e65ac2153264aad8b3a`，与清单逐位相同 |
 
-⇒ 下下来的就是当年被玩的那个版本，@@BT@@checksum_ok=True@@BT@@ 会成立。少数被 mapper 更新过的图会标 False，
+⇒ 下下来的就是当年被玩的那个版本，`checksum_ok=True` 会成立。少数被 mapper 更新过的图会标 False，
 **保留并单独统计，不静默丢**。
 
 ---
@@ -64,13 +64,16 @@
 
     # 2) CM3P 推理侧依赖
     pip install "transformers>=4.48" "huggingface_hub>=0.26" accelerate
-    pip install "slider @ git+https://github.com/OliBomby/slider.git@gedagedigedagedaoh"
     pip install numpy pandas pyarrow
+    # slider 不要走 GitHub（目标集群连不上），也不要 pip install slider（PyPI 上是另一个项目）：
+    pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl
 
     python -c "import torch;print(torch.__version__, torch.cuda.is_available())"   # 必须是 True
 
-`slider` 是 CM3P 解析 `.osu` 的硬依赖（`cm3p/parsing_cm3p.py` 直接 import），
-漏了会在加载 processor 时炸。`scripts/remote_cm3p_run.sh` 会在安装步骤里带上它。
+`slider` 是 CM3P 解析 `.osu` 的**解析器本体**（`cm3p/parsing_cm3p.py` 在模块顶层 import 它，stub 不掉），
+漏了会在加载 processor 时炸。它只发布在 GitHub，而目标集群连不上 GitHub —— 所以仓库里
+**自带编好的纯 Python wheel**（`vendor/`，含 LGPLv3 许可证原文），理由与重建方法见 `vendor/README.md`；
+`scripts/slurm/cm3p_embed.slurm` 会在预检里自动装它（pip 不可用时退化为解包挂 PYTHONPATH）。
 
 ---
 
@@ -174,7 +177,7 @@
 
 | 现象 | 原因 / 处理 |
 |---|---|
-| `ModuleNotFoundError: slider` | 漏装 git 版 slider，见 §2 |
+| `ModuleNotFoundError: slider` | 装 `vendor/slider-0.8.2-py3-none-any.whl`（**不要**从 GitHub 装，集群连不上；PyPI 上的同名包是另一个项目），见 §2 与 `vendor/README.md` |
 | `No module named 'cm3p'` | CM3P 没 clone 到 `external/cm3p`（`step0c` 会自动 `sys.path.insert` 该目录） |
 | CUDA OOM | 降 `--infer-batch`（8 → 4 → 2）；它只影响吞吐，不影响结果 |
 | 大量 `missing`（HTTP 404/451） | 谱面已删除或受限。它们**不会**进内容表，step2 会把它们丢掉并报数，**不会瞎猜** |

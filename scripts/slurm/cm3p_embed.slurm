@@ -65,6 +65,31 @@ echo "CM3P_ROOT   $CM3P_ROOT"
 echo "osu cache   $($OSU_CACHE)  -> $(ls "$OSU_CACHE"/*.osu 2>/dev/null | wc -l) files"
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv || true
 
+# ---- slider: not on PyPI under this name, and compute nodes cannot reach GitHub ----
+# CM3P imports it at module level (it IS the .osu parser), so a missing slider is fatal.
+# The wheel is vendored in vendor/ -- see vendor/README.md.
+if ! "$PY" -c "import slider" >/dev/null 2>&1; then
+  WHL="$(ls vendor/slider-*.whl 2>/dev/null | head -1)"
+  if [ -n "$WHL" ]; then
+    echo "slider missing -> installing from $WHL"
+    if "$PY" -m pip install --user --no-index --no-deps "$WHL" >/dev/null 2>&1; then
+      echo "  pip install OK"
+    else
+      echo "  pip unavailable/read-only home -> unpacking the wheel onto PYTHONPATH"
+      "$PY" - "$WHL" <<'PYEOF'
+import sys, zipfile
+zipfile.ZipFile(sys.argv[1]).extractall("vendor/_unpacked")
+PYEOF
+      export PYTHONPATH="$PWD/vendor/_unpacked:${PYTHONPATH:-}"
+      echo "  PYTHONPATH=$PYTHONPATH"
+    fi
+  else
+    echo "ERROR: slider is missing and vendor/slider-*.whl was not found." >&2
+    echo "       See vendor/README.md (the folder upload must include vendor/)." >&2
+    exit 1
+  fi
+fi
+
 # ---- preflight: fail loudly in 10 s instead of 10 min downstream ------------
 $PY - <<'EOF' || exit 1
 import os, sys

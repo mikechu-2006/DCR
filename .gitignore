@@ -39,6 +39,10 @@ data/**
 #   "no-audio 的行能不能和已发布的行混用"。见 docs/cm3p_remote_runbook.md。
 !manifests/cm3p_probe_1k.npz
 
+# vendor/ 里那个 wheel 是**故意入库**的：HPC 集群连不上 GitHub，而 PyPI 上的 "slider"
+# 是另一个项目。见 vendor/README.md。只有运行时解包出来的目录要排除。
+vendor/_unpacked/
+
 # 大体积 / 模型权重 (large blobs & model weights)
 *.safetensors
 *.ckpt
