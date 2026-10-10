@@ -43,6 +43,11 @@ data/**
 # 是另一个项目。见 vendor/README.md。只有运行时解包出来的目录要排除。
 vendor/_unpacked/
 
+# git bundle 是**传输用的临时包，不能入库**：git bundle --all 会把上一次的 bundle
+# 一起打进去，体积逐次翻倍（5 MB → 10 MB → 20 MB…）。它只用于"网络不通时把仓库搬过去"。
+DCR.bundle
+*.bundle
+
 # 大体积 / 模型权重 (large blobs & model weights)
 *.safetensors
 *.ckpt

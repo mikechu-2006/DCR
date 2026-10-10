@@ -192,3 +192,62 @@
 | 大量 `missing`（404/451） | 谱面已删/受限，不会进内容表，step2 会把它们丢掉并报数，不会瞎猜 |
 | 大量 `mismatch` | 谱面被 mapper 改过；文件保留、`checksum_ok=False`，单独统计 |
 | 作业到点被杀 | 直接重投，幂等（§4） |
+
+---
+
+## 8. `sbatch` 自己起不来：`slurm_set_addr: Unable to resolve`
+
+```
+sbatch: error: get_addr_info: getaddrinfo() failed: Name or service not known
+sbatch: error: slurm_set_addr: Unable to resolve "mgt02"
+sbatch: error: Unable to establish control machine address
+sbatch: error: Batch job submission failed: No such file or directory
+```
+
+**这不是作业脚本的问题。** `mgt02` 是 `/etc/slurm/slurm.conf` 里 `SlurmctldHost` 写的主机名，
+Slurm 客户端解析不出它 —— 典型原因是**集群 DNS 挂了**（校园网抽风时很常见），而 `/etc/hosts` 没有兜底。
+`sbatch` 根本没走到"读你的脚本"这一步，所以改脚本、改参数都没用。
+
+### 30 秒定位
+
+    hostname; hostname -i
+    getent hosts mgt02 || echo "DNS 解析不了 mgt02"
+    grep -i "^SlurmctldHost" /etc/slurm/slurm.conf 2>/dev/null || echo "读不到 slurm.conf"
+    sinfo 2>&1 | head -3        # 其它 slurm 命令是不是也这样
+
+### 处理顺序
+
+**1) 重试 / 换登录节点。** DNS 抖动常常几分钟就恢复；同集群的另一台登录节点（`yq_mgt01` 之类）可能是好的。
+
+**2) 用 IP 绕开 DNS（最可能有效）。** 复制一份配置，把 `SlurmctldHost` 换成 IP，再用 `SLURM_CONF` 指过去：
+
+    IP=$(hostname -i | awk '{print $1}')
+    [ -z "$IP" ] && IP=$(getent hosts "$(hostname)" | awk '{print $1}' | head -1)
+    mkdir -p ~/.slurm
+    sed -E "s/^SlurmctldHost=[^(]+/SlurmctldHost=${IP}/" /etc/slurm/slurm.conf > ~/.slurm/slurm.conf
+    grep -i "^SlurmctldHost" ~/.slurm/slurm.conf          # 确认已变成 IP
+
+    export SLURM_CONF=$HOME/.slurm/slurm.conf
+    sinfo | head                                          # 先试这个
+    sbatch scripts/slurm/cm3p_embed.slurm
+
+`sed` 里的 `[^(]+` 是为了保留 `mgt02(6817)` 这种带端口的写法。
+前提是**控制器就在你登录的这台机器上**（名字对得上时通常如此）；如果控制器是另一台，用管理员给的 IP。
+
+**3) 完全绕开调度器。** 作业脚本不依赖 Slurm —— 所有 `SLURM_*` 变量都带默认值，
+`#SBATCH` 行对 bash 来说只是注释。拿到一台 GPU 节点的 shell 后直接跑：
+
+    ssh <gpu-node>                     # 或站点提供的交互方式
+    cd <仓库绝对路径>
+    module load anaconda3
+    bash scripts/slurm/cm3p_embed.slurm 2>&1 | tee logs/cm3p_embed_$(date +%F).log
+
+⚠️ 这会独占节点、绕过 fair-share，有些站点明令禁止；只在前两条都失败时用，并尽快结束。
+
+**4) 报给管理员**（把这段原样发过去最快）：
+
+    登录节点上所有 slurm 客户端命令都失败：
+      sbatch: error: slurm_set_addr: Unable to resolve "mgt02"
+      sbatch: error: Unable to establish control machine address
+    getent hosts mgt02 无结果；/etc/slurm/slurm.conf 里 SlurmctldHost=mgt02。
+    疑似 DNS / /etc/hosts 解析问题。

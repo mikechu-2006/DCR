@@ -13,6 +13,12 @@
 #  from its --out table, so if Slurm kills you at the time limit, just re-submit.
 #  (That is why the per-chart work is checkpointed into the parquet, not held in RAM.)
 #
+#  This file ALSO runs without Slurm, which matters when sbatch itself is broken
+#  (e.g. "slurm_set_addr: Unable to resolve ...").  The #SBATCH lines are comments to
+#  bash, so on a GPU node just do:
+#      bash scripts/slurm/cm3p_embed.slurm 2>&1 | tee logs/cm3p_embed_$(date +%F).log
+#  Every SLURM_* variable below is read with a default, so nothing breaks outside a job.
+#
 #  Environment: this script assumes the compute node is OFFLINE.  Everything that
 #  needs the network (pip, the CM3P checkout, the HF weights, the .osu files) must
 #  already exist - see docs/cm3p_hpc_slurm.md step 0.
@@ -60,7 +66,7 @@ ADD_OUT="${ADD_OUT:-data/processed/chart_content_cm3p_add.parquet}"
 MIX_JSON=data/processed/cm3p_mix_report.json
 INFER_BATCH="${INFER_BATCH:-8}"
 
-echo "=== job $SLURM_JOB_ID on $(hostname) ==="
+echo "=== job ${SLURM_JOB_ID:-local (not under Slurm)} on $(hostname) ==="
 date
 echo "repo        $REPO"
 echo "python      $($PY -V 2>&1)"
