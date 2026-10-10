@@ -29,8 +29,12 @@
 
 set -uo pipefail
 # see cm3p_embed.slurm: "$0" is Slurm's spooled copy, so use SLURM_SUBMIT_DIR instead
-REPO="${SLURM_SUBMIT_DIR:-$PWD}"
+# REPO can be passed explicitly at submit time, which is the only reliable override if you
+# are not standing in the repo when you call sbatch:
+#     REPO=/scratch/$USER/DSR sbatch scripts/slurm/cm3p_embed.slurm
+REPO="${REPO:-${SLURM_SUBMIT_DIR:-$PWD}}"
 cd "$REPO" || exit 1
+echo "job starts in: $(pwd)"
 if [ ! -f scripts/step0d_fetch_osu.py ]; then
   echo "ERROR: submit this job from the repo root (currently in $REPO)." >&2
   exit 1

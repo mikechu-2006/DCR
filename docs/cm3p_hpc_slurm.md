@@ -64,6 +64,22 @@
 
 ---
 
+## 1.9 两个作业分别是什么（为什么一个是 CPU、一个是 GPU）
+
+| 作业 | 队列 | 资源 | 干什么 | 为什么这么配 |
+|---|---|---|---|---|
+| `cm3p_fetch.slurm` | **不写 `-p`**，走站点默认队列 | 4 核 / 8G / 6 h | 1 万次小 HTTP GET，把 `.osu` 下下来 | **纯网络 IO，用不着 GPU**。GPU 队列是稀缺资源（要排队、时限常常更短），拿它下文件是浪费，也会挤掉别人的训练 |
+| `cm3p_embed.slurm` | `i64m1tga800u` | **1 GPU** + 8 核 / 64G / 24 h | 探针 → 混用 gate → 10,072 张推理 | CM3P 是 22 层 Transformer，GPU 必需；那 8 个核是给 dataloader/tokenizer 和 `OMP_NUM_THREADS` 的，不是拿来算矩阵的 |
+
+如果站点要求 CPU 作业也必须指定队列，把 `cm3p_fetch.slurm` 里的注释打开（`#SBATCH -p <cpu-partition>`），
+队列名用 `sinfo` / `sinfo -s` 查。GPU 作业换队列不用改文件，命令行覆盖即可：
+`sbatch -p <other> scripts/slurm/cm3p_embed.slurm`。
+
+**只有在计算节点完全不能上网时**（§1④ 不是 200），下载才挪到登录节点用 tmux 跑 —— 那不是"CPU 任务"，
+只是不需要调度器（§2B）。
+
+---
+
 ## 2. 下载 `.osu`：根据 §1④ 的结果二选一
 
 **A. 计算节点能上网（`osu=200`）** → 提交下载作业：
@@ -169,7 +185,9 @@
 | `no GPU visible` | `--gres=gpu:1` 漏了，或站点要先 `module load cuda` |
 | `ModuleNotFoundError: slider` | **集群连不上 GitHub，所以不能用 `pip install "slider @ git+..."`**；PyPI 上的 `slider` 还是另一个项目。装仓库自带的 wheel：`pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl`（作业会自己试一次，失败则解包到 `vendor/_unpacked` 挂 PYTHONPATH） |
 | `OSError: We couldn't connect to huggingface.co` | 计算节点离线且权重没预热（§1③），或 `HF_HOME` 提交时和预热时不一致 |
-| `no such file: manifests/...` | 没在仓库根目录提交；脚本会自动 `cd` 到脚本上两级的目录，但输入清单必须在那儿 |
+| `sbatch: error: getcwd failed: No such file or directory` | **你当前所在的目录已经被删掉/改名了**（常见于把上传的文件夹又移动或重命名过一次），跟作业脚本无关。`cd ~` 再 `cd <仓库>`，或直接 `REPO=/绝对/路径/DSR sbatch scripts/slurm/cm3p_embed.slurm` |
+| `ERROR: submit this job from the repo root` | `SLURM_SUBMIT_DIR` 不是仓库根。要么先 `cd` 到仓库再提交，要么用上面的 `REPO=...` 显式指定 |
+| `no such file: manifests/...` | 作业没在仓库里跑。先 `cd` 到仓库再提交，或用 `REPO=...` |
 | CUDA OOM | `INFER_BATCH=4`（或 2）重投；只影响吞吐，不影响结果 |
 | 大量 `missing`（404/451） | 谱面已删/受限，不会进内容表，step2 会把它们丢掉并报数，不会瞎猜 |
 | 大量 `mismatch` | 谱面被 mapper 改过；文件保留、`checksum_ok=False`，单独统计 |

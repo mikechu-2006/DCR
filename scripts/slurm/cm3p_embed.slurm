@@ -30,8 +30,12 @@ set -uo pipefail
 # Slurm copies the batch script into its own spool directory, so "$0" is NOT this file and
 # "$(dirname "$0")" is NOT scripts/slurm/ -- resolving the repo from $0 silently breaks.
 # SLURM_SUBMIT_DIR is the directory sbatch was invoked from; that is the contract here.
-REPO="${SLURM_SUBMIT_DIR:-$PWD}"
+# REPO can be passed explicitly at submit time, which is the only reliable override if you
+# are not standing in the repo when you call sbatch:
+#     REPO=/scratch/$USER/DSR sbatch scripts/slurm/cm3p_embed.slurm
+REPO="${REPO:-${SLURM_SUBMIT_DIR:-$PWD}}"
 cd "$REPO" || exit 1
+echo "job starts in: $(pwd)"
 if [ ! -f scripts/step0c_chart_content.py ]; then
   echo "ERROR: submit this job from the repo root (currently in $REPO)." >&2
   echo "       e.g.  cd <repo> && sbatch scripts/slurm/cm3p_embed.slurm" >&2
