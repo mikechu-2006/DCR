@@ -34,7 +34,14 @@
     PY=python
 
     # ① 依赖：只装推理侧。不要装 requirements.txt（它把 torch 钉在 CPU 版）
-    $PY -m pip install --user "transformers>=4.48" accelerate numpy pandas pyarrow
+    # transformers 必须钉在 4.42–4.57 这个窗口里，两头都会炸：
+    #   <=4.41 → 没有 processing_utils.CommonKwargs → ImportError
+    #   >=5.0  → 这个类被删掉了                     → 一模一样的 ImportError
+    # 上游 CM3P 的 Dockerfile 钉的就是 transformers==4.55.0，照抄最省事。
+    # 已经在 conda/venv 里就不要加 --user：~/.local 的旧版本会遮蔽环境里的新版本。
+    $PY -m pip install -U "transformers==4.55.0" accelerate numpy pandas pyarrow
+    $PY -c "import transformers;print(transformers.__version__, transformers.__file__)"
+    $PY -c "from transformers.processing_utils import CommonKwargs;print('CommonKwargs ok')"
     # 若无 CUDA 版 torch：
     $PY -m pip install --user torch --index-url https://download.pytorch.org/whl/cu124
 
@@ -186,6 +193,7 @@
 |---|---|
 | `no GPU visible` | `--gres=gpu:1` 漏了，或站点要先 `module load cuda` |
 | `Can not execute setup.py since setuptools is not available in the build environment` | `pip install "slider @ git+..."` 的 build isolation 拿不到 setuptools（不是网络问题）。**首选**装仓库自带的 wheel：`pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl`；**次选**（手上没有 vendor/ 时）：`pip install --user -U setuptools wheel` 之后原命令加 `--no-build-isolation` |
+| `ImportError: cannot import name 'CommonKwargs' from transformers.processing_utils` | transformers 落在窗口外：**≤4.41 没有这个类，≥5.0 又把它删了**（只有 4.42–4.57 有）。`pip install -U "transformers==4.55.0"`（上游 Dockerfile 的钉法）；升完仍报错就看 `transformers.__file__` 指向哪，多半是 `~/.local` 遮蔽了 conda 环境 |
 | `ModuleNotFoundError: slider` | 没装成功。PyPI 上的 `slider` 是**另一个项目**，永远不要 `pip install slider`。作业预检会自己从 vendor/ 装一次；pip 不可用或家目录只读时，它会解包到 `vendor/_unpacked` 并挂到 PYTHONPATH |
 | `OSError: We couldn't connect to huggingface.co` | 计算节点离线且权重没预热（§1③），或 `HF_HOME` 提交时和预热时不一致 |
 | `sbatch: error: getcwd failed: No such file or directory` | **你当前所在的目录已经被删掉/改名了**（常见于把上传的文件夹又移动或重命名过一次），跟作业脚本无关。`cd ~` 再 `cd <仓库>`，或直接 `REPO=/绝对/路径/DSR sbatch scripts/slurm/cm3p_embed.slurm` |

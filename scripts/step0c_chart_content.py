@@ -193,12 +193,21 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
         device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"[osu] device={device}  audio={audio}  dirs={[str(d) for d in dirs]}")
     processor = CM3PProcessor.from_pretrained(rev)
-    model = CM3PModel.from_pretrained(rev, trust_remote_code=True, revision="main")
+    # The published config may ask for flash_attention_2, which needs the flash-attn wheel.
+    # Upstream README: "For CPU-only or unsupported GPUs, set attn_implementation: sdpa".
+    attn = os.environ.get("CM3P_ATTN", "sdpa")
+    try:
+        model = CM3PModel.from_pretrained(rev, trust_remote_code=True, revision="main",
+                                          attn_implementation=attn)
+    except Exception as exc:                                   # noqa: BLE001
+        print(f"[osu] attn_implementation={attn!r} rejected ({exc}); retrying without it",
+              flush=True)
+        model = CM3PModel.from_pretrained(rev, trust_remote_code=True, revision="main")
     # bf16 on CUDA is what upstream's extract_beatmap_embeddings.py used for the published
     # table, so it is also the faithful choice here; fp32 on CPU.
     mdt = torch.bfloat16 if device == "cuda" else torch.float32
     model = model.to(device=device, dtype=mdt).eval()
-    print(f"[osu] model dtype {mdt}", flush=True)
+    print(f"[osu] model dtype {mdt}, attn={attn}", flush=True)
 
     ds = BeatmapFilesDataset([str(d) for d in dirs], processor=processor,
                              include_audio=audio, include_beatmap=True, include_metadata=False)

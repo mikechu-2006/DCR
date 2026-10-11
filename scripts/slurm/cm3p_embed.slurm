@@ -107,6 +107,17 @@ sys.path.insert(0, os.environ["CM3P_ROOT"])
 import torch
 print("torch", torch.__version__, "cuda", torch.cuda.is_available())
 assert torch.cuda.is_available(), "no GPU visible: check --gres=gpu:1 and the site's cuda module"
+import transformers
+print("transformers", transformers.__version__, transformers.__file__)
+try:
+    from transformers.processing_utils import CommonKwargs, AudioKwargs   # noqa: F401
+except ImportError as exc:                      # old transformers -> cm3p cannot even import
+    print("FATAL: transformers", transformers.__version__, "cannot work with CM3P:", exc)
+    print("      CommonKwargs exists only in transformers 4.42-4.57:")
+    print("        <=4.41 has no such class;  >=5.0 removed it.  Both fail identically.")
+    print("fix:  python -m pip install -U 'transformers==4.55.0'   (same env as PY)")
+    print("      then check that transformers.__file__ moved; ~/.local can shadow a conda env")
+    raise SystemExit(1)
 from cm3p.processing_cm3p import CM3PProcessor           # noqa: F401  (pulls in slider)
 from cm3p.modeling_cm3p import CM3PModel                 # noqa: F401
 print("cm3p import OK")
