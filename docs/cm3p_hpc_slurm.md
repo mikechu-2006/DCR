@@ -38,7 +38,9 @@
     # 若无 CUDA 版 torch：
     $PY -m pip install --user torch --index-url https://download.pytorch.org/whl/cu124
 
-    # ⚠️ slider 不要走 GitHub（集群连不上），也不要 `pip install slider`（PyPI 上是另一个项目）。
+    # ⚠️ slider 不要走 `pip install "slider @ git+..."`（它只有 legacy setup.py，pip 的
+    #    build isolation 会报 "setuptools is not available in the build environment"）。
+    #    也不要 `pip install slider`（PyPI 上那是另一个项目）。
     #    仓库自带编好的 wheel，直接本地装：
     $PY -m pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl
     $PY -c "import slider; print('slider', slider.__file__)"
@@ -183,7 +185,8 @@
 | 现象 | 原因 / 处理 |
 |---|---|
 | `no GPU visible` | `--gres=gpu:1` 漏了，或站点要先 `module load cuda` |
-| `ModuleNotFoundError: slider` | **集群连不上 GitHub，所以不能用 `pip install "slider @ git+..."`**；PyPI 上的 `slider` 还是另一个项目。装仓库自带的 wheel：`pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl`（作业会自己试一次，失败则解包到 `vendor/_unpacked` 挂 PYTHONPATH） |
+| `Can not execute setup.py since setuptools is not available in the build environment` | `pip install "slider @ git+..."` 的 build isolation 拿不到 setuptools（不是网络问题）。**首选**装仓库自带的 wheel：`pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl`；**次选**（手上没有 vendor/ 时）：`pip install --user -U setuptools wheel` 之后原命令加 `--no-build-isolation` |
+| `ModuleNotFoundError: slider` | 没装成功。PyPI 上的 `slider` 是**另一个项目**，永远不要 `pip install slider`。作业预检会自己从 vendor/ 装一次；pip 不可用或家目录只读时，它会解包到 `vendor/_unpacked` 并挂到 PYTHONPATH |
 | `OSError: We couldn't connect to huggingface.co` | 计算节点离线且权重没预热（§1③），或 `HF_HOME` 提交时和预热时不一致 |
 | `sbatch: error: getcwd failed: No such file or directory` | **你当前所在的目录已经被删掉/改名了**（常见于把上传的文件夹又移动或重命名过一次），跟作业脚本无关。`cd ~` 再 `cd <仓库>`，或直接 `REPO=/绝对/路径/DSR sbatch scripts/slurm/cm3p_embed.slurm` |
 | `ERROR: submit this job from the repo root` | `SLURM_SUBMIT_DIR` 不是仓库根。要么先 `cd` 到仓库再提交，要么用上面的 `REPO=...` 显式指定 |
