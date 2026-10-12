@@ -63,7 +63,10 @@
     pip install torch --index-url https://download.pytorch.org/whl/cu124
 
     # 2) CM3P 推理侧依赖
-    pip install "transformers>=4.48" "huggingface_hub>=0.26" accelerate
+    pip install -U "transformers==4.55.0" "huggingface_hub>=0.26" accelerate
+    #   必须钉死：processing_utils.CommonKwargs 只在 4.42–4.57 存在，
+    #   ≤4.41 没有它、≥5.0 又删了它，两头都是同一个 ImportError。
+    #   4.55.0 是上游 CM3P Dockerfile 的钉法。
     pip install numpy pandas pyarrow
     # slider 不要走 GitHub（目标集群连不上），也不要 pip install slider（PyPI 上是另一个项目）：
     pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl
