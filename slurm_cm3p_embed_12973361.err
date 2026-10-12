@@ -1,0 +1,2 @@
+/var/spool/slurmd/job12973361/slurm_script: line 75: /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/osu_cache: Is a directory
+the osu-dir path needs transformers + torch (pip install -r external/cm3p/requirements.txt); import failed with: No module named 'hydra'

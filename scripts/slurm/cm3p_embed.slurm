@@ -23,7 +23,7 @@
 #  needs the network (pip, the CM3P checkout, the HF weights, the .osu files) must
 #  already exist - see docs/cm3p_hpc_slurm.md step 0.
 # =============================================================================
-#SBATCH -p i64m1tga800u
+#SBATCH -p i64m1tga800ue
 #SBATCH -J cm3p-embed
 #SBATCH -o slurm_cm3p_embed_%j.out
 #SBATCH -e slurm_cm3p_embed_%j.err
