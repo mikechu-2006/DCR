@@ -38,6 +38,10 @@ OUT_LOCAL=${OUT_LOCAL:-data/processed/chart_content_cm3p_local.parquet}
 OUT_PROBE=${OUT_PROBE:-data/processed/chart_content_cm3p_probe.parquet}
 WORKERS=${WORKERS:-4}
 PY=${PY:-python}
+# CM3P head is @torch.compile-decorated; Inductor would shell out to nvcc and can die
+# with "PermissionError: [Errno 13] Permission denied: 'nvcc'" -- inference is eager.
+export TORCH_COMPILE_DISABLE=${TORCH_COMPILE_DISABLE:-1}
+export TORCHDYNAMO_DISABLE=${TORCHDYNAMO_DISABLE:-1}
 
 say() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 

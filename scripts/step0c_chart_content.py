@@ -51,6 +51,18 @@ PROC = Path("data/processed")
 EMBED_DIM = 512
 CM3P_REPO = "OliBomby/CM3P"
 
+# CM3P's modelling code decorates its head with @torch.compile(dynamic=True)
+# (`compiled_head` in modeling_cm3p.py) and calls it whenever the model config sets
+# `reference_compile` -- the published HF config does.  Compiling drags in
+# TorchInductor, which shells out to `nvcc`; on a cluster where nvcc is not
+# executable for the user that dies with
+#     torch._inductor.exc.InductorError: PermissionError: [Errno 13] Permission denied: 'nvcc'
+# Inference needs no compiler, and dynamo off evaluates the *same* math eagerly
+# (the probe gate compares these vectors against the published ones, so a real
+# difference would show up there).  setdefault: an explicit env still wins.
+os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
+os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+
 # source codes; the numbers are part of the on-disk contract, do not renumber
 SRC_HF = 0
 SRC_LOCAL_NOAUDIO = 1

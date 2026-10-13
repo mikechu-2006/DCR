@@ -26,9 +26,11 @@
 #      INFER_BATCH=4 SKIP_PROBE=1 sbatch scripts/slurm/cm3p_embed.slurm
 #      LIMIT=32 sbatch scripts/slurm/cm3p_embed.slurm     # first 32 charts only (debug)
 #
-#  RESUMABLE at every stage: step0c only computes ids that are absent from its
-#  --out table, so a time-limit kill only costs the batch in flight -- resubmit
-#  the very same command and it picks up where it stopped.
+#  RESUMABLE ACROSS RUNS, not within one: step0c computes only the ids that are
+#  absent from its --out table, but it writes that table when the run FINISHES.
+#  A kill mid-run loses that run (the previous table, if any, survives and the
+#  next submit only fills its gaps).  The full 21,949-chart run is ~45-90 min on
+#  an A800, so the 24 h request is ample -- do not cut --time short.
 #
 #  This file ALSO runs without Slurm (useful when sbatch itself is broken):
 #      bash scripts/slurm/cm3p_embed.slurm 2>&1 | tee logs/cm3p_embed_$(date +%F).log
@@ -93,6 +95,12 @@ export CM3P_ROOT="${CM3P_ROOT:-$REPO/external/cm3p}"
 export CM3P_ATTN="${CM3P_ATTN:-sdpa}"
 export OMP_NUM_THREADS="${SLURM_CPUS_ON_NODE:-8}"
 export TOKENIZERS_PARALLELISM=false PYTHONUNBUFFERED=1
+# CM3P's head is @torch.compile-decorated (compiled_head) and the HF config can turn
+# it on; TorchInductor then wants nvcc, which on many clusters is not executable for
+# the user:
+#     torch._inductor.exc.InductorError: PermissionError: [Errno 13] Permission denied: 'nvcc'
+# Inference needs no compiler -- dynamo off is the very same math, eagerly.
+export TORCH_COMPILE_DISABLE=1 TORCHDYNAMO_DISABLE=1
 
 echo "=== job ${SLURM_JOB_ID:-local (not under Slurm)} on $(hostname) ==="
 date
@@ -136,6 +144,12 @@ sys.path.insert(0, os.environ["CM3P_ROOT"])
 import torch
 print("torch", torch.__version__, "cuda", torch.cuda.is_available())
 assert torch.cuda.is_available(), "no GPU visible: check --gres=gpu:1 and the site cuda module"
+import torch._dynamo
+print("dynamo        disable =", torch._dynamo.config.disable,
+      "| TORCHDYNAMO_DISABLE =", os.environ.get("TORCHDYNAMO_DISABLE"))
+if not torch._dynamo.config.disable and os.environ.get("TORCHDYNAMO_DISABLE") != "1":
+    print("WARNING: dynamo is enabled; CM3P compiled_head can make Inductor call nvcc")
+    print("         (PermissionError on clusters where nvcc is not executable).")
 import transformers
 print("transformers", transformers.__version__, transformers.__file__)
 try:

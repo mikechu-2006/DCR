@@ -176,8 +176,9 @@ HF 权重：脚本按 `data/raw/hf_cache` → `HF_HOME` → `~/.cache/huggingfac
     sacct -j <jobid> --format=JobID,State,Elapsed,MaxRSS,ExitCode
     scancel <jobid>                       # 想停就停，已算的不会丢
 
-**时间给得很足**（推理作业 24 h、下载作业 6 h），正常情况用不掉。真被杀了也不用从头来：
-`step0c` 只算 `--out` 表里还没有的 id，`step0d` 只下 md5 还不对的文件，两步都幂等，重投命令完全一样：
+**时间给得很足**（推理作业 24 h、下载作业 6 h），正常情况用不掉。`step0c` 只在**跑完时**写一次 `--out` 表：
+表写成就幂等（重投只补表里没有的 id），但**中途被杀会丢掉这一次的全部计算**——所以 `--time` 不要砍
+（全量 21,949 张在 A800 上约 45–90 min）。`step0d` 是每张下完就落盘，随时可续。重投命令完全一样：
 
     sbatch scripts/slurm/cm3p_embed.slurm
 
@@ -235,6 +236,7 @@ verdict 只记录不停（`GATE_STOP=1` 可强制停）。
 | 现象 | 原因 / 处理 |
 |---|---|
 | `no GPU visible` | `--gres=gpu:1` 漏了，或站点要先 `module load cuda` |
+| `torch._inductor.exc.InductorError: PermissionError: [Errno 13] Permission denied: 'nvcc'` | CM3P 的 `compiled_head` 带 `@torch.compile(dynamic=True)`，模型 config 打开 `reference_compile` 时 TorchInductor 会去调 `nvcc`，而集群上的 `nvcc` 对你不可执行。**推理不需要编译器**：`export TORCH_COMPILE_DISABLE=1 TORCHDYNAMO_DISABLE=1`（`cm3p_embed.slurm` 已默认导出，`step0c` 自己也会 `setdefault`）。预检 A 会打印 `dynamo disable = True`；显示 False 说明还在编译路径上。想查 `nvcc` 本身：`which nvcc; ls -l "$(which nvcc)"; nvcc --version` —— `Errno 13`（找到但不可执行）常见于 CUDA 模块没 `module load`、二进制在 `noexec` 挂载的 `/home` 下、或站点没给该用户执行权限；`Errno 2`（No such file）才是根本没装 |
 | `Can not execute setup.py since setuptools is not available in the build environment` | `pip install "slider @ git+..."` 的 build isolation 拿不到 setuptools（不是网络问题）。**首选**装仓库自带的 wheel：`pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl`；**次选**（手上没有 vendor/ 时）：`pip install --user -U setuptools wheel` 之后原命令加 `--no-build-isolation` |
 | `ImportError: cannot import name 'CommonKwargs' from transformers.processing_utils` | transformers 落在窗口外：**≤4.41 没有这个类，≥5.0 又把它删了**（只有 4.42–4.57 有）。`pip install -U "transformers==4.55.0"`（上游 Dockerfile 的钉法）；升完仍报错就看 `transformers.__file__` 指向哪，多半是 `~/.local` 那份在遮蔽 conda 环境。先 `python -c "import transformers;print(transformers.__file__)"` 看指向；要交给环境管就先 `ls -d ~/.local/lib/python*/site-packages/transformers*` 确认，再 `rm -rf` 掉那两份，最后 `python -m pip install -U "transformers==4.55.0"` |
 | `ModuleNotFoundError: slider` | 没装成功。PyPI 上的 `slider` 是**另一个项目**，永远不要 `pip install slider`。作业预检会自己从 vendor/ 装一次；pip 不可用或家目录只读时，它会解包到 `vendor/_unpacked` 并挂到 PYTHONPATH |

@@ -218,6 +218,7 @@
 | `ModuleNotFoundError: slider` | 装 `vendor/slider-0.8.2-py3-none-any.whl`（**不要**从 GitHub 装，集群连不上；PyPI 上的同名包是另一个项目），见 §2 与 `vendor/README.md` |
 | `No module named 'cm3p'` | CM3P 没 clone 到 `external/cm3p`（`step0c` 会自动 `sys.path.insert` 该目录） |
 | CUDA OOM | 降 `--infer-batch`（8 → 4 → 2）；它只影响吞吐，不影响结果 |
+| `InductorError: PermissionError ... 'nvcc'` | CM3P 的 `compiled_head` 触发 `torch.compile` → TorchInductor 去调 `nvcc`（集群上常常不可执行）。`export TORCH_COMPILE_DISABLE=1 TORCHDYNAMO_DISABLE=1`：推理走 eager 是同一份数学，不需要编译器 |
 | 大量 `missing`（HTTP 404/451） | 谱面已删除或受限，缓存里永远不会有。`step0g` 标 `cacheable=False`，step0 把谱面连同它的 play 一起剔除（清单在 `whitelist_1k_dropped.csv` / `_report.json`），**不会瞎猜** |
 | 大量 `mismatch`（md5 不符） | 谱面被 mapper 更新过。文件保留、`checksum_ok=False` 标记，单独统计 —— 不要静默丢弃 |
 | 下载一直超时 | `--delay` 调大、`--workers` 调小；已下好的不会重下 |
