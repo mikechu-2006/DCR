@@ -185,3 +185,13 @@ credentials.json
 
 # 本地上传助手（不入库）/ Local upload helper
 upload_to_github.sh
+
+# ------------------------------------------------------------------------------
+# 上传 / 作业日志（本地产物，不入库）/ Upload & job logs (local artifacts)
+# ------------------------------------------------------------------------------
+# push.log          copy_folder.sh 用 `tee -a` 追加写，每次上传都变；
+# slurm_*.out/.err  Slurm 按 #SBATCH -o/-e 直接写在仓库根。
+# 两者都在这里忽略；copy_folder.sh 的 rsync 批次另有 --exclude，避免 --delete 删掉远端日志。
+push.log
+slurm_*.out
+slurm_*.err

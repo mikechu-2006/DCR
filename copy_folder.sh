@@ -57,6 +57,7 @@ FAIL=0
 # 唯一带 --delete 的批次：--exclude data/ 保护远端 data（远端 osu_cache 里有本地没有的 .osu）
 run rsync "${OPTS[@]}" --rsync-path="$MKDIRS && rsync" --delete \
   --exclude='data/' --exclude='.git/' --exclude='__pycache__/' --exclude='*.pyc' \
+  --exclude='slurm_*.out' --exclude='slurm_*.err' \
   ./ "$REMOTE:$R/" || FAIL=1
 
 # ---------- ② 数据 10.1 G ----------
@@ -86,4 +87,23 @@ ssh aiaa3111_l01_008@hpc2login.hpc.hkust-gz.edu.cn '
   # 计数确认无误后再执行下一行：
   # rm -f osu_cache.zip
 '
+EOF
+
+cat <<'EOF'
+
+--------------- 代码同步：远端 git pull（2026-10-13 起可用）---------------
+远端 /hpc2hdd/home/aiaa3111_l01_008/DCR 已经是正常 git checkout（.git 已 rsync 过去，
+之后不再随本脚本同步），仓库是 public，HTTPS 免密钥：
+
+    ssh aiaa3111_l01_008@hpc2login.hpc.hkust-gz.edu.cn
+    cd /hpc2hdd/home/aiaa3111_l01_008/DCR
+    git pull          # 已设 pull.ff=only：只做 fast-forward，不会冒合并提交
+    git status        # 只应看到 slurm_*.out/.err 这类未跟踪文件
+
+本地流程：改代码 → git add/commit → git push → 远端 git pull。
+数据（data/）仍走本脚本的 rsync 批次；代码批次保留作兜底（本地始终是已提交状态）。
+⚠️ 不要在服务器上 commit（以本地为准）；.git 不在 rsync 范围，pull 出来的 refs 不会被覆盖。
+远端 .git 万一丢了，重建：
+    git init -q && git remote add origin https://github.com/mikechu-2006/DCR.git
+    git fetch origin && git checkout -f -B main origin/main && git config pull.ff only
 EOF

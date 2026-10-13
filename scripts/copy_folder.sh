@@ -20,6 +20,7 @@ run() { echo; echo "=================== $* ==================="; date; "$@"; ech
 # ① 代码 27 M（唯一带 --delete 的批次：--exclude data/ 保护远端 data）
 run rsync "${OPTS[@]}" $RSYNC_PATH --delete \
   --exclude 'data/' --exclude '.git/' --exclude '__pycache__/' --exclude '*.pyc' \
+  --exclude 'slurm_*.out' --exclude 'slurm_*.err' \
   ./ "$REMOTE:$R/"
 
 # ② 数据 10.1 G（永不 --delete：远端可能有本地没有的文件）

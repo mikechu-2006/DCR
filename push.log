@@ -1,1357 +1,0 @@
-
-=================== rsync -a -z -h --partial --partial-dir=.rsync-partial --timeout=120 --info=name,progress2 --exclude=.rsync-partial/ --rsync-path=mkdir -p /hpc2hdd/home/aiaa3111_l01_008/DCR/data /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/extracted /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/extracted_10k /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/cm3p_embeddings /hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed /hpc2hdd/home/aiaa3111_l01_008/DCR/data/interim /hpc2hdd/home/aiaa3111_l01_008/DCR/data/osu_cache && rsync --delete --exclude=data/ --exclude=.git/ --exclude=__pycache__/ --exclude=*.pyc ./ aiaa3111_l01_008@hpc2login.hpc.hkust-gz.edu.cn:/hpc2hdd/home/aiaa3111_l01_008/DCR/ ===================
-Tue Oct 13 09:06:44 PM CST 2026
-./
-.gitignore
-          5.86K   0%    0.00kB/s    0:00:00            5.86K   0%    0.00kB/s    0:00:00 (xfr#1, to-chk=489/491)
-DCR.bundle
-         10.24M  39%   13.58MB/s    0:00:00 (xfr#2, to-chk=488/491)
-README.md
-         10.26M  39%   13.58MB/s    0:00:00 (xfr#3, to-chk=487/491)
-copy_folder.sh
-         10.26M  39%   13.58MB/s    0:00:00 (xfr#4, to-chk=486/491)
-main.py
-         10.26M  39%   13.58MB/s    0:00:00 (xfr#5, to-chk=485/491)
-push.log
-         10.26M  39%   13.58MB/s    0:00:00 (xfr#6, to-chk=484/491)
-requirements-cm3p.txt
-         10.26M  39%   13.59MB/s    0:00:00 (xfr#7, to-chk=483/491)
-requirements.txt
-         10.27M  39%   13.57MB/s    0:00:00 (xfr#8, to-chk=482/491)
-slurm_cm3p_embed_12973361.err
-         10.27M  39%   13.57MB/s    0:00:00 (xfr#9, to-chk=481/491)
-slurm_cm3p_embed_12973361.out
-         10.27M  39%   13.57MB/s    0:00:00 (xfr#10, to-chk=480/491)
-slurm_cm3p_fetch_12972063.err
-         10.27M  39%   13.57MB/s    0:00:00 (xfr#11, to-chk=479/491)
-slurm_cm3p_fetch_12972063.out
-         10.27M  39%   13.58MB/s    0:00:00 (xfr#12, to-chk=478/491)
-upload_to_github.sh
-         10.28M  39%   13.58MB/s    0:00:00 (xfr#13, to-chk=477/491)
-.workbuddy-ai/
-.workbuddy-ai/memory/
-.workbuddy-ai/memory/2026-10-02.md
-         10.30M  39%   13.58MB/s    0:00:00 (xfr#14, to-chk=465/491)
-.workbuddy-ai/memory/2026-10-03.md
-         10.34M  39%   13.61MB/s    0:00:00 (xfr#15, to-chk=464/491)
-.workbuddy-ai/memory/2026-10-04.md
-         10.36M  39%   13.61MB/s    0:00:00 (xfr#16, to-chk=463/491)
-.workbuddy-ai/memory/MEMORY.md
-         10.37M  39%   13.62MB/s    0:00:00 (xfr#17, to-chk=462/491)
-configs/
-configs/default.yaml
-         10.38M  39%   13.61MB/s    0:00:00 (xfr#18, to-chk=461/491)
-configs/exp_10k.yaml
-         10.38M  39%   13.61MB/s    0:00:00 (xfr#19, to-chk=460/491)
-configs/exp_cm3p_1k.yaml
-         10.38M  39%   13.59MB/s    0:00:00 (xfr#20, to-chk=459/491)
-configs/exp_dimsweep_1k.yaml
-         10.38M  39%   13.59MB/s    0:00:00 (xfr#21, to-chk=458/491)
-configs/exp_full_1k.yaml
-         10.38M  39%   13.59MB/s    0:00:00 (xfr#22, to-chk=457/491)
-configs/exp_std_1k.yaml
-         10.38M  39%   13.58MB/s    0:00:00 (xfr#23, to-chk=456/491)
-dcr/
-dcr/__init__.py
-         10.38M  39%   13.58MB/s    0:00:00 (xfr#24, to-chk=455/491)
-dcr/cli.py
-         10.39M  39%   13.56MB/s    0:00:00 (xfr#25, to-chk=454/491)
-dcr/config.py
-         10.40M  40%   13.56MB/s    0:00:00 (xfr#26, to-chk=453/491)
-dcr/errors.py
-         10.40M  40%   13.56MB/s    0:00:00 (xfr#27, to-chk=452/491)
-dcr/experiment.py
-         10.41M  40%   13.55MB/s    0:00:00 (xfr#28, to-chk=451/491)
-dcr/paths.py
-         10.41M  40%   13.54MB/s    0:00:00 (xfr#29, to-chk=450/491)
-dcr/pipeline.py
-         10.43M  40%   13.55MB/s    0:00:00 (xfr#30, to-chk=449/491)
-dcr/run.py
-         10.43M  40%   13.55MB/s    0:00:00 (xfr#31, to-chk=448/491)
-dcr/steps.py
-         10.45M  40%   13.55MB/s    0:00:00 (xfr#32, to-chk=447/491)
-docs/
-docs/cm3p_hpc_slurm.md
-         10.47M  40%   13.57MB/s    0:00:00 (xfr#33, to-chk=446/491)
-docs/cm3p_remote_runbook.md
-         10.48M  40%   13.57MB/s    0:00:00 (xfr#34, to-chk=445/491)
-docs/cm3p_step2_integration_plan.md
-         10.51M  40%   13.59MB/s    0:00:00 (xfr#35, to-chk=444/491)
-docs/cm3p_step2_results.md
-         10.52M  40%   13.60MB/s    0:00:00 (xfr#36, to-chk=443/491)
-docs/procedure.md
-         10.53M  40%   13.60MB/s    0:00:00 (xfr#37, to-chk=442/491)
-docs/step0_preprocessing.md
-         10.63M  40%   13.66MB/s    0:00:00 (xfr#38, to-chk=441/491)
-docs/step1_cleaning.md
-         10.65M  41%   13.67MB/s    0:00:00 (xfr#39, to-chk=440/491)
-docs/step2_capacity_dim_sweep.md
-         10.68M  41%   13.68MB/s    0:00:00 (xfr#40, to-chk=439/491)
-docs/step2_prediction.md
-         10.73M  41%   13.71MB/s    0:00:00 (xfr#41, to-chk=438/491)
-docs/archive/
-docs/archive/beatmap_embedding_plan.md
-         10.75M  41%   13.72MB/s    0:00:00 (xfr#42, to-chk=435/491)
-docs/archive/cleaning_plan.md
-         10.77M  41%   13.73MB/s    0:00:00 (xfr#43, to-chk=434/491)
-docs/archive/forgetting_curve.md
-         10.79M  41%   13.73MB/s    0:00:00 (xfr#44, to-chk=433/491)
-docs/archive/learning_rate_heterogeneity.md
-         10.80M  41%   13.73MB/s    0:00:00 (xfr#45, to-chk=432/491)
-docs/archive/play_order_analysis.md
-         10.81M  41%   13.74MB/s    0:00:00 (xfr#46, to-chk=431/491)
-docs/archive/practice_vs_time.md
-         10.83M  41%   13.74MB/s    0:00:00 (xfr#47, to-chk=430/491)
-docs/figs/
-docs/figs/chart_playcount_distribution_1k.png
-         11.15M  42%   13.97MB/s    0:00:00 (xfr#48, to-chk=429/491)
-docs/figs/chart_players_distribution_1k.png
-         11.26M  43%   14.03MB/s    0:00:00 (xfr#49, to-chk=428/491)
-docs/figs/forgetting_10k_1_dt_dose.png
-         11.41M  43%   13.98MB/s    0:00:00 (xfr#50, to-chk=427/491)
-docs/figs/forgetting_10k_2_kernel.png
-         11.50M  44%   14.03MB/s    0:00:00 (xfr#51, to-chk=426/491)
-docs/figs/forgetting_1k_1_dt_dose.png
-         11.64M  44%   13.90MB/s    0:00:00 (xfr#52, to-chk=425/491)
-docs/figs/forgetting_1k_2_kernel.png
-         11.74M  45%   13.97MB/s    0:00:00 (xfr#53, to-chk=424/491)
-docs/figs/lr_10k_1_rates.png
-         11.90M  45%   13.88MB/s    0:00:00 (xfr#54, to-chk=423/491)
-docs/figs/lr_10k_2_groups.png
-         11.93M  45%   13.89MB/s    0:00:00 (xfr#55, to-chk=422/491)
-docs/figs/lr_10k_3_scatter.png
-         12.16M  46%   13.73MB/s    0:00:00 (xfr#56, to-chk=421/491)
-docs/figs/lr_1k_1_rates.png
-         12.31M  47%   13.80MB/s    0:00:00 (xfr#57, to-chk=420/491)
-docs/figs/lr_1k_2_groups.png
-         12.34M  47%   13.82MB/s    0:00:00 (xfr#58, to-chk=419/491)
-docs/figs/lr_1k_3_scatter.png
-         12.52M  48%   13.60MB/s    0:00:00 (xfr#59, to-chk=418/491)
-docs/figs/order_10k_1_percentile.png
-         12.62M  48%   13.47MB/s    0:00:00 (xfr#60, to-chk=417/491)
-docs/figs/order_10k_2_cumcount.png
-         12.70M  48%   13.45MB/s    0:00:00 (xfr#61, to-chk=416/491)
-docs/figs/order_10k_3_position.png
-         12.80M  49%   13.47MB/s    0:00:00 (xfr#62, to-chk=415/491)
-docs/figs/order_10k_4_by_n.png
-         12.88M  49%   13.49MB/s    0:00:00 (xfr#63, to-chk=414/491)
-docs/figs/order_10k_5_groups.png
-         13.06M  50%   13.60MB/s    0:00:00 (xfr#64, to-chk=413/491)
-docs/figs/order_10k_6_slope.png
-         13.11M  50%   13.50MB/s    0:00:00 (xfr#65, to-chk=412/491)
-docs/figs/order_10k_7_span.png
-         13.18M  50%   13.38MB/s    0:00:00 (xfr#66, to-chk=411/491)
-docs/figs/order_1k_1_percentile.png
-         13.28M  51%   13.32MB/s    0:00:00 (xfr#67, to-chk=410/491)
-docs/figs/order_1k_2_cumcount.png
-         13.36M  51%   13.22MB/s    0:00:00 (xfr#68, to-chk=409/491)
-docs/figs/order_1k_3_position.png
-         13.46M  51%   13.27MB/s    0:00:00 (xfr#69, to-chk=408/491)
-docs/figs/order_1k_4_by_n.png
-         13.54M  52%   13.32MB/s    0:00:00 (xfr#70, to-chk=407/491)
-docs/figs/order_1k_5_groups.png
-         13.73M  52%   13.42MB/s    0:00:00 (xfr#71, to-chk=406/491)
-docs/figs/order_1k_6_slope.png
-         13.79M  53%   13.45MB/s    0:00:00 (xfr#72, to-chk=405/491)
-docs/figs/order_1k_7_span.png
-         13.86M  53%   13.50MB/s    0:00:00 (xfr#73, to-chk=404/491)
-docs/figs/practice_vs_time_10k_1_matched.png
-         13.98M  53%   13.44MB/s    0:00:00 (xfr#74, to-chk=403/491)
-docs/figs/practice_vs_time_10k_2_curve_by_span.png
-         14.10M  54%   13.51MB/s    0:00:00 (xfr#75, to-chk=402/491)
-docs/figs/practice_vs_time_10k_3_drift.png
-         14.18M  54%   13.55MB/s    0:00:00 (xfr#76, to-chk=401/491)
-docs/figs/practice_vs_time_10k_4_span_dose.png
-         14.25M  54%   13.58MB/s    0:00:00           14.25M  54%   13.58MB/s    0:00:01 (xfr#77, to-chk=400/491)
-docs/figs/practice_vs_time_10k_5_dt_dose.png
-         14.32M  55%   13.62MB/s    0:00:01 (xfr#78, to-chk=399/491)
-docs/figs/practice_vs_time_10k_6_n3.png
-         14.38M  55%   13.65MB/s    0:00:01 (xfr#79, to-chk=398/491)
-docs/figs/practice_vs_time_1k_1_matched.png
-         14.47M  55%   13.70MB/s    0:00:01 (xfr#80, to-chk=397/491)
-docs/figs/practice_vs_time_1k_2_curve_by_span.png
-         14.57M  56%   13.46MB/s    0:00:01 (xfr#81, to-chk=396/491)
-docs/figs/practice_vs_time_1k_3_drift.png
-         14.65M  56%   13.50MB/s    0:00:01 (xfr#82, to-chk=395/491)
-docs/figs/practice_vs_time_1k_4_span_dose.png
-         14.72M  56%   13.54MB/s    0:00:01 (xfr#83, to-chk=394/491)
-docs/figs/practice_vs_time_1k_5_dt_dose.png
-         14.79M  56%   13.57MB/s    0:00:01 (xfr#84, to-chk=393/491)
-docs/figs/practice_vs_time_1k_6_n3.png
-         14.85M  57%   13.60MB/s    0:00:01 (xfr#85, to-chk=392/491)
-external/
-external/bobert/
-external/bobert/.dockerignore
-         14.85M  57%   13.59MB/s    0:00:01 (xfr#86, to-chk=389/491)
-external/bobert/.env.example
-         14.85M  57%   13.59MB/s    0:00:01 (xfr#87, to-chk=388/491)
-external/bobert/.gitignore
-         14.85M  57%   13.57MB/s    0:00:01 (xfr#88, to-chk=387/491)
-external/bobert/Dockerfile
-         14.85M  57%   13.58MB/s    0:00:01 (xfr#89, to-chk=386/491)
-external/bobert/LICENSE
-         14.85M  57%   13.58MB/s    0:00:01 (xfr#90, to-chk=385/491)
-external/bobert/README.md
-         14.86M  57%   13.57MB/s    0:00:01 (xfr#91, to-chk=384/491)
-external/bobert/compose.prod.yaml
-         14.86M  57%   13.57MB/s    0:00:01 (xfr#92, to-chk=383/491)
-external/bobert/compose.yaml
-         14.86M  57%   13.56MB/s    0:00:01 (xfr#93, to-chk=382/491)
-external/bobert/mise.toml
-         14.86M  57%   13.56MB/s    0:00:01 (xfr#94, to-chk=381/491)
-external/bobert/pyproject.toml
-         14.87M  57%   13.55MB/s    0:00:01 (xfr#95, to-chk=380/491)
-external/bobert/pyrightconfig.json
-         14.87M  57%   13.55MB/s    0:00:01 (xfr#96, to-chk=379/491)
-external/bobert/uv.lock
-         15.03M  57%   13.66MB/s    0:00:01 (xfr#97, to-chk=378/491)
-external/bobert/configs/
-external/bobert/configs/default.yaml
-         15.03M  57%   13.66MB/s    0:00:01 (xfr#98, to-chk=370/491)
-external/bobert/core/
-external/bobert/core/__init__.py
-         15.03M  57%   13.65MB/s    0:00:01 (xfr#99, to-chk=369/491)
-external/bobert/core/artifacts.py
-         15.04M  57%   13.65MB/s    0:00:01 (xfr#100, to-chk=368/491)
-external/bobert/core/catch.py
-         15.05M  57%   13.66MB/s    0:00:01 (xfr#101, to-chk=367/491)
-external/bobert/core/components.py
-         15.06M  57%   13.66MB/s    0:00:01 (xfr#102, to-chk=366/491)
-external/bobert/core/dataset.py
-         15.08M  58%   13.68MB/s    0:00:01 (xfr#103, to-chk=365/491)
-external/bobert/core/features.py
-         15.10M  58%   13.68MB/s    0:00:01 (xfr#104, to-chk=364/491)
-external/bobert/core/mania.py
-         15.11M  58%   13.69MB/s    0:00:01 (xfr#105, to-chk=363/491)
-external/bobert/core/model.py
-         15.12M  58%   13.70MB/s    0:00:01 (xfr#106, to-chk=362/491)
-external/bobert/core/osu.py
-         15.15M  58%   13.72MB/s    0:00:01 (xfr#107, to-chk=361/491)
-external/bobert/core/retrieval.py
-         15.15M  58%   13.70MB/s    0:00:01 (xfr#108, to-chk=360/491)
-external/bobert/core/taiko.py
-         15.16M  58%   13.71MB/s    0:00:01 (xfr#109, to-chk=359/491)
-external/bobert/docs/
-external/bobert/docs/assets/
-external/bobert/docs/assets/architecture.png
-         15.36M  59%   13.82MB/s    0:00:01 (xfr#110, to-chk=357/491)
-external/bobert/docs/assets/architecture.svg
-         15.36M  59%   13.82MB/s    0:00:01 (xfr#111, to-chk=356/491)
-external/bobert/scripts/
-external/bobert/scripts/README.md
-         15.37M  59%   13.82MB/s    0:00:01 (xfr#112, to-chk=355/491)
-external/bobert/scripts/__init__.py
-         15.37M  59%   13.82MB/s    0:00:01 (xfr#113, to-chk=354/491)
-external/bobert/scripts/deploy.py
-         15.37M  59%   13.83MB/s    0:00:01 (xfr#114, to-chk=353/491)
-external/bobert/scripts/deploy.sh
-         15.38M  59%   13.82MB/s    0:00:01 (xfr#115, to-chk=352/491)
-external/bobert/scripts/search_catalog.py
-         15.39M  59%   13.83MB/s    0:00:01 (xfr#116, to-chk=351/491)
-external/bobert/scripts/common/
-external/bobert/scripts/common/__init__.py
-         15.39M  59%   13.83MB/s    0:00:01 (xfr#117, to-chk=345/491)
-external/bobert/scripts/common/api.py
-         15.39M  59%   13.83MB/s    0:00:01 (xfr#118, to-chk=344/491)
-external/bobert/scripts/common/beatmaps.py
-         15.40M  59%   13.83MB/s    0:00:01 (xfr#119, to-chk=343/491)
-external/bobert/scripts/common/collections.py
-         15.41M  59%   13.83MB/s    0:00:01 (xfr#120, to-chk=342/491)
-external/bobert/scripts/common/failures.py
-         15.41M  59%   13.83MB/s    0:00:01 (xfr#121, to-chk=341/491)
-external/bobert/scripts/common/io.py
-         15.41M  59%   13.83MB/s    0:00:01 (xfr#122, to-chk=340/491)
-external/bobert/scripts/common/mappers.py
-         15.41M  59%   13.82MB/s    0:00:01 (xfr#123, to-chk=339/491)
-external/bobert/scripts/common/osdb.py
-         15.41M  59%   13.82MB/s    0:00:01 (xfr#124, to-chk=338/491)
-external/bobert/scripts/common/osu.py
-         15.42M  59%   13.83MB/s    0:00:01 (xfr#125, to-chk=337/491)
-external/bobert/scripts/common/paths.py
-         15.42M  59%   13.83MB/s    0:00:01 (xfr#126, to-chk=336/491)
-external/bobert/scripts/common/query.py
-         15.43M  59%   13.82MB/s    0:00:01 (xfr#127, to-chk=335/491)
-external/bobert/scripts/common/text.py
-         15.43M  59%   13.82MB/s    0:00:01 (xfr#128, to-chk=334/491)
-external/bobert/scripts/dataset/
-external/bobert/scripts/dataset/__init__.py
-         15.43M  59%   13.82MB/s    0:00:01 (xfr#129, to-chk=333/491)
-external/bobert/scripts/dataset/build.py
-         15.44M  59%   13.84MB/s    0:00:01 (xfr#130, to-chk=332/491)
-external/bobert/scripts/dataset/features.py
-         15.45M  59%   13.83MB/s    0:00:01 (xfr#131, to-chk=331/491)
-external/bobert/scripts/dataset/native.py
-         15.45M  59%   13.83MB/s    0:00:01 (xfr#132, to-chk=330/491)
-external/bobert/scripts/dataset/strains.py
-         15.47M  59%   13.85MB/s    0:00:01 (xfr#133, to-chk=329/491)
-external/bobert/scripts/evaluation/
-external/bobert/scripts/evaluation/__init__.py
-         15.47M  59%   13.85MB/s    0:00:01 (xfr#134, to-chk=328/491)
-external/bobert/scripts/evaluation/graph.py
-         15.48M  59%   13.85MB/s    0:00:01 (xfr#135, to-chk=327/491)
-external/bobert/scripts/evaluation/mine.py
-         15.50M  59%   13.87MB/s    0:00:01 (xfr#136, to-chk=326/491)
-external/bobert/scripts/evaluation/ngrams.py
-         15.51M  59%   13.87MB/s    0:00:01 (xfr#137, to-chk=325/491)
-external/bobert/scripts/evaluation/recommend.py
-         15.53M  59%   13.88MB/s    0:00:01 (xfr#138, to-chk=324/491)
-external/bobert/scripts/evaluation/run.py
-         15.58M  59%   13.91MB/s    0:00:01 (xfr#139, to-chk=323/491)
-external/bobert/scripts/evaluation/umap.py
-         15.59M  60%   13.91MB/s    0:00:01 (xfr#140, to-chk=322/491)
-external/bobert/scripts/model/
-external/bobert/scripts/model/__init__.py
-         15.59M  60%   13.91MB/s    0:00:01 (xfr#141, to-chk=321/491)
-external/bobert/scripts/model/adapt.py
-         15.60M  60%   13.92MB/s    0:00:01 (xfr#142, to-chk=320/491)
-external/bobert/scripts/model/embed.py
-         15.61M  60%   13.92MB/s    0:00:01 (xfr#143, to-chk=319/491)
-external/bobert/scripts/model/export.py
-         15.62M  60%   13.91MB/s    0:00:01 (xfr#144, to-chk=318/491)
-external/bobert/scripts/model/fetch.py
-         15.62M  60%   13.92MB/s    0:00:01 (xfr#145, to-chk=317/491)
-external/bobert/scripts/model/model_card.md
-         15.62M  60%   13.92MB/s    0:00:01 (xfr#146, to-chk=316/491)
-external/bobert/scripts/model/pretrain.py
-         15.63M  60%   13.92MB/s    0:00:01 (xfr#147, to-chk=315/491)
-external/bobert/scripts/model/publish.py
-         15.63M  60%   13.93MB/s    0:00:01 (xfr#148, to-chk=314/491)
-external/bobert/scripts/sources/
-external/bobert/scripts/sources/__init__.py
-         15.63M  60%   13.91MB/s    0:00:01 (xfr#149, to-chk=313/491)
-external/bobert/scripts/sources/mappers.py
-         15.64M  60%   13.92MB/s    0:00:01 (xfr#150, to-chk=312/491)
-external/bobert/scripts/sources/beatmaps/
-external/bobert/scripts/sources/beatmaps/__init__.py
-         15.64M  60%   13.92MB/s    0:00:01 (xfr#151, to-chk=309/491)
-external/bobert/scripts/sources/beatmaps/files.py
-         15.65M  60%   13.93MB/s    0:00:01 (xfr#152, to-chk=308/491)
-external/bobert/scripts/sources/beatmaps/import_archive.py
-         15.66M  60%   13.94MB/s    0:00:01 (xfr#153, to-chk=307/491)
-external/bobert/scripts/sources/beatmaps/metadata.py
-         15.66M  60%   13.93MB/s    0:00:01 (xfr#154, to-chk=306/491)
-external/bobert/scripts/sources/beatmaps/sets.py
-         15.67M  60%   13.94MB/s    0:00:01 (xfr#155, to-chk=305/491)
-external/bobert/scripts/sources/beatmaps/shard.py
-         15.68M  60%   13.95MB/s    0:00:01 (xfr#156, to-chk=304/491)
-external/bobert/scripts/sources/collections/
-external/bobert/scripts/sources/collections/__init__.py
-         15.68M  60%   13.95MB/s    0:00:01 (xfr#157, to-chk=303/491)
-external/bobert/scripts/sources/collections/edges.py
-         15.70M  60%   13.94MB/s    0:00:01 (xfr#158, to-chk=302/491)
-external/bobert/scripts/sources/collections/tournaments.py
-         15.70M  60%   13.95MB/s    0:00:01 (xfr#159, to-chk=301/491)
-external/bobert/scripts/sources/collections/vertices.py
-         15.72M  60%   13.95MB/s    0:00:01 (xfr#160, to-chk=300/491)
-external/bobert/server/
-external/bobert/server/README.md
-         15.72M  60%   13.95MB/s    0:00:01 (xfr#161, to-chk=299/491)
-external/bobert/server/__init__.py
-         15.72M  60%   13.95MB/s    0:00:01 (xfr#162, to-chk=298/491)
-external/bobert/server/app.py
-         15.73M  60%   13.97MB/s    0:00:01 (xfr#163, to-chk=297/491)
-external/bobert/server/osu.py
-         15.74M  60%   13.96MB/s    0:00:01 (xfr#164, to-chk=296/491)
-external/bobert/server/runtime.py
-         15.77M  60%   13.97MB/s    0:00:01 (xfr#165, to-chk=295/491)
-external/bobert/training/
-external/bobert/training/__init__.py
-         15.77M  60%   13.97MB/s    0:00:01 (xfr#166, to-chk=294/491)
-external/bobert/training/adapt.py
-         15.78M  60%   13.98MB/s    0:00:01 (xfr#167, to-chk=293/491)
-external/bobert/training/loader.py
-         15.79M  60%   13.99MB/s    0:00:01 (xfr#168, to-chk=292/491)
-external/bobert/training/pretrain.py
-         15.80M  60%   13.99MB/s    0:00:01 (xfr#169, to-chk=291/491)
-external/bobert/training/setup.py
-         15.81M  60%   13.99MB/s    0:00:01 (xfr#170, to-chk=290/491)
-external/bobert/web/
-external/bobert/web/.gitignore
-         15.81M  60%   13.99MB/s    0:00:01 (xfr#171, to-chk=289/491)
-external/bobert/web/README.md
-         15.81M  60%   14.00MB/s    0:00:01 (xfr#172, to-chk=288/491)
-external/bobert/web/bun.lock
-         15.87M  61%   14.02MB/s    0:00:01 (xfr#173, to-chk=287/491)
-external/bobert/web/eslint.config.js
-         15.87M  61%   14.02MB/s    0:00:01 (xfr#174, to-chk=286/491)
-external/bobert/web/index.html
-         15.87M  61%   14.02MB/s    0:00:01 (xfr#175, to-chk=285/491)
-external/bobert/web/package.json
-         15.87M  61%   14.01MB/s    0:00:01 (xfr#176, to-chk=284/491)
-external/bobert/web/search-catalog.json
-         15.87M  61%   14.01MB/s    0:00:01 (xfr#177, to-chk=283/491)
-external/bobert/web/tsconfig.app.json
-         15.87M  61%   14.01MB/s    0:00:01 (xfr#178, to-chk=282/491)
-external/bobert/web/tsconfig.json
-         15.87M  61%   14.01MB/s    0:00:01 (xfr#179, to-chk=281/491)
-external/bobert/web/tsconfig.node.json
-         15.87M  61%   14.01MB/s    0:00:01 (xfr#180, to-chk=280/491)
-external/bobert/web/vite.config.ts
-         15.87M  61%   14.01MB/s    0:00:01 (xfr#181, to-chk=279/491)
-external/bobert/web/functions/
-external/bobert/web/functions/api/
-external/bobert/web/functions/api/[[path]].ts
-         15.87M  61%   14.01MB/s    0:00:01 (xfr#182, to-chk=272/491)
-external/bobert/web/gateway/
-external/bobert/web/gateway/.editorconfig
-         15.87M  61%   14.00MB/s    0:00:01 (xfr#183, to-chk=271/491)
-external/bobert/web/gateway/.gitignore
-         15.87M  61%   14.00MB/s    0:00:01 (xfr#184, to-chk=270/491)
-external/bobert/web/gateway/.prettierrc
-         15.87M  61%   14.00MB/s    0:00:01 (xfr#185, to-chk=269/491)
-external/bobert/web/gateway/bun.lock
-         15.90M  61%   14.02MB/s    0:00:01 (xfr#186, to-chk=268/491)
-external/bobert/web/gateway/package.json
-         15.90M  61%   14.01MB/s    0:00:01 (xfr#187, to-chk=267/491)
-external/bobert/web/gateway/wrangler.example.jsonc
-         15.90M  61%   14.01MB/s    0:00:01 (xfr#188, to-chk=266/491)
-external/bobert/web/gateway/src/
-external/bobert/web/gateway/src/worker.js
-         15.90M  61%   14.01MB/s    0:00:01 (xfr#189, to-chk=264/491)
-external/bobert/web/public/
-external/bobert/web/public/_headers
-         15.90M  61%   14.01MB/s    0:00:01 (xfr#190, to-chk=263/491)
-external/bobert/web/public/favicon.ico
-         15.91M  61%   14.00MB/s    0:00:01 (xfr#191, to-chk=262/491)
-external/bobert/web/public/icons.ico
-         15.92M  61%   14.01MB/s    0:00:01 (xfr#192, to-chk=261/491)
-external/bobert/web/scripts/
-external/bobert/web/scripts/search.ts
-         15.92M  61%   14.01MB/s    0:00:01 (xfr#193, to-chk=260/491)
-external/bobert/web/src/
-external/bobert/web/src/App.tsx
-         15.92M  61%   14.00MB/s    0:00:01 (xfr#194, to-chk=259/491)
-external/bobert/web/src/main.tsx
-         15.92M  61%   14.00MB/s    0:00:01 (xfr#195, to-chk=258/491)
-external/bobert/web/src/routeTree.gen.ts
-         15.92M  61%   14.00MB/s    0:00:01 (xfr#196, to-chk=257/491)
-external/bobert/web/src/router.tsx
-         15.92M  61%   14.00MB/s    0:00:01 (xfr#197, to-chk=256/491)
-external/bobert/web/src/features/
-external/bobert/web/src/features/audio/
-external/bobert/web/src/features/audio/AudioPreviewBar.module.css
-         15.93M  61%   14.01MB/s    0:00:01 (xfr#198, to-chk=248/491)
-external/bobert/web/src/features/audio/AudioPreviewBar.tsx
-         15.93M  61%   14.01MB/s    0:00:01 (xfr#199, to-chk=247/491)
-external/bobert/web/src/features/audio/useAudioPreview.tsx
-         15.93M  61%   14.00MB/s    0:00:01 (xfr#200, to-chk=246/491)
-external/bobert/web/src/features/recommend/
-external/bobert/web/src/features/recommend/BeatmapCard.module.css
-         15.96M  61%   14.02MB/s    0:00:01 (xfr#201, to-chk=245/491)
-external/bobert/web/src/features/recommend/BeatmapCard.tsx
-         15.97M  61%   14.03MB/s    0:00:01 (xfr#202, to-chk=244/491)
-external/bobert/web/src/features/recommend/DateRangeFilter.tsx
-         15.98M  61%   14.03MB/s    0:00:01 (xfr#203, to-chk=243/491)
-external/bobert/web/src/features/recommend/FilterPopover.tsx
-         15.98M  61%   14.03MB/s    0:00:01 (xfr#204, to-chk=242/491)
-external/bobert/web/src/features/recommend/RangeFilter.tsx
-         15.99M  61%   14.04MB/s    0:00:01 (xfr#205, to-chk=241/491)
-external/bobert/web/src/features/recommend/RecommendForm.module.css
-         16.02M  61%   14.06MB/s    0:00:01 (xfr#206, to-chk=240/491)
-external/bobert/web/src/features/recommend/RecommendForm.tsx
-         16.03M  61%   14.05MB/s    0:00:01 (xfr#207, to-chk=239/491)
-external/bobert/web/src/features/recommend/RecommendPage.module.css
-         16.03M  61%   14.06MB/s    0:00:01 (xfr#208, to-chk=238/491)
-external/bobert/web/src/features/recommend/RecommendPage.tsx
-         16.05M  61%   14.07MB/s    0:00:01 (xfr#209, to-chk=237/491)
-external/bobert/web/src/features/recommend/ResultsList.module.css
-         16.06M  61%   14.07MB/s    0:00:01 (xfr#210, to-chk=236/491)
-external/bobert/web/src/features/recommend/ResultsList.tsx
-         16.06M  61%   14.07MB/s    0:00:01 (xfr#211, to-chk=235/491)
-external/bobert/web/src/features/recommend/StatusFilter.tsx
-         16.06M  61%   14.07MB/s    0:00:01 (xfr#212, to-chk=234/491)
-external/bobert/web/src/features/recommend/filters.ts
-         16.06M  61%   14.07MB/s    0:00:01 (xfr#213, to-chk=233/491)
-external/bobert/web/src/features/recommend/rangeFilters.tsx
-         16.07M  61%   14.06MB/s    0:00:01 (xfr#214, to-chk=232/491)
-external/bobert/web/src/features/search/
-external/bobert/web/src/features/search/BeatmapSearch.module.css
-         16.07M  61%   14.07MB/s    0:00:01 (xfr#215, to-chk=231/491)
-external/bobert/web/src/features/search/BeatmapSearch.tsx
-         16.08M  61%   14.08MB/s    0:00:01 (xfr#216, to-chk=230/491)
-external/bobert/web/src/features/search/search.ts
-         16.11M  62%   14.09MB/s    0:00:01 (xfr#217, to-chk=229/491)
-external/bobert/web/src/features/search/search.worker.ts
-         16.11M  62%   14.09MB/s    0:00:01 (xfr#218, to-chk=228/491)
-external/bobert/web/src/features/search/searchClient.ts
-         16.11M  62%   14.09MB/s    0:00:01 (xfr#219, to-chk=227/491)
-external/bobert/web/src/routes/
-external/bobert/web/src/routes/__root.tsx
-         16.11M  62%   14.09MB/s    0:00:01 (xfr#220, to-chk=226/491)
-external/bobert/web/src/routes/index.tsx
-         16.11M  62%   14.09MB/s    0:00:01 (xfr#221, to-chk=225/491)
-external/bobert/web/src/routes/recommendations.tsx
-         16.11M  62%   14.08MB/s    0:00:01 (xfr#222, to-chk=224/491)
-external/bobert/web/src/shared/
-external/bobert/web/src/shared/api.ts
-         16.11M  62%   14.08MB/s    0:00:01 (xfr#223, to-chk=223/491)
-external/bobert/web/src/shared/beatmapIds.ts
-         16.11M  62%   14.08MB/s    0:00:01 (xfr#224, to-chk=222/491)
-external/bobert/web/src/shared/copy.ts
-         16.11M  62%   14.08MB/s    0:00:01 (xfr#225, to-chk=221/491)
-external/bobert/web/src/shared/format.ts
-         16.12M  62%   14.08MB/s    0:00:01 (xfr#226, to-chk=220/491)
-external/bobert/web/src/shared/schema.d.ts
-         16.13M  62%   14.08MB/s    0:00:01 (xfr#227, to-chk=219/491)
-external/bobert/web/src/shared/types.ts
-         16.13M  62%   14.08MB/s    0:00:01 (xfr#228, to-chk=218/491)
-external/bobert/web/src/shared/urls.ts
-         16.13M  62%   14.08MB/s    0:00:01 (xfr#229, to-chk=217/491)
-external/bobert/web/src/shared/ui/
-external/bobert/web/src/shared/ui/Stat.tsx
-         16.13M  62%   14.08MB/s    0:00:01 (xfr#230, to-chk=215/491)
-external/bobert/web/src/styles/
-external/bobert/web/src/styles/globals.css
-         16.13M  62%   14.08MB/s    0:00:01 (xfr#231, to-chk=214/491)
-external/bobert/web/src/styles/theme.css
-         16.13M  62%   14.07MB/s    0:00:01 (xfr#232, to-chk=213/491)
-external/cm3p/
-external/cm3p/.gitignore
-         16.13M  62%   14.07MB/s    0:00:01 (xfr#233, to-chk=212/491)
-external/cm3p/Dockerfile
-         16.13M  62%   14.07MB/s    0:00:01 (xfr#234, to-chk=211/491)
-external/cm3p/LICENSE
-         16.14M  62%   14.06MB/s    0:00:01 (xfr#235, to-chk=210/491)
-external/cm3p/README.md
-         16.15M  62%   14.07MB/s    0:00:01 (xfr#236, to-chk=209/491)
-external/cm3p/compose.yaml
-         16.15M  62%   14.06MB/s    0:00:01 (xfr#237, to-chk=208/491)
-external/cm3p/config.py
-         16.15M  62%   14.06MB/s    0:00:01 (xfr#238, to-chk=207/491)
-external/cm3p/extract_beatmap_embeddings.py
-         16.16M  62%   14.06MB/s    0:00:01 (xfr#239, to-chk=206/491)
-external/cm3p/push_to_hub.py
-         16.17M  62%   14.07MB/s    0:00:01 (xfr#240, to-chk=205/491)
-external/cm3p/requirements.txt
-         16.17M  62%   14.05MB/s    0:00:01 (xfr#241, to-chk=204/491)
-external/cm3p/train.py
-         16.19M  62%   14.07MB/s    0:00:01 (xfr#242, to-chk=203/491)
-external/cm3p/validate_dataset.py
-         16.20M  62%   14.07MB/s    0:00:01 (xfr#243, to-chk=202/491)
-external/cm3p/.github/
-external/cm3p/.github/FUNDING.yml
-         16.20M  62%   14.05MB/s    0:00:01 (xfr#244, to-chk=193/491)
-external/cm3p/.github/workflows/
-external/cm3p/.github/workflows/deploy_pages.yml
-         16.20M  62%   14.05MB/s    0:00:01 (xfr#245, to-chk=191/491)
-external/cm3p/cm3p/
-external/cm3p/cm3p/__init__.py
-         16.20M  62%   14.05MB/s    0:00:01 (xfr#246, to-chk=190/491)
-external/cm3p/cm3p/configuration_cm3p.py
-         16.21M  62%   14.05MB/s    0:00:01 (xfr#247, to-chk=189/491)
-external/cm3p/cm3p/modeling_cm3p.py
-         16.28M  62%   14.09MB/s    0:00:01 (xfr#248, to-chk=188/491)
-external/cm3p/cm3p/parsing_cm3p.py
-         16.30M  62%   14.12MB/s    0:00:01 (xfr#249, to-chk=187/491)
-external/cm3p/cm3p/processing_cm3p.py
-         16.34M  62%   14.12MB/s    0:00:01 (xfr#250, to-chk=186/491)
-external/cm3p/cm3p/tokenization_cm3p.py
-         16.38M  63%   14.15MB/s    0:00:01 (xfr#251, to-chk=185/491)
-external/cm3p/colab/
-external/cm3p/colab/CM3P_embeddings.ipynb
-         16.38M  63%   14.16MB/s    0:00:01 (xfr#252, to-chk=184/491)
-external/cm3p/configs/
-external/cm3p/configs/model/
-external/cm3p/configs/model/default.yaml
-         16.38M  63%   14.15MB/s    0:00:01 (xfr#253, to-chk=181/491)
-external/cm3p/configs/model/v1.yaml
-         16.38M  63%   14.15MB/s    0:00:01 (xfr#254, to-chk=180/491)
-external/cm3p/configs/train/
-external/cm3p/configs/train/default.yaml
-         16.39M  63%   14.15MB/s    0:00:01 (xfr#255, to-chk=179/491)
-external/cm3p/configs/train/v1.yaml
-         16.39M  63%   14.14MB/s    0:00:01 (xfr#256, to-chk=178/491)
-external/cm3p/configs/train/v2.yaml
-         16.39M  63%   14.14MB/s    0:00:01 (xfr#257, to-chk=177/491)
-external/cm3p/configs/train/v3.yaml
-         16.39M  63%   14.14MB/s    0:00:01 (xfr#258, to-chk=176/491)
-external/cm3p/configs/train/v4.yaml
-         16.39M  63%   14.14MB/s    0:00:01 (xfr#259, to-chk=175/491)
-external/cm3p/configs/train/v5.yaml
-         16.39M  63%   14.14MB/s    0:00:01 (xfr#260, to-chk=174/491)
-external/cm3p/configs/train/v6.1.yaml
-         16.39M  63%   14.14MB/s    0:00:01 (xfr#261, to-chk=173/491)
-external/cm3p/configs/train/v6.yaml
-         16.39M  63%   14.14MB/s    0:00:01 (xfr#262, to-chk=172/491)
-external/cm3p/configs/train/v6_mask.yaml
-         16.39M  63%   14.14MB/s    0:00:01 (xfr#263, to-chk=171/491)
-external/cm3p/configs/train/v7.yaml
-         16.39M  63%   14.13MB/s    0:00:01 (xfr#264, to-chk=170/491)
-external/cm3p/configs/train/v7_classifier.yaml
-         16.39M  63%   14.13MB/s    0:00:01 (xfr#265, to-chk=169/491)
-external/cm3p/resources/
-external/cm3p/resources/Denkishiki Karen Ongaku Shuudan - Aoki Kotou no Anguis (OliBomby) [Ardens Spes].osu
-         16.47M  63%   14.15MB/s    0:00:01 (xfr#266, to-chk=168/491)
-external/cm3p/resources/audio.mp3
-         22.73M  87%   13.88MB/s    0:00:01 (xfr#267, to-chk=167/491)
-external/cm3p/resources/tags.json
-         22.76M  87%   13.90MB/s    0:00:01 (xfr#268, to-chk=166/491)
-external/cm3p/tests/
-external/cm3p/tests/test_cm3p.py
-         22.76M  87%   13.89MB/s    0:00:01 (xfr#269, to-chk=165/491)
-external/cm3p/tests/test_cm3p_for_masked_lm.py
-         22.76M  87%   13.89MB/s    0:00:01 (xfr#270, to-chk=164/491)
-external/cm3p/tests/test_masked_prediction.py
-         22.77M  87%   13.90MB/s    0:00:01 (xfr#271, to-chk=163/491)
-external/cm3p/tests/test_ranked_classifier.py
-         22.77M  87%   13.89MB/s    0:00:01 (xfr#272, to-chk=162/491)
-external/cm3p/tests/test_save_processor.py
-         22.77M  87%   13.89MB/s    0:00:01 (xfr#273, to-chk=161/491)
-external/cm3p/tests/test_zero_shot_classification.py
-         22.77M  87%   13.89MB/s    0:00:01 (xfr#274, to-chk=160/491)
-external/cm3p/utils/
-external/cm3p/utils/beatmap_files_dataset.py
-         22.78M  87%   13.89MB/s    0:00:01 (xfr#275, to-chk=159/491)
-external/cm3p/utils/data_utils.py
-         22.79M  87%   13.89MB/s    0:00:01 (xfr#276, to-chk=158/491)
-external/cm3p/utils/mmrs_dataset.py
-         22.80M  87%   13.90MB/s    0:00:01 (xfr#277, to-chk=157/491)
-external/cm3p/utils/muon_utils.py
-         22.81M  87%   13.90MB/s    0:00:01 (xfr#278, to-chk=156/491)
-external/cm3p/visualizer/
-external/cm3p/visualizer/app.js
-         22.83M  87%   13.91MB/s    0:00:01 (xfr#279, to-chk=155/491)
-external/cm3p/visualizer/build_wasm.bat
-         22.83M  87%   13.91MB/s    0:00:01 (xfr#280, to-chk=154/491)
-external/cm3p/visualizer/compute_worker.js
-         22.84M  87%   13.91MB/s    0:00:01 (xfr#281, to-chk=153/491)
-external/cm3p/visualizer/index.html
-         22.84M  87%   13.91MB/s    0:00:01 (xfr#282, to-chk=152/491)
-external/cm3p/visualizer/style.css
-         22.84M  87%   13.92MB/s    0:00:01 (xfr#283, to-chk=151/491)
-external/cm3p/visualizer/worker_pool.js
-         22.85M  87%   13.91MB/s    0:00:01 (xfr#284, to-chk=150/491)
-external/cm3p/visualizer/worker_wasm.js
-         22.88M  88%   13.92MB/s    0:00:01 (xfr#285, to-chk=149/491)
-external/cm3p/visualizer/wasm/
-external/cm3p/visualizer/wasm/.gitignore
-         22.88M  88%   13.92MB/s    0:00:01 (xfr#286, to-chk=147/491)
-external/cm3p/visualizer/wasm/Cargo.lock
-         22.89M  88%   13.92MB/s    0:00:01 (xfr#287, to-chk=146/491)
-external/cm3p/visualizer/wasm/Cargo.toml
-         22.89M  88%   13.92MB/s    0:00:01 (xfr#288, to-chk=145/491)
-external/cm3p/visualizer/wasm/package.json
-         22.89M  88%   13.92MB/s    0:00:01 (xfr#289, to-chk=144/491)
-external/cm3p/visualizer/wasm/src/
-external/cm3p/visualizer/wasm/src/lib.rs
-         22.91M  88%   13.92MB/s    0:00:01 (xfr#290, to-chk=142/491)
-external/cm3p/visualizer/wasm/src/lib_old.rs
-         22.92M  88%   13.93MB/s    0:00:01 (xfr#291, to-chk=141/491)
-external/cm3p/visualizer/wasm/src/lib_parallel.rs
-         22.94M  88%   13.93MB/s    0:00:01 (xfr#292, to-chk=140/491)
-external/cm3p/visualizer/wasm/src/lib_ultra.rs
-         22.95M  88%   13.93MB/s    0:00:01 (xfr#293, to-chk=139/491)
-external/cm3p/visualizer/wasm/src/tests.rs
-         22.96M  88%   13.94MB/s    0:00:01 (xfr#294, to-chk=138/491)
-logs/
-logs/cm3p_step2_1k_summary.log
-         22.97M  88%   13.94MB/s    0:00:01 (xfr#295, to-chk=137/491)
-logs/extract_log.txt
-         22.97M  88%   13.91MB/s    0:00:01 (xfr#296, to-chk=136/491)
-logs/forget_1k.log
-         22.97M  88%   13.91MB/s    0:00:01 (xfr#297, to-chk=135/491)
-logs/forget_all.log
-         22.98M  88%   13.91MB/s    0:00:01 (xfr#298, to-chk=134/491)
-logs/lr.log
-         23.00M  88%   13.91MB/s    0:00:01 (xfr#299, to-chk=133/491)
-logs/step0_10k.log
-         23.00M  88%   13.91MB/s    0:00:01 (xfr#300, to-chk=132/491)
-logs/step0_10k_nf_excluded.log
-         23.00M  88%   13.91MB/s    0:00:01 (xfr#301, to-chk=131/491)
-logs/step0_1k_nf_excluded.log
-         23.01M  88%   13.90MB/s    0:00:01 (xfr#302, to-chk=130/491)
-logs/step2_10k.log
-         23.01M  88%   13.90MB/s    0:00:01 (xfr#303, to-chk=129/491)
-logs/step2_10k_torch.log
-         23.01M  88%   13.91MB/s    0:00:01 (xfr#304, to-chk=128/491)
-logs/step2_1k_dim32.log
-         23.02M  88%   13.90MB/s    0:00:01 (xfr#305, to-chk=127/491)
-logs/step2_1k_dim_sweep.log
-         23.04M  88%   13.90MB/s    0:00:01 (xfr#306, to-chk=126/491)
-logs/step2_1k_dim_sweep_rerun.log
-         23.06M  88%   13.91MB/s    0:00:01 (xfr#307, to-chk=125/491)
-logs/step2_1k_drop_bias.log
-         23.08M  88%   13.91MB/s    0:00:01 (xfr#308, to-chk=124/491)
-logs/step2_1k_mechanisms.log
-         23.09M  88%   13.92MB/s    0:00:01 (xfr#309, to-chk=123/491)
-logs/step2_1k_mechanisms_canonical.log
-         23.09M  88%   13.91MB/s    0:00:01 (xfr#310, to-chk=122/491)
-logs/step2_1k_mechanisms_canonical2.log
-         23.10M  88%   13.91MB/s    0:00:01 (xfr#311, to-chk=121/491)
-logs/step2_1k_mechanisms_probe.log
-         23.11M  88%   13.91MB/s    0:00:01 (xfr#312, to-chk=120/491)
-logs/step2_1k_mechanisms_probe2.log
-         23.12M  89%   13.92MB/s    0:00:01 (xfr#313, to-chk=119/491)
-logs/step2_1k_mechanisms_probe3.log
-         23.13M  89%   13.91MB/s    0:00:01 (xfr#314, to-chk=118/491)
-logs/step2_1k_mechanisms_probe4.log
-         23.15M  89%   13.92MB/s    0:00:01 (xfr#315, to-chk=117/491)
-logs/step2_1k_mirt_exp.log
-         23.16M  89%   13.92MB/s    0:00:01 (xfr#316, to-chk=116/491)
-logs/step2_1k_mirt_exp2.log
-         23.17M  89%   13.92MB/s    0:00:01 (xfr#317, to-chk=115/491)
-logs/step2_1k_mirt_exp_200ep.log
-         23.18M  89%   13.93MB/s    0:00:01 (xfr#318, to-chk=114/491)
-logs/step2_1k_reverify.log
-         23.18M  89%   13.92MB/s    0:00:01 (xfr#319, to-chk=113/491)
-logs/step2_1k_torch.log
-         23.19M  89%   13.93MB/s    0:00:01 (xfr#320, to-chk=112/491)
-manifests/
-manifests/cm3p_probe_1k.csv
-         23.20M  89%   13.92MB/s    0:00:01 (xfr#321, to-chk=111/491)
-manifests/cm3p_probe_1k.npz
-         23.69M  91%   14.10MB/s    0:00:01 (xfr#322, to-chk=110/491)
-manifests/cm3p_todo_1k.csv
-         24.18M  93%   14.16MB/s    0:00:01 (xfr#323, to-chk=109/491)
-manifests/whitelist_1k.csv
-         25.25M  97%   14.38MB/s    0:00:01 (xfr#324, to-chk=108/491)
-results/
-results/mf_dot_dimsweep_manual.txt
-         25.25M  97%   14.37MB/s    0:00:01 (xfr#325, to-chk=107/491)
-scripts/
-scripts/README.md
-         25.26M  97%   14.37MB/s    0:00:01 (xfr#326, to-chk=106/491)
-scripts/_tmp_anova.py
-         25.26M  97%   14.36MB/s    0:00:01 (xfr#327, to-chk=105/491)
-scripts/_tmp_decomp.py
-         25.26M  97%   14.36MB/s    0:00:01 (xfr#328, to-chk=104/491)
-scripts/_tmp_deff.py
-         25.26M  97%   14.36MB/s    0:00:01 (xfr#329, to-chk=103/491)
-scripts/_tmp_dep.py
-         25.27M  97%   14.36MB/s    0:00:01 (xfr#330, to-chk=102/491)
-scripts/copy_folder.sh
-         25.27M  97%   14.37MB/s    0:00:01 (xfr#331, to-chk=101/491)
-scripts/diag_source_order.py
-         25.27M  97%   14.37MB/s    0:00:01 (xfr#332, to-chk=100/491)
-scripts/diag_step2_anchored.py
-         25.28M  97%   14.37MB/s    0:00:01 (xfr#333, to-chk=99/491) 
-scripts/diag_step2_capacity.py
-         25.29M  97%   14.38MB/s    0:00:01 (xfr#334, to-chk=98/491)
-scripts/diag_step2_capacity_filtered.py
-         25.29M  97%   14.37MB/s    0:00:01 (xfr#335, to-chk=97/491)
-scripts/diag_step2_content_inter.py
-         25.30M  97%   14.38MB/s    0:00:01 (xfr#336, to-chk=96/491)
-scripts/diag_step2_feasible.py
-         25.32M  97%   14.38MB/s    0:00:01 (xfr#337, to-chk=95/491)
-scripts/diag_step2_fm.py
-         25.32M  97%   14.38MB/s    0:00:01 (xfr#338, to-chk=94/491)
-scripts/diag_step2_gauge.py
-         25.33M  97%   14.38MB/s    0:00:01 (xfr#339, to-chk=93/491)
-scripts/diag_step2_identif.py
-         25.33M  97%   14.38MB/s    0:00:01 (xfr#340, to-chk=92/491)
-scripts/diag_step2_orbit.py
-         25.33M  97%   14.39MB/s    0:00:01 (xfr#341, to-chk=91/491)
-scripts/diag_step2_orbit_existing.py
-         25.33M  97%   14.39MB/s    0:00:01 (xfr#342, to-chk=90/491)
-scripts/diag_step2_recover.py
-         25.34M  97%   14.39MB/s    0:00:01 (xfr#343, to-chk=89/491)
-scripts/diag_step2_recover_seeds.py
-         25.34M  97%   14.39MB/s    0:00:01 (xfr#344, to-chk=88/491)
-scripts/diag_step2_structure.py
-         25.36M  97%   14.39MB/s    0:00:01 (xfr#345, to-chk=87/491)
-scripts/diag_step2_vs_additive.py
-         25.37M  97%   14.40MB/s    0:00:01 (xfr#346, to-chk=86/491)
-scripts/forgetting_curve.py
-         25.39M  97%   14.40MB/s    0:00:01 (xfr#347, to-chk=85/491)
-scripts/learning_rate_variance.py
-         25.41M  97%   14.41MB/s    0:00:01 (xfr#348, to-chk=84/491)
-scripts/play_order_curve.py
-         25.43M  97%   14.43MB/s    0:00:01 (xfr#349, to-chk=83/491)
-scripts/plot_chart_players.py
-         25.44M  97%   14.42MB/s    0:00:01 (xfr#350, to-chk=82/491)
-scripts/plot_chart_sparsity.py
-         25.45M  97%   14.43MB/s    0:00:01 (xfr#351, to-chk=81/491)
-scripts/practice_vs_time.py
-         25.49M  98%   14.44MB/s    0:00:01 (xfr#352, to-chk=80/491)
-scripts/probe_mod_loss.py
-         25.50M  98%   14.44MB/s    0:00:01 (xfr#353, to-chk=79/491)
-scripts/probe_mod_whitelist.py
-         25.50M  98%   14.45MB/s    0:00:01 (xfr#354, to-chk=78/491)
-scripts/probe_modern_cl.py
-         25.50M  98%   14.44MB/s    0:00:01 (xfr#355, to-chk=77/491)
-scripts/probe_nf_acc.py
-         25.51M  98%   14.44MB/s    0:00:01 (xfr#356, to-chk=76/491)
-scripts/remote_cm3p_run.sh
-         25.52M  98%   14.44MB/s    0:00:01 (xfr#357, to-chk=75/491)
-scripts/step0_preprocess.py
-         25.55M  98%   14.46MB/s    0:00:01 (xfr#358, to-chk=74/491)
-scripts/step0c_chart_content.py
-         25.57M  98%   14.46MB/s    0:00:01 (xfr#359, to-chk=73/491)
-scripts/step0d_fetch_osu.py
-         25.58M  98%   14.46MB/s    0:00:01 (xfr#360, to-chk=72/491)
-scripts/step0e_validate_mix.py
-         25.58M  98%   14.47MB/s    0:00:01 (xfr#361, to-chk=71/491)
-scripts/step0f_fetch_tags.py
-         25.59M  98%   14.47MB/s    0:00:01 (xfr#362, to-chk=70/491)
-scripts/step0g_whitelist.py
-         25.61M  98%   14.47MB/s    0:00:01 (xfr#363, to-chk=69/491)
-scripts/step1_clean.py
-         25.63M  98%   14.49MB/s    0:00:01 (xfr#364, to-chk=68/491)
-scripts/step2_predict.py
-         25.68M  98%   14.51MB/s    0:00:01 (xfr#365, to-chk=67/491)
-scripts/legacy/
-scripts/legacy/accuracy_formula.py
-         25.68M  98%   14.50MB/s    0:00:01 (xfr#366, to-chk=64/491)
-scripts/legacy/aggregation_sensitivity.py
-         25.68M  98%   14.49MB/s    0:00:01 (xfr#367, to-chk=63/491)
-scripts/legacy/attempts.py
-         25.69M  98%   14.49MB/s    0:00:01 (xfr#368, to-chk=62/491)
-scripts/legacy/bit_inventory.py
-         25.69M  98%   14.49MB/s    0:00:01 (xfr#369, to-chk=61/491)
-scripts/legacy/build_dataset.py
-         25.69M  98%   14.49MB/s    0:00:01 (xfr#370, to-chk=60/491)
-scripts/legacy/build_dataset_10k.py
-         25.70M  98%   14.49MB/s    0:00:01 (xfr#371, to-chk=59/491)
-scripts/legacy/build_v2.py
-         25.71M  98%   14.49MB/s    0:00:01 (xfr#372, to-chk=58/491)
-scripts/legacy/check_cl.py
-         25.71M  98%   14.49MB/s    0:00:01 (xfr#373, to-chk=57/491)
-scripts/legacy/compare_rate_models.py
-         25.71M  98%   14.48MB/s    0:00:01 (xfr#374, to-chk=56/491)
-scripts/legacy/convergence_filter.py
-         25.74M  99%   14.49MB/s    0:00:01 (xfr#375, to-chk=55/491)
-scripts/legacy/counter_bias_check.py
-         25.74M  99%   14.49MB/s    0:00:01 (xfr#376, to-chk=54/491)
-scripts/legacy/debug_date.py
-         25.74M  99%   14.48MB/s    0:00:01 (xfr#377, to-chk=53/491)
-scripts/legacy/debug_json.py
-         25.74M  99%   14.48MB/s    0:00:01 (xfr#378, to-chk=52/491)
-scripts/legacy/debug_parse.py
-         25.74M  99%   14.48MB/s    0:00:01 (xfr#379, to-chk=51/491)
-scripts/legacy/dt_vs_nm.py
-         25.74M  99%   14.47MB/s    0:00:01 (xfr#380, to-chk=50/491)
-scripts/legacy/dump_inventory.py
-         25.74M  99%   14.47MB/s    0:00:01 (xfr#381, to-chk=49/491)
-scripts/legacy/eval_metrics_demo.py
-         25.75M  99%   14.47MB/s    0:00:01 (xfr#382, to-chk=48/491)
-scripts/legacy/explore.py
-         25.75M  99%   14.47MB/s    0:00:01 (xfr#383, to-chk=47/491)
-scripts/legacy/explore4k.py
-         25.75M  99%   14.47MB/s    0:00:01 (xfr#384, to-chk=46/491)
-scripts/legacy/extract_scores_detail.py
-         25.75M  99%   14.47MB/s    0:00:01 (xfr#385, to-chk=45/491)
-scripts/legacy/fail_exit_stats.py
-         25.75M  99%   14.46MB/s    0:00:01 (xfr#386, to-chk=44/491)
-scripts/legacy/failtimes_check.py
-         25.76M  99%   14.46MB/s    0:00:01 (xfr#387, to-chk=43/491)
-scripts/legacy/failtimes_subsets.py
-         25.76M  99%   14.45MB/s    0:00:01 (xfr#388, to-chk=42/491)
-scripts/legacy/fit_accuracy.py
-         25.76M  99%   14.46MB/s    0:00:01 (xfr#389, to-chk=41/491)
-scripts/legacy/make_matrix_n.py
-         25.76M  99%   14.46MB/s    0:00:01 (xfr#390, to-chk=40/491)
-scripts/legacy/matrix_passrate.py
-         25.76M  99%   14.45MB/s    0:00:01 (xfr#391, to-chk=39/491)
-scripts/legacy/mod_inventory.py
-         25.77M  99%   14.45MB/s    0:00:01 (xfr#392, to-chk=38/491)
-scripts/legacy/mod_stats.py
-         25.77M  99%   14.45MB/s    0:00:01 (xfr#393, to-chk=37/491)
-scripts/legacy/nm_dt_filters.py
-         25.77M  99%   14.44MB/s    0:00:01 (xfr#394, to-chk=36/491)
-scripts/legacy/nm_dt_overlap.py
-         25.77M  99%   14.44MB/s    0:00:01 (xfr#395, to-chk=35/491)
-scripts/legacy/nm_dt_time.py
-         25.77M  99%   14.45MB/s    0:00:01 (xfr#396, to-chk=34/491)
-scripts/legacy/parse_difficulty.py
-         25.77M  99%   14.44MB/s    0:00:01 (xfr#397, to-chk=33/491)
-scripts/legacy/parse_dump.py
-         25.78M  99%   14.44MB/s    0:00:01 (xfr#398, to-chk=32/491)
-scripts/legacy/parse_mania_high_direct.py
-         25.78M  99%   14.44MB/s    0:00:01 (xfr#399, to-chk=31/491)
-scripts/legacy/pass_rate_samples.py
-         25.79M  99%   14.44MB/s    0:00:01 (xfr#400, to-chk=30/491)
-scripts/legacy/passrate_by_star.py
-         25.79M  99%   14.44MB/s    0:00:01 (xfr#401, to-chk=29/491)
-scripts/legacy/passrate_slices.py
-         25.79M  99%   14.43MB/s    0:00:01 (xfr#402, to-chk=28/491)
-scripts/legacy/plan_n1000.py
-         25.79M  99%   14.43MB/s    0:00:01 (xfr#403, to-chk=27/491)
-scripts/legacy/player_validation.py
-         25.79M  99%   14.43MB/s    0:00:01 (xfr#404, to-chk=26/491)
-scripts/legacy/quick_stats.py
-         25.79M  99%   14.42MB/s    0:00:01 (xfr#405, to-chk=25/491)
-scripts/legacy/sanity_acc.py
-         25.79M  99%   14.42MB/s    0:00:01 (xfr#406, to-chk=24/491)
-scripts/legacy/source_overlap.py
-         25.80M  99%   14.43MB/s    0:00:01 (xfr#407, to-chk=23/491)
-scripts/legacy/spotcheck_beatmaps.py
-         25.80M  99%   14.43MB/s    0:00:01 (xfr#408, to-chk=22/491)
-scripts/legacy/stage2_difficulty.py
-         25.80M  99%   14.42MB/s    0:00:01 (xfr#409, to-chk=21/491)
-scripts/legacy/stage2_v2.py
-         25.81M  99%   14.42MB/s    0:00:01 (xfr#410, to-chk=20/491)
-scripts/legacy/star_by_year.py
-         25.81M  99%   14.41MB/s    0:00:01 (xfr#411, to-chk=19/491)
-scripts/legacy/star_distribution.py
-         25.81M  99%   14.42MB/s    0:00:01 (xfr#412, to-chk=18/491)
-scripts/legacy/star_mix_compare.py
-         25.81M  99%   14.42MB/s    0:00:01 (xfr#413, to-chk=17/491)
-scripts/legacy/step0_preprocess_10k.py
-         25.82M  99%   14.41MB/s    0:00:01 (xfr#414, to-chk=16/491)
-scripts/legacy/step2_predict_numpy.py
-         25.84M  99%   14.41MB/s    0:00:01 (xfr#415, to-chk=15/491)
-scripts/legacy/train_play_level.py
-         25.84M  99%   14.42MB/s    0:00:01 (xfr#416, to-chk=14/491)
-scripts/legacy/train_stage1.py
-         25.85M  99%   14.42MB/s    0:00:01 (xfr#417, to-chk=13/491)
-scripts/legacy/train_stage1_meta.py
-         25.86M  99%   14.42MB/s    0:00:01 (xfr#418, to-chk=12/491)
-scripts/legacy/train_stage1_shared.py
-         25.87M  99%   14.42MB/s    0:00:01 (xfr#419, to-chk=11/491)
-scripts/legacy/train_stage1_yearly.py
-         25.88M  99%   14.42MB/s    0:00:01 (xfr#420, to-chk=10/491)
-scripts/legacy/v3_stats.py
-         25.88M  99%   14.42MB/s    0:00:01 (xfr#421, to-chk=9/491) 
-scripts/legacy/validate_passrate.py
-         25.88M  99%   14.42MB/s    0:00:01 (xfr#422, to-chk=8/491)
-scripts/legacy/validate_rank.py
-         25.88M  99%   14.41MB/s    0:00:01 (xfr#423, to-chk=7/491)
-scripts/legacy/vector_analysis.py
-         25.88M  99%   14.42MB/s    0:00:01 (xfr#424, to-chk=6/491)
-scripts/legacy/verify_accuracy.py
-         25.89M  99%   14.42MB/s    0:00:01 (xfr#425, to-chk=5/491)
-scripts/slurm/
-scripts/slurm/cm3p_embed.slurm
-         25.90M  99%   14.42MB/s    0:00:01 (xfr#426, to-chk=4/491)
-scripts/slurm/cm3p_fetch.slurm
-         25.90M  99%   14.42MB/s    0:00:01 (xfr#427, to-chk=3/491)
-vendor/
-vendor/README.md
-         25.91M  99%   14.42MB/s    0:00:01 (xfr#428, to-chk=2/491)
-vendor/slider-0.8.2-py3-none-any.whl
-         25.97M  99%   14.44MB/s    0:00:01 (xfr#429, to-chk=1/491)
-vendor/slider-LICENSE.txt
-         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.44MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.41MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.41MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.27MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.27MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.27MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   14.02MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   13.87MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   13.56MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   13.56MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   13.20MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   12.76MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   12.76MB/s    0:00:01 (xfr#430, to-chk=0/491)         25.98M 100%   12.74MB/s    0:00:01 (xfr#430, to-chk=0/491)
-[exit=0] Tue Oct 13 09:06:48 PM CST 2026
-
-=================== rsync -a -z -h --partial --partial-dir=.rsync-partial --timeout=120 --info=name,progress2 --exclude=.rsync-partial/ --rsync-path=mkdir -p /hpc2hdd/home/aiaa3111_l01_008/DCR/data /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/extracted /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/extracted_10k /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/cm3p_embeddings /hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed /hpc2hdd/home/aiaa3111_l01_008/DCR/data/interim /hpc2hdd/home/aiaa3111_l01_008/DCR/data/osu_cache && rsync data/raw/ aiaa3111_l01_008@hpc2login.hpc.hkust-gz.edu.cn:/hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/ ===================
-Tue Oct 13 09:06:48 PM CST 2026
-./
-.gitkeep
-              0   0%    0.00kB/s    0:00:00 (xfr#1, to-chk=25/27)
-cm3p_embeddings/
-cm3p_embeddings/beatmap_embeddings.parquet
-         32.77K   0%    0.00kB/s    0:00:00           14.19M   0%   13.49MB/s    0:08:59           26.25M   0%   12.43MB/s    0:09:44           34.73M   0%   10.98MB/s    0:11:01           47.97M   0%   11.39MB/s    0:10:36           60.65M   0%   11.04MB/s    0:10:55           73.11M   0%   11.14MB/s    0:10:48           86.28M   1%   12.24MB/s    0:09:48          102.60M   1%   12.97MB/s    0:09:14          114.75M   1%   12.75MB/s    0:09:23          132.42M   1%   13.97MB/s    0:08:32          148.24M   1%   14.63MB/s    0:08:08          162.37M   2%   14.01MB/s    0:08:29          174.75M   2%   14.15MB/s    0:08:23          187.20M   2%   12.90MB/s    0:09:10          198.61M   2%   11.86MB/s    0:09:58          213.84M   2%   12.20MB/s    0:09:40          229.54M   3%   12.94MB/s    0:09:05          243.86M   3%   13.39MB/s    0:08:46          258.74M   3%   14.21MB/s    0:08:15          273.91M   3%   14.21MB/s    0:08:14          289.77M   3%   14.33MB/s    0:08:09          305.53M   4%   14.65MB/s    0:07:57          314.31M   4%   13.15MB/s    0:08:51          326.01M   4%   12.32MB/s    0:09:25          338.92M   4%   11.61MB/s    0:09:59          354.94M   4%   11.70MB/s    0:09:53          371.16M   4%   13.51MB/s    0:08:32          386.83M   5%   14.46MB/s    0:07:58          403.24M   5%   15.24MB/s    0:07:32          419.27M   5%   15.26MB/s    0:07:30          435.36M   5%   15.21MB/s    0:07:31          451.48M   6%   15.31MB/s    0:07:27          464.58M   6%   14.60MB/s    0:07:48          479.43M   6%   14.30MB/s    0:07:57          491.52M   6%   13.38MB/s    0:08:29          506.04M   6%   13.00MB/s    0:08:42          520.29M   6%   13.27MB/s    0:08:30          535.00M   7%   13.26MB/s    0:08:30          551.06M   7%   14.17MB/s    0:07:56          567.21M   7%   14.54MB/s    0:07:43          582.75M   7%   14.78MB/s    0:07:34          597.49M   8%   14.78MB/s    0:07:33          610.17M   8%   14.01MB/s    0:07:57          615.22M   8%   13.45MB/s    0:00:43 (xfr#2, to-chk=21/27)
-cm3p_embeddings/fetch_chunked.sh
-        615.22M   8%   13.44MB/s    0:00:43 (xfr#3, to-chk=20/27)
-extracted/
-extracted/.gitkeep
-        615.22M   8%   13.44MB/s    0:00:43 (xfr#4, to-chk=19/27)
-extracted/2026_09_01_performance_mania_top_1000/
-extracted/2026_09_01_performance_mania_top_1000/osu_beatmap_difficulty.sql
-        652.51M   8%   20.27MB/s    0:05:28          711.98M   9%   30.81MB/s    0:03:34          774.57M  10%   42.24MB/s    0:02:34          836.27M  11%   53.95MB/s    0:02:00          899.65M  12%   58.95MB/s    0:01:48          962.30M  12%   59.71MB/s    0:01:46            1.03G  13%   59.77MB/s    0:01:45            1.09G  14%   60.23MB/s    0:01:43            1.15G  15%   60.31MB/s    0:01:42            1.22G  16%   60.44MB/s    0:01:40            1.28G  17%   60.51MB/s    0:01:39            1.34G  17%   60.46MB/s    0:01:38            1.41G  18%   60.32MB/s    0:01:38            1.47G  19%   60.50MB/s    0:01:36            1.53G  20%   60.84MB/s    0:01:35            1.60G  21%   60.92MB/s    0:01:34            1.65G  22%   26.17MB/s    0:00:59 (xfr#5, to-chk=17/27)
-extracted/2026_09_01_performance_mania_top_1000/osu_beatmap_difficulty_attribs.sql
-          1.66G  22%   59.71MB/s    0:01:35            1.70G  22%   54.26MB/s    0:01:43            1.74G  23%   48.71MB/s    0:01:54            1.78G  23%   43.34MB/s    0:02:08            1.82G  24%   39.65MB/s    0:02:19            1.86G  24%   39.81MB/s    0:02:17            1.91G  25%   40.22MB/s    0:02:14            1.95G  26%   40.12MB/s    0:02:14            1.99G  26%   40.28MB/s    0:02:12            2.03G  27%   40.73MB/s    0:02:10            2.08G  27%   41.09MB/s    0:02:08            2.12G  28%   41.92MB/s    0:02:04            2.17G  29%   42.47MB/s    0:02:01            2.21G  29%   42.78MB/s    0:01:59            2.26G  30%   43.01MB/s    0:01:58            2.30G  30%   43.17MB/s    0:01:56            2.35G  31%   42.72MB/s    0:01:57            2.39G  32%   41.96MB/s    0:01:58            2.43G  32%   41.76MB/s    0:01:57            2.48G  33%   41.52MB/s    0:01:57            2.52G  33%   41.52MB/s    0:01:56            2.57G  34%   42.13MB/s    0:01:53            2.61G  34%   41.93MB/s    0:01:53            2.65G  35%   42.06MB/s    0:01:51            2.70G  36%   42.29MB/s    0:01:50            2.74G  36%   42.28MB/s    0:01:49            2.79G  37%   42.41MB/s    0:01:47            2.82G  37%   30.91MB/s    0:01:27 (xfr#6, to-chk=16/27)
-extracted/2026_09_01_performance_mania_top_1000/osu_beatmap_failtimes.sql
-          2.82G  37%   40.13MB/s    0:01:52            2.83G  37%   31.62MB/s    0:02:23            2.84G  38%   23.28MB/s    0:03:14            2.85G  38%   14.90MB/s    0:05:02            2.86G  38%    8.78MB/s    0:08:32            2.87G  38%    8.98MB/s    0:08:19            2.88G  38%    9.15MB/s    0:08:09            2.89G  38%    9.40MB/s    0:07:55            2.90G  38%    9.85MB/s    0:07:32            2.92G  39%   11.39MB/s    0:06:29            2.94G  39%   13.49MB/s    0:05:27            2.96G  39%   16.30MB/s    0:04:29            2.96G  39%   28.71MB/s    0:01:38 (xfr#7, to-chk=15/27)
-extracted/2026_09_01_performance_mania_top_1000/osu_beatmap_performance_blacklist.sql
-          2.96G  39%   28.71MB/s    0:01:38 (xfr#8, to-chk=14/27)
-extracted/2026_09_01_performance_mania_top_1000/osu_beatmaps.sql
-          2.99G  40%   20.30MB/s    0:03:35            3.01G  40%   22.25MB/s    0:03:15            3.02G  40%   28.63MB/s    0:01:40 (xfr#9, to-chk=13/27)
-extracted/2026_09_01_performance_mania_top_1000/osu_beatmapsets.sql
-          3.04G  40%   24.64MB/s    0:02:55            3.07G  41%   28.61MB/s    0:01:42 (xfr#10, to-chk=12/27)
-extracted/2026_09_01_performance_mania_top_1000/osu_counts.sql
-          3.07G  41%   28.61MB/s    0:01:42 (xfr#11, to-chk=11/27)
-extracted/2026_09_01_performance_mania_top_1000/osu_difficulty_attribs.sql
-          3.07G  41%   28.61MB/s    0:01:42 (xfr#12, to-chk=10/27)
-extracted/2026_09_01_performance_mania_top_1000/osu_scores_mania_high.sql
-          3.07G  41%   25.81MB/s    0:02:46            3.09G  41%   24.31MB/s    0:02:55            3.11G  41%   23.42MB/s    0:03:01            3.13G  41%   21.78MB/s    0:03:14            3.15G  42%   20.32MB/s    0:03:27            3.17G  42%   19.99MB/s    0:03:29            3.19G  42%   19.85MB/s    0:03:30            3.21G  43%   19.72MB/s    0:03:30            3.23G  43%   19.40MB/s    0:03:33            3.25G  43%   19.42MB/s    0:03:31            3.27G  43%   19.60MB/s    0:03:28            3.30G  44%   19.56MB/s    0:03:28            3.32G  44%   19.98MB/s    0:03:22            3.34G  44%   20.04MB/s    0:03:21            3.36G  44%   19.88MB/s    0:03:21            3.38G  45%   19.82MB/s    0:03:21            3.40G  45%   19.33MB/s    0:03:25            3.42G  45%   19.09MB/s    0:03:27            3.44G  46%   27.29MB/s    0:02:00 (xfr#13, to-chk=9/27) 
-extracted/2026_09_01_performance_mania_top_1000/osu_user_beatmap_playcount.sql
-          3.44G  46%   19.71MB/s    0:03:19            3.48G  46%   24.22MB/s    0:02:40            3.51G  47%   27.45MB/s    0:02:02 (xfr#14, to-chk=8/27)
-extracted/2026_09_01_performance_mania_top_1000/osu_user_stats_mania.sql
-          3.51G  47%   27.45MB/s    0:02:02 (xfr#15, to-chk=7/27)
-extracted/2026_09_01_performance_mania_top_1000/sample_users.sql
-          3.51G  47%   27.45MB/s    0:02:02 (xfr#16, to-chk=6/27)
-extracted/2026_09_01_performance_mania_top_1000/scores.sql
-          3.52G  47%   28.92MB/s    0:02:13            3.56G  47%   34.82MB/s    0:01:49            3.61G  48%   39.43MB/s    0:01:35            3.65G  48%   40.51MB/s    0:01:31            3.69G  49%   40.70MB/s    0:01:30            3.73G  49%   39.89MB/s    0:01:31            3.77G  50%   39.99MB/s    0:01:30            3.82G  51%   39.36MB/s    0:01:30            3.86G  51%   39.86MB/s    0:01:28            3.90G  52%   39.72MB/s    0:01:27            3.93G  52%   37.83MB/s    0:01:31            3.97G  53%   36.34MB/s    0:01:33            4.01G  53%   35.65MB/s    0:01:34            4.05G  54%   36.30MB/s    0:01:31            4.09G  54%   37.31MB/s    0:01:28            4.13G  55%   38.94MB/s    0:01:23            4.17G  55%   40.03MB/s    0:01:20            4.22G  56%   39.86MB/s    0:01:19            4.26G  57%   40.32MB/s    0:01:17            4.30G  57%   39.52MB/s    0:01:18            4.34G  58%   39.07MB/s    0:01:18            4.38G  58%   38.41MB/s    0:01:18            4.42G  59%   38.57MB/s    0:01:17            4.43G  59%   29.23MB/s    0:02:24 (xfr#17, to-chk=5/27)
-extracted_10k/
-extracted_10k/.gitkeep
-          4.43G  59%   29.23MB/s    0:02:24 (xfr#18, to-chk=4/27)
-extracted_10k/2026_09_01_performance_mania_top_10000/
-extracted_10k/2026_09_01_performance_mania_top_10000/osu_scores_mania_high.sql
-          4.44G  59%   34.99MB/s    0:01:24            4.47G  59%   30.27MB/s    0:01:36            4.49G  60%   25.82MB/s    0:01:52            4.51G  60%   20.75MB/s    0:02:19            4.53G  60%   19.88MB/s    0:02:24            4.55G  60%   19.50MB/s    0:02:26            4.57G  61%   19.32MB/s    0:02:26            4.59G  61%   19.16MB/s    0:02:26            4.61G  61%   19.09MB/s    0:02:26            4.63G  61%   19.26MB/s    0:02:23            4.65G  62%   19.25MB/s    0:02:22            4.67G  62%   19.24MB/s    0:02:22            4.69G  62%   19.52MB/s    0:02:18            4.71G  63%   19.50MB/s    0:02:18            4.73G  63%   19.37MB/s    0:02:18            4.75G  63%   19.61MB/s    0:02:15            4.77G  63%   19.33MB/s    0:02:16            4.79G  64%   19.27MB/s    0:02:15            4.81G  64%   19.51MB/s    0:02:12            4.83G  64%   19.36MB/s    0:02:12            4.85G  64%   19.37MB/s    0:02:11            4.87G  65%   19.66MB/s    0:02:08            4.89G  65%   19.32MB/s    0:02:10            4.91G  65%   19.10MB/s    0:02:10            4.93G  66%   18.73MB/s    0:02:12            4.95G  66%   18.39MB/s    0:02:13            4.97G  66%   18.08MB/s    0:02:14            4.99G  66%   18.16MB/s    0:02:13            5.01G  67%   18.34MB/s    0:02:10            5.03G  67%   17.98MB/s    0:02:12            5.04G  67%   18.31MB/s    0:02:09            5.06G  67%   18.18MB/s    0:02:09            5.08G  68%   18.13MB/s    0:02:08            5.10G  68%   18.61MB/s    0:02:03            5.12G  68%   18.35MB/s    0:02:04            5.14G  68%   18.66MB/s    0:02:01            5.16G  69%   18.63MB/s    0:02:00            5.18G  69%   18.52MB/s    0:02:00            5.20G  69%   18.84MB/s    0:01:57            5.22G  69%   18.70MB/s    0:01:57            5.24G  70%   18.55MB/s    0:01:57            5.26G  70%   18.49MB/s    0:01:56            5.28G  70%   18.68MB/s    0:01:54            5.30G  70%   18.93MB/s    0:01:51            5.32G  71%   19.05MB/s    0:01:50            5.34G  71%   18.84MB/s    0:01:50            5.36G  71%   18.77MB/s    0:01:49            5.38G  72%   18.59MB/s    0:01:49            5.40G  72%   18.88MB/s    0:01:46            5.42G  72%   19.12MB/s    0:01:44            5.44G  72%   19.17MB/s    0:01:43            5.46G  73%   19.05MB/s    0:01:42            5.48G  73%   19.16MB/s    0:01:41            5.50G  73%   19.23MB/s    0:01:39            5.52G  73%   19.12MB/s    0:01:39            5.54G  74%   19.22MB/s    0:01:37            5.56G  74%   19.13MB/s    0:01:37            5.58G  74%   19.05MB/s    0:01:36            5.60G  75%   19.34MB/s    0:01:34            5.62G  75%   19.25MB/s    0:01:33            5.64G  75%   19.57MB/s    0:01:31            5.66G  75%   19.80MB/s    0:01:28            5.68G  76%   20.02MB/s    0:01:26            5.70G  76%   20.20MB/s    0:01:25            5.72G  76%   19.85MB/s    0:01:25            5.74G  76%   19.66MB/s    0:01:25            5.76G  77%   19.09MB/s    0:01:27            5.78G  77%   19.06MB/s    0:01:26            5.80G  77%   18.89MB/s    0:01:25            5.82G  78%   18.97MB/s    0:01:24            5.84G  78%   19.10MB/s    0:01:22            5.86G  78%   19.20MB/s    0:01:21            5.88G  78%   18.96MB/s    0:01:21            5.90G  79%   18.84MB/s    0:01:21            5.92G  79%   19.14MB/s    0:01:18            5.94G  79%   18.76MB/s    0:01:19            5.96G  79%   19.04MB/s    0:01:17            5.98G  80%   19.17MB/s    0:01:15            6.00G  80%   19.06MB/s    0:01:14            6.02G  80%   19.33MB/s    0:01:12            6.04G  80%   19.36MB/s    0:01:11            6.06G  81%   19.01MB/s    0:01:12            6.08G  81%   18.77MB/s    0:01:11            6.10G  81%   18.73MB/s    0:01:11            6.12G  82%   18.76MB/s    0:01:09            6.14G  82%   18.90MB/s    0:01:08            6.16G  82%   19.08MB/s    0:01:06            6.18G  82%   18.83MB/s    0:01:06            6.20G  83%   18.76MB/s    0:01:05            6.22G  83%   18.96MB/s    0:01:04            6.24G  83%   19.09MB/s    0:01:02            6.26G  83%   19.30MB/s    0:01:00            6.28G  84%   19.44MB/s    0:00:59            6.30G  84%   19.47MB/s    0:00:58            6.32G  84%   19.39MB/s    0:00:57            6.34G  84%   19.24MB/s    0:00:56            6.36G  85%   19.30MB/s    0:00:55            6.38G  85%   19.23MB/s    0:00:54            6.41G  85%   19.28MB/s    0:00:53            6.43G  86%   19.63MB/s    0:00:51            6.45G  86%   19.52MB/s    0:00:51            6.47G  86%   19.32MB/s    0:00:50            6.49G  86%   19.25MB/s    0:00:49            6.51G  87%   19.10MB/s    0:00:49            6.53G  87%   18.96MB/s    0:00:48            6.55G  87%   19.10MB/s    0:00:47            6.57G  87%   19.16MB/s    0:00:45            6.59G  88%   19.48MB/s    0:00:44            6.61G  88%   18.88MB/s    0:00:44            6.63G  88%   19.02MB/s    0:00:43            6.65G  89%   18.91MB/s    0:00:42            6.67G  89%   18.76MB/s    0:00:41            6.69G  89%   19.77MB/s    0:00:38            6.71G  89%   19.60MB/s    0:00:37            6.73G  90%   19.67MB/s    0:00:36            6.75G  90%   19.51MB/s    0:00:35            6.77G  90%   19.24MB/s    0:00:35            6.79G  90%   19.28MB/s    0:00:34            6.81G  91%   19.16MB/s    0:00:33            6.83G  91%   19.20MB/s    0:00:32            6.85G  91%   19.27MB/s    0:00:31            6.87G  91%   24.61MB/s    0:04:26 (xfr#19, to-chk=2/27)
-extracted_10k/2026_09_01_performance_mania_top_10000/osu_user_beatmap_playcount.sql
-          6.87G  92%   19.88MB/s    0:00:29            6.91G  92%   23.68MB/s    0:00:22            6.94G  93%   26.85MB/s    0:00:18            6.98G  93%   30.94MB/s    0:00:15            7.02G  94%   34.53MB/s    0:00:12            7.06G  94%   35.24MB/s    0:00:11            7.10G  95%   36.63MB/s    0:00:09            7.13G  95%   36.69MB/s    0:00:08            7.17G  96%   36.83MB/s    0:00:07            7.21G  96%   36.31MB/s    0:00:06            7.25G  97%   35.73MB/s    0:00:05            7.28G  97%   35.20MB/s    0:00:05            7.32G  98%   34.56MB/s    0:00:04            7.36G  98%   34.76MB/s    0:00:03            7.39G  99%   34.72MB/s    0:00:02            7.43G  99%   35.39MB/s    0:00:00            7.46G  99%   25.22MB/s    0:04:42 (xfr#20, to-chk=1/27)
-extracted_10k/2026_09_01_performance_mania_top_10000/osu_user_stats_mania.sql
-          7.47G  99%   35.10MB/s    0:00:00            7.47G 100%   25.21MB/s    0:04:42 (xfr#21, to-chk=0/27)          7.47G 100%   25.21MB/s    0:04:42 (xfr#21, to-chk=0/27)          7.47G 100%   25.21MB/s    0:04:42 (xfr#21, to-chk=0/27)          7.47G 100%   25.21MB/s    0:04:42 (xfr#21, to-chk=0/27)          7.47G 100%   25.21MB/s    0:04:42 (xfr#21, to-chk=0/27)          7.47G 100%   25.21MB/s    0:04:42 (xfr#21, to-chk=0/27)          7.47G 100%   25.21MB/s    0:04:42 (xfr#21, to-chk=0/27)
-[exit=0] Tue Oct 13 09:11:33 PM CST 2026
-
-=================== rsync -a -z -h --partial --partial-dir=.rsync-partial --timeout=120 --info=name,progress2 --exclude=.rsync-partial/ --rsync-path=mkdir -p /hpc2hdd/home/aiaa3111_l01_008/DCR/data /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/extracted /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/extracted_10k /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/cm3p_embeddings /hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed /hpc2hdd/home/aiaa3111_l01_008/DCR/data/interim /hpc2hdd/home/aiaa3111_l01_008/DCR/data/osu_cache && rsync data/processed/ aiaa3111_l01_008@hpc2login.hpc.hkust-gz.edu.cn:/hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed/ ===================
-Tue Oct 13 09:11:33 PM CST 2026
-./
-.gitkeep
-              0   0%    0.00kB/s    0:00:00 (xfr#1, to-chk=173/175)
-beatmap_meta_10k.csv
-         32.77K   0%    0.00kB/s    0:00:00            3.12M   0%   18.65MB/s    0:00:00 (xfr#2, to-chk=172/175)
-beatmap_meta_1k.csv
-          6.25M   0%   18.52MB/s    0:00:00 (xfr#3, to-chk=171/175)
-chart_content_cm3p.parquet
-         18.11M   0%   17.24MB/s    0:02:04           31.28M   1%   15.46MB/s    0:00:01 (xfr#4, to-chk=170/175)
-chart_playcount_stats_1k.json
-         31.28M   1%   15.42MB/s    0:00:01 (xfr#5, to-chk=169/175)
-chart_players_distribution_1k.csv
-         31.28M   1%   15.42MB/s    0:00:01 (xfr#6, to-chk=168/175)
-chart_players_stats_1k.json
-         31.28M   1%   15.42MB/s    0:00:01 (xfr#7, to-chk=167/175)
-chart_user_tag_coverage_1k.csv
-         31.80M   1%   15.46MB/s    0:00:01 (xfr#8, to-chk=166/175)
-chart_user_tag_vocab_1k.csv
-         31.81M   1%   15.46MB/s    0:00:01 (xfr#9, to-chk=165/175)
-chart_user_tags_1k.parquet
-         31.92M   1%   15.46MB/s    0:00:01 (xfr#10, to-chk=164/175)
-charts_v2_10k_v3.json
-         31.92M   1%   15.45MB/s    0:00:01 (xfr#11, to-chk=163/175)
-charts_v2_10k_v3.parquet
-         32.61M   1%   15.53MB/s    0:02:16           48.90M   2%   15.53MB/s    0:02:15           67.28M   3%   16.02MB/s    0:02:10           84.55M   3%   15.84MB/s    0:02:10          100.64M   4%   16.21MB/s    0:02:06          115.81M   5%   15.90MB/s    0:02:08          128.88M   5%   14.62MB/s    0:02:18          139.76M   6%   13.10MB/s    0:02:34          148.22M   6%   11.09MB/s    0:03:01          162.47M   7%   10.91MB/s    0:03:03          177.31M   8%   11.31MB/s    0:02:55          191.90M   8%   12.18MB/s    0:02:41          206.31M   9%   13.83MB/s    0:02:21          220.99M  10%   13.84MB/s    0:02:20          237.41M  10%   14.24MB/s    0:02:15          251.60M  11%   14.14MB/s    0:02:15          267.85M  12%   14.57MB/s    0:02:09          280.63M  12%   14.20MB/s    0:02:12          295.38M  13%   13.82MB/s    0:02:15          310.35M  14%   14.01MB/s    0:02:12          325.79M  14%   13.81MB/s    0:02:13          340.07M  15%   14.17MB/s    0:02:08          357.96M  16%   14.92MB/s    0:02:01          373.30M  16%   15.00MB/s    0:01:59          387.00M  17%   14.59MB/s    0:02:01          400.89M  18%   14.50MB/s    0:02:01          414.13M  18%   13.36MB/s    0:02:11          428.02M  19%   13.02MB/s    0:02:13          441.39M  19%   12.88MB/s    0:02:13          456.27M  20%   13.12MB/s    0:02:10          471.80M  21%   13.70MB/s    0:02:03          485.56M  21%   13.65MB/s    0:02:03          499.16M  22%   13.77MB/s    0:02:01          501.74M  22%   13.94MB/s    0:00:34 (xfr#12, to-chk=162/175)
-charts_v2_1k_v3.json
-        501.74M  22%   13.94MB/s    0:00:34 (xfr#13, to-chk=161/175)
-charts_v2_1k_v3.parquet
-        514.32M  23%   13.83MB/s    0:01:59          531.59M  24%   14.24MB/s    0:01:54          548.04M  24%   14.89MB/s    0:01:48          556.49M  25%   14.06MB/s    0:00:37 (xfr#14, to-chk=160/175)
-diag_step2_anchored_1k.json
-        556.49M  25%   14.06MB/s    0:00:37 (xfr#15, to-chk=159/175)
-diag_step2_capacity_1k.json
-        556.49M  25%   14.06MB/s    0:00:37 (xfr#16, to-chk=158/175)
-diag_step2_capacity_filtered20_1k.json
-        556.50M  25%   14.06MB/s    0:00:37 (xfr#17, to-chk=157/175)
-diag_step2_feasible_1k_K4.json
-        556.50M  25%   14.06MB/s    0:00:37 (xfr#18, to-chk=156/175)
-diag_step2_fm_1k.json
-        556.50M  25%   14.06MB/s    0:00:37 (xfr#19, to-chk=155/175)
-diag_step2_fm_1k_bpm+max_combo+count_total+diff_overall+diff_drain+hit_length.json
-        556.50M  25%   14.06MB/s    0:00:37 (xfr#20, to-chk=154/175)
-diag_step2_structure_1k.json
-        556.50M  25%   14.06MB/s    0:00:37 (xfr#21, to-chk=153/175)
-diag_step2_vs_additive_1k.json
-        556.50M  25%   14.06MB/s    0:00:37 (xfr#22, to-chk=152/175)
-forgetting_10k.json
-        556.55M  25%   14.06MB/s    0:00:37 (xfr#23, to-chk=151/175)
-forgetting_10k_by_k_dt.csv
-        556.56M  25%   14.06MB/s    0:00:37 (xfr#24, to-chk=150/175)
-forgetting_10k_dt_composition.csv
-        556.56M  25%   14.06MB/s    0:00:37 (xfr#25, to-chk=149/175)
-forgetting_10k_dt_reg_acc_klevel.csv
-        556.56M  25%   14.06MB/s    0:00:37 (xfr#26, to-chk=148/175)
-forgetting_10k_dt_reg_acc_kleveldrift.csv
-        556.56M  25%   14.06MB/s    0:00:37 (xfr#27, to-chk=147/175)
-forgetting_10k_dt_reg_acc_konly.csv
-        556.56M  25%   14.06MB/s    0:00:37 (xfr#28, to-chk=146/175)
-forgetting_10k_dt_reg_level_klevel.csv
-        556.57M  25%   14.06MB/s    0:00:37 (xfr#29, to-chk=145/175)
-forgetting_10k_dt_reg_level_kleveldrift.csv
-        556.57M  25%   14.06MB/s    0:00:37 (xfr#30, to-chk=144/175)
-forgetting_10k_dt_reg_level_konly.csv
-        556.57M  25%   14.06MB/s    0:00:37 (xfr#31, to-chk=143/175)
-forgetting_10k_dt_reg_loss_klevel.csv
-        556.57M  25%   14.06MB/s    0:00:37 (xfr#32, to-chk=142/175)
-forgetting_10k_dt_reg_loss_kleveldrift.csv
-        556.57M  25%   14.06MB/s    0:00:37 (xfr#33, to-chk=141/175)
-forgetting_10k_dt_reg_loss_konly.csv
-        556.57M  25%   14.06MB/s    0:00:37 (xfr#34, to-chk=140/175)
-forgetting_10k_dt_reg_narrow.csv
-        556.57M  25%   14.06MB/s    0:00:37 (xfr#35, to-chk=139/175)
-forgetting_10k_gap_dist.csv
-        556.58M  25%   14.06MB/s    0:00:37 (xfr#36, to-chk=138/175)
-forgetting_10k_kernel_curve.csv
-        556.58M  25%   14.06MB/s    0:00:37 (xfr#37, to-chk=137/175)
-forgetting_10k_kernel_scan.csv
-        556.60M  25%   14.06MB/s    0:00:37 (xfr#38, to-chk=136/175)
-forgetting_1k.json
-        556.65M  25%   14.06MB/s    0:00:37 (xfr#39, to-chk=135/175)
-forgetting_1k_by_k_dt.csv
-        556.66M  25%   14.06MB/s    0:00:37 (xfr#40, to-chk=134/175)
-forgetting_1k_dt_composition.csv
-        556.66M  25%   14.06MB/s    0:00:37 (xfr#41, to-chk=133/175)
-forgetting_1k_dt_profile.csv
-        556.66M  25%   14.06MB/s    0:00:37 (xfr#42, to-chk=132/175)
-forgetting_1k_dt_reg_acc_drift.csv
-        556.66M  25%   14.06MB/s    0:00:37 (xfr#43, to-chk=131/175)
-forgetting_1k_dt_reg_acc_klevel.csv
-        556.66M  25%   14.06MB/s    0:00:37 (xfr#44, to-chk=130/175)
-forgetting_1k_dt_reg_acc_kleveldrift.csv
-        556.66M  25%   14.06MB/s    0:00:37 (xfr#45, to-chk=129/175)
-forgetting_1k_dt_reg_acc_konly.csv
-        556.67M  25%   14.06MB/s    0:00:37 (xfr#46, to-chk=128/175)
-forgetting_1k_dt_reg_acc_nodrift.csv
-        556.67M  25%   14.06MB/s    0:00:37 (xfr#47, to-chk=127/175)
-forgetting_1k_dt_reg_level_klevel.csv
-        556.67M  25%   14.06MB/s    0:00:37 (xfr#48, to-chk=126/175)
-forgetting_1k_dt_reg_level_kleveldrift.csv
-        556.67M  25%   14.06MB/s    0:00:37 (xfr#49, to-chk=125/175)
-forgetting_1k_dt_reg_level_konly.csv
-        556.67M  25%   14.06MB/s    0:00:37 (xfr#50, to-chk=124/175)
-forgetting_1k_dt_reg_loss_drift.csv
-        556.67M  25%   14.06MB/s    0:00:37 (xfr#51, to-chk=123/175)
-forgetting_1k_dt_reg_loss_klevel.csv
-        556.68M  25%   14.06MB/s    0:00:37 (xfr#52, to-chk=122/175)
-forgetting_1k_dt_reg_loss_kleveldrift.csv
-        556.68M  25%   14.06MB/s    0:00:37 (xfr#53, to-chk=121/175)
-forgetting_1k_dt_reg_loss_konly.csv
-        556.68M  25%   14.06MB/s    0:00:37 (xfr#54, to-chk=120/175)
-forgetting_1k_dt_reg_loss_nodrift.csv
-        556.68M  25%   14.06MB/s    0:00:37 (xfr#55, to-chk=119/175)
-forgetting_1k_dt_reg_narrow.csv
-        556.68M  25%   14.06MB/s    0:00:37 (xfr#56, to-chk=118/175)
-forgetting_1k_gap_dist.csv
-        556.68M  25%   14.06MB/s    0:00:37 (xfr#57, to-chk=117/175)
-forgetting_1k_kernel_curve.csv
-        556.69M  25%   14.06MB/s    0:00:37 (xfr#58, to-chk=116/175)
-forgetting_1k_kernel_scan.csv
-        556.71M  25%   14.06MB/s    0:00:37 (xfr#59, to-chk=115/175)
-learning_rate_10k.json
-        556.72M  25%   14.06MB/s    0:00:37 (xfr#60, to-chk=114/175)
-learning_rate_10k_by_chart.csv
-        557.52M  25%   14.06MB/s    0:00:37 (xfr#61, to-chk=113/175)
-learning_rate_10k_by_player.csv
-        558.27M  25%   14.05MB/s    0:00:37 (xfr#62, to-chk=112/175)
-learning_rate_10k_by_star.csv
-        558.27M  25%   14.05MB/s    0:00:37 (xfr#63, to-chk=111/175)
-learning_rate_10k_cells.parquet
-        562.49M  25%   15.09MB/s    0:01:46          574.91M  26%   14.44MB/s    0:01:50          587.53M  26%   13.33MB/s    0:01:58          598.28M  27%   11.97MB/s    0:02:11          610.27M  27%   11.36MB/s    0:02:17          620.00M  28%   10.72MB/s    0:02:24          630.32M  28%   10.17MB/s    0:02:31          643.79M  29%   10.66MB/s    0:02:23          650.51M  29%   13.51MB/s    0:00:45 (xfr#64, to-chk=110/175)
-learning_rate_1k.json
-        650.52M  29%   13.51MB/s    0:00:45 (xfr#65, to-chk=109/175)
-learning_rate_1k_by_chart.csv
-        650.65M  29%   13.51MB/s    0:00:45 (xfr#66, to-chk=108/175)
-learning_rate_1k_by_player.csv
-        650.72M  29%   13.51MB/s    0:00:45 (xfr#67, to-chk=107/175)
-learning_rate_1k_by_star.csv
-        650.72M  29%   13.51MB/s    0:00:45 (xfr#68, to-chk=106/175)
-learning_rate_1k_cells.parquet
-        653.44M  29%   10.13MB/s    0:02:29          662.02M  29%   13.42MB/s    0:00:47 (xfr#69, to-chk=105/175)
-order_curve_10k.json
-        662.02M  29%   13.42MB/s    0:00:47 (xfr#70, to-chk=104/175)
-order_curve_10k_cells.parquet
-        664.22M  30%   10.38MB/s    0:02:25          674.48M  30%   10.16MB/s    0:02:27          680.54M  30%    8.58MB/s    0:02:53          690.01M  31%    8.54MB/s    0:02:53          700.66M  31%    8.51MB/s    0:02:52          712.29M  32%    9.01MB/s    0:02:42          723.82M  32%   10.31MB/s    0:02:20          738.70M  33%   11.60MB/s    0:02:03          748.27M  33%   11.33MB/s    0:02:05          758.07M  34%   10.90MB/s    0:02:09          772.32M  34%   11.55MB/s    0:02:01          776.08M  35%   12.83MB/s    0:00:57 (xfr#71, to-chk=103/175)
-order_curve_10k_curves.csv
-        776.15M  35%   12.83MB/s    0:00:57 (xfr#72, to-chk=102/175)
-order_curve_10k_position.csv
-        776.16M  35%   12.83MB/s    0:00:57 (xfr#73, to-chk=101/175)
-order_curve_10k_slope_by_density.csv
-        776.16M  35%   12.83MB/s    0:00:57 (xfr#74, to-chk=100/175)
-order_curve_10k_slope_by_n.csv
-        776.17M  35%   12.83MB/s    0:00:57 (xfr#75, to-chk=99/175) 
-order_curve_10k_slope_by_rate.csv
-        776.17M  35%   12.83MB/s    0:00:57 (xfr#76, to-chk=98/175)
-order_curve_10k_slope_by_star.csv
-        776.17M  35%   12.83MB/s    0:00:57 (xfr#77, to-chk=97/175)
-order_curve_1k.json
-        776.17M  35%   12.83MB/s    0:00:57 (xfr#78, to-chk=96/175)
-order_curve_1k_cells.parquet
-        785.44M  35%   11.14MB/s    0:02:04          790.30M  35%   12.84MB/s    0:00:58 (xfr#79, to-chk=95/175)
-order_curve_1k_curves.csv
-        790.37M  35%   12.84MB/s    0:00:58 (xfr#80, to-chk=94/175)
-order_curve_1k_position.csv
-        790.38M  35%   12.84MB/s    0:00:58 (xfr#81, to-chk=93/175)
-order_curve_1k_slope_by_density.csv
-        790.38M  35%   12.84MB/s    0:00:58 (xfr#82, to-chk=92/175)
-order_curve_1k_slope_by_n.csv
-        790.38M  35%   12.84MB/s    0:00:58 (xfr#83, to-chk=91/175)
-order_curve_1k_slope_by_rate.csv
-        790.38M  35%   12.84MB/s    0:00:58 (xfr#84, to-chk=90/175)
-order_curve_1k_slope_by_star.csv
-        790.38M  35%   12.84MB/s    0:00:58 (xfr#85, to-chk=89/175)
-plays_v2_10k_v3.parquet
-        802.67M  36%   12.92MB/s    0:01:46          817.55M  37%   14.12MB/s    0:01:36          831.93M  37%   14.16MB/s    0:01:34          843.93M  38%   13.88MB/s    0:01:35          856.93M  38%   12.93MB/s    0:01:41          867.91M  39%   12.00MB/s    0:01:49          881.25M  39%   11.75MB/s    0:01:50          895.73M  40%   12.34MB/s    0:01:43          910.12M  41%   12.67MB/s    0:01:39          923.39M  41%   13.19MB/s    0:01:35          935.84M  42%   12.98MB/s    0:01:35          949.37M  43%   12.75MB/s    0:01:36          964.51M  43%   12.93MB/s    0:01:33          980.24M  44%   13.51MB/s    0:01:28          992.76M  44%   13.53MB/s    0:01:27            1.01G  45%   13.68MB/s    0:01:25            1.02G  46%   13.37MB/s    0:01:26            1.04G  46%   13.19MB/s    0:01:26            1.05G  47%   13.38MB/s    0:01:24            1.06G  47%   12.26MB/s    0:01:31            1.07G  48%   12.25MB/s    0:01:30            1.07G  48%   12.87MB/s    0:01:19 (xfr#86, to-chk=88/175)
-plays_v2_1k_v3.parquet
-          1.08G  49%   11.26MB/s    0:01:37            1.10G  49%   11.50MB/s    0:01:34            1.11G  50%   12.87MB/s    0:01:22 (xfr#87, to-chk=87/175)
-practice_vs_time_10k.json
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#88, to-chk=86/175)
-practice_vs_time_10k_first_attempt_year.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#89, to-chk=85/175)
-practice_vs_time_10k_matched_n_span.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#90, to-chk=84/175)
-practice_vs_time_10k_n3_pairs.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#91, to-chk=83/175)
-practice_vs_time_10k_pair_dt.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#92, to-chk=82/175)
-practice_vs_time_10k_pair_gamma_by_n.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#93, to-chk=81/175)
-practice_vs_time_10k_practice_curve.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#94, to-chk=80/175)
-practice_vs_time_10k_slope_by_span.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#95, to-chk=79/175)
-practice_vs_time_10k_span_dose.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#96, to-chk=78/175)
-practice_vs_time_1k.json
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#97, to-chk=77/175)
-practice_vs_time_1k_first_attempt_year.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#98, to-chk=76/175)
-practice_vs_time_1k_matched_n_span.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#99, to-chk=75/175)
-practice_vs_time_1k_n3_pairs.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#100, to-chk=74/175)
-practice_vs_time_1k_pair_dt.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#101, to-chk=73/175)
-practice_vs_time_1k_pair_gamma_by_n.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#102, to-chk=72/175)
-practice_vs_time_1k_practice_curve.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#103, to-chk=71/175)
-practice_vs_time_1k_slope_by_span.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#104, to-chk=70/175)
-practice_vs_time_1k_span_dose.csv
-          1.11G  50%   12.87MB/s    0:01:22 (xfr#105, to-chk=69/175)
-step0_10k.parquet
-          1.11G  50%   13.03MB/s    0:01:21            1.13G  51%   13.67MB/s    0:01:16            1.15G  51%   14.76MB/s    0:01:10            1.16G  52%   14.89MB/s    0:01:08            1.17G  53%   14.48MB/s    0:01:09            1.19G  53%   13.71MB/s    0:01:12            1.20G  54%   13.62MB/s    0:01:12            1.22G  55%   13.59MB/s    0:01:11            1.23G  55%   13.58MB/s    0:01:10            1.25G  56%   13.93MB/s    0:01:07            1.26G  57%   13.90MB/s    0:01:06            1.28G  57%   13.79MB/s    0:01:06            1.29G  58%   13.70MB/s    0:01:05            1.30G  58%   13.02MB/s    0:01:34 (xfr#106, to-chk=68/175)
-step0_1k.csv
-          1.31G  59%   14.86MB/s    0:00:59            1.33G  60%   16.26MB/s    0:00:52            1.35G  61%   17.76MB/s    0:00:47            1.37G  61%   13.26MB/s    0:01:38 (xfr#107, to-chk=67/175)
-step1_10k.csv
-          1.37G  62%   19.42MB/s    0:00:42            1.39G  63%   19.89MB/s    0:00:40            1.41G  64%   20.30MB/s    0:00:38            1.44G  65%   20.32MB/s    0:00:37            1.46G  65%   20.28MB/s    0:00:36            1.48G  66%   20.07MB/s    0:00:35            1.50G  67%   19.89MB/s    0:00:34            1.52G  68%   20.04MB/s    0:00:33            1.54G  69%   20.41MB/s    0:00:31            1.56G  70%   20.39MB/s    0:00:30            1.58G  71%   20.38MB/s    0:00:29            1.61G  72%   20.56MB/s    0:00:28            1.63G  73%   20.54MB/s    0:00:27            1.65G  74%   20.70MB/s    0:00:26            1.67G  75%   20.61MB/s    0:00:25            1.69G  76%   20.42MB/s    0:00:24            1.71G  77%   20.40MB/s    0:00:23            1.74G  78%   20.81MB/s    0:00:22            1.76G  79%   20.89MB/s    0:00:21            1.78G  80%   21.21MB/s    0:00:19            1.80G  81%   21.01MB/s    0:00:18            1.82G  82%   20.82MB/s    0:00:18            1.82G  82%   14.56MB/s    0:01:59 (xfr#108, to-chk=66/175)
-step1_10k.json
-          1.82G  82%   14.56MB/s    0:01:59 (xfr#109, to-chk=65/175)
-step1_10k.parquet
-          1.84G  83%   18.62MB/s    0:00:19            1.85G  83%   16.47MB/s    0:00:21            1.86G  84%   14.64MB/s    0:00:23            1.88G  84%   12.54MB/s    0:00:25            1.89G  85%   12.83MB/s    0:00:24            1.90G  86%   12.80MB/s    0:00:23            1.92G  86%   12.66MB/s    0:00:22            1.93G  87%   12.44MB/s    0:00:21            1.94G  87%   11.88MB/s    0:00:22            1.95G  88%   11.18MB/s    0:00:22            1.95G  88%   14.36MB/s    0:02:09 (xfr#110, to-chk=64/175)
-step1_1k.csv
-          1.97G  89%   13.17MB/s    0:00:17            1.99G  90%   15.33MB/s    0:00:13            2.00G  90%   14.47MB/s    0:02:11 (xfr#111, to-chk=63/175)
-step1_1k.json
-          2.00G  90%   14.47MB/s    0:02:11 (xfr#112, to-chk=62/175)
-step1_1k.parquet
-          2.01G  91%   16.57MB/s    0:00:11            2.01G  91%   14.46MB/s    0:02:12 (xfr#113, to-chk=61/175)
-step2_10k_bias_F0_loss.npz
-          2.02G  91%   14.48MB/s    0:02:12 (xfr#114, to-chk=60/175)
-step2_10k_mf_dot_F0_loss.npz
-          2.02G  91%   14.49MB/s    0:02:13 (xfr#115, to-chk=59/175)
-step2_10k_mirt_F0_loss.npz
-          2.03G  91%   14.49MB/s    0:02:13 (xfr#116, to-chk=58/175)
-step2_10k_summary_loss.json
-          2.03G  91%   14.49MB/s    0:02:13 (xfr#117, to-chk=57/175)
-step2_1k_bias_F0_cov_loss.npz
-          2.03G  91%   14.50MB/s    0:02:13 (xfr#118, to-chk=56/175)
-step2_1k_bias_F0_loss.npz
-          2.03G  91%   18.83MB/s    0:00:09            2.03G  92%   14.51MB/s    0:02:13 (xfr#119, to-chk=55/175)
-step2_1k_mf_dot_F0_cm3p_dim128_loss.npz
-          2.04G  92%   14.54MB/s    0:02:14 (xfr#120, to-chk=54/175)
-step2_1k_mf_dot_F0_cm3p_dim32_loss.npz
-          2.05G  92%   14.55MB/s    0:02:14 (xfr#121, to-chk=53/175)
-step2_1k_mf_dot_F0_cm3p_dim32_pdt_loss.npz
-          2.05G  92%   14.56MB/s    0:02:14 (xfr#122, to-chk=52/175)
-step2_1k_mf_dot_F0_cm3p_dim512_loss.npz
-          2.05G  93%   19.93MB/s    0:00:07            2.07G  93%   18.56MB/s    0:00:07            2.10G  95%   14.73MB/s    0:02:15 (xfr#123, to-chk=51/175)
-step2_1k_mf_dot_F0_cm3p_dim64_loss.npz
-          2.11G  95%   14.75MB/s    0:02:16 (xfr#124, to-chk=50/175)
-step2_1k_mf_dot_F0_cm3p_dim64_pdt_loss.npz
-          2.11G  95%   14.78MB/s    0:02:16 (xfr#125, to-chk=49/175)
-step2_1k_mf_dot_F0_cm3p_dim8_loss.npz
-          2.11G  95%   14.78MB/s    0:02:16 (xfr#126, to-chk=48/175)
-step2_1k_mf_dot_F0_cm3p_loss.npz
-          2.12G  95%   14.79MB/s    0:02:16 (xfr#127, to-chk=47/175)
-step2_1k_mf_dot_F0_cm3p_pd_loss.npz
-          2.12G  95%   25.65MB/s    0:00:03            2.12G  95%   14.80MB/s    0:02:16 (xfr#128, to-chk=46/175)
-step2_1k_mf_dot_F0_cm3p_pdt_loss.npz
-          2.12G  96%   14.80MB/s    0:02:16 (xfr#129, to-chk=45/175)
-step2_1k_mf_dot_F0_cov_dim8_loss.npz
-          2.12G  96%   14.81MB/s    0:02:16 (xfr#130, to-chk=44/175)
-step2_1k_mf_dot_F0_cov_loss.npz
-          2.12G  96%   14.81MB/s    0:02:16 (xfr#131, to-chk=43/175)
-step2_1k_mf_dot_F0_cov_pd_loss.npz
-          2.12G  96%   14.82MB/s    0:02:16 (xfr#132, to-chk=42/175)
-step2_1k_mf_dot_F0_cov_pdt_loss.npz
-          2.13G  96%   14.83MB/s    0:02:16 (xfr#133, to-chk=41/175)
-step2_1k_mf_dot_F0_dim2_loss.npz
-          2.13G  96%   14.83MB/s    0:02:16 (xfr#134, to-chk=40/175)
-step2_1k_mf_dot_F0_dim3_loss.npz
-          2.13G  96%   14.83MB/s    0:02:16 (xfr#135, to-chk=39/175)
-step2_1k_mf_dot_F0_dim4_loss.npz
-          2.13G  96%   14.84MB/s    0:02:16 (xfr#136, to-chk=38/175)
-step2_1k_mf_dot_F0_dim8_loss.npz
-          2.13G  96%   14.84MB/s    0:02:16 (xfr#137, to-chk=37/175)
-step2_1k_mf_dot_F0_dim8_pdt_loss.npz
-          2.13G  96%   14.84MB/s    0:02:16 (xfr#138, to-chk=36/175)
-step2_1k_mf_dot_F0_loss.npz
-          2.13G  96%   14.85MB/s    0:02:16 (xfr#139, to-chk=35/175)
-step2_1k_mf_dot_F0_pdt_loss.npz
-          2.14G  96%   14.86MB/s    0:02:17 (xfr#140, to-chk=34/175)
-step2_1k_mirt_F0_dim2_loss.npz
-          2.14G  96%   14.86MB/s    0:02:17 (xfr#141, to-chk=33/175)
-step2_1k_mirt_F0_dim32_loss.npz
-          2.14G  97%   14.87MB/s    0:02:17 (xfr#142, to-chk=32/175)
-step2_1k_mirt_F0_dim3_loss.npz
-          2.14G  97%   14.87MB/s    0:02:17 (xfr#143, to-chk=31/175)
-step2_1k_mirt_F0_dim4_loss.npz
-          2.14G  97%   27.19MB/s    0:00:02            2.14G  97%   14.87MB/s    0:02:17 (xfr#144, to-chk=30/175)
-step2_1k_mirt_F0_dim8_loss.npz
-          2.15G  97%   14.87MB/s    0:02:17 (xfr#145, to-chk=29/175)
-step2_1k_mirt_F0_dnonneg_loss.npz
-          2.15G  97%   14.87MB/s    0:02:17 (xfr#146, to-chk=28/175)
-step2_1k_mirt_F0_dsimplex_loss.npz
-          2.15G  97%   14.87MB/s    0:02:18 (xfr#147, to-chk=27/175)
-step2_1k_mirt_F0_loss.npz
-          2.16G  97%   14.86MB/s    0:02:18 (xfr#148, to-chk=26/175)
-step2_1k_mirt_F0_pd_dnonneg_loss.npz
-          2.16G  97%   24.61MB/s    0:00:01            2.16G  97%   14.86MB/s    0:02:18 (xfr#149, to-chk=25/175)
-step2_1k_mirt_F0_pd_dsimplex_loss.npz
-          2.16G  98%   14.87MB/s    0:02:18 (xfr#150, to-chk=24/175)
-step2_1k_mirt_F0_pd_loss.npz
-          2.17G  98%   14.87MB/s    0:02:19 (xfr#151, to-chk=23/175)
-step2_1k_mirt_F0_ustep1_loss.npz
-          2.17G  98%   14.87MB/s    0:02:19 (xfr#152, to-chk=22/175)
-step2_1k_mirt_F1_dim2_pd_loss.npz
-          2.17G  98%   14.87MB/s    0:02:19 (xfr#153, to-chk=21/175)
-step2_1k_mirt_F1_dim3_pd_loss.npz
-          2.17G  98%   14.87MB/s    0:02:19 (xfr#154, to-chk=20/175)
-step2_1k_mirt_F1_dim4_pd_loss.npz
-          2.17G  98%   14.87MB/s    0:02:19 (xfr#155, to-chk=19/175)
-step2_1k_mirt_F1_dim8_pd_loss.npz
-          2.17G  98%   14.87MB/s    0:02:19 (xfr#156, to-chk=18/175)
-step2_1k_mirt_F1_loss.npz
-          2.18G  98%   24.93MB/s    0:00:01            2.18G  98%   14.87MB/s    0:02:19 (xfr#157, to-chk=17/175)
-step2_1k_mirt_F1_pd_loss.npz
-          2.18G  98%   14.87MB/s    0:02:19 (xfr#158, to-chk=16/175)
-step2_1k_mirt_F2_py_loss.npz
-          2.18G  98%   14.87MB/s    0:02:19 (xfr#159, to-chk=15/175)
-step2_1k_mirt_exp_F0_dim2_loss.npz
-          2.18G  98%   14.87MB/s    0:02:20 (xfr#160, to-chk=14/175)
-step2_1k_mirt_exp_F0_dim3_loss.npz
-          2.18G  98%   14.87MB/s    0:02:20 (xfr#161, to-chk=13/175)
-step2_1k_mirt_exp_F0_dim4_loss.npz
-          2.19G  99%   14.87MB/s    0:02:20 (xfr#162, to-chk=12/175)
-step2_1k_mirt_exp_F0_dim8_loss.npz
-          2.19G  99%   14.86MB/s    0:02:20 (xfr#163, to-chk=11/175)
-step2_1k_mirt_exp_F0_loss.npz
-          2.19G  99%   17.13MB/s    0:00:01            2.19G  99%   14.85MB/s    0:02:20 (xfr#164, to-chk=10/175)
-step2_1k_mirt_exp_F0_pd_loss.npz
-          2.20G  99%   14.85MB/s    0:02:21 (xfr#165, to-chk=9/175) 
-step2_1k_mirt_exp_F1_loss.npz
-          2.20G  99%   14.85MB/s    0:02:21 (xfr#166, to-chk=8/175)
-step2_1k_mirt_exp_F1_pd_loss.npz
-          2.20G  99%   14.29MB/s    0:00:00            2.20G  99%   14.85MB/s    0:02:21 (xfr#167, to-chk=7/175)
-step2_1k_summary_loss.json
-          2.20G  99%   14.85MB/s    0:02:21 (xfr#168, to-chk=6/175)
-whitelist_10k.csv
-          2.21G  99%   14.86MB/s    0:02:21 (xfr#169, to-chk=5/175)
-whitelist_10k_dropped.csv
-          2.21G  99%   14.86MB/s    0:02:21 (xfr#170, to-chk=4/175)
-whitelist_10k_report.json
-          2.21G  99%   14.86MB/s    0:02:21 (xfr#171, to-chk=3/175)
-whitelist_1k.csv
-          2.21G  99%   14.86MB/s    0:02:21 (xfr#172, to-chk=2/175)
-whitelist_1k_dropped.csv
-          2.21G  99%   14.86MB/s    0:02:21 (xfr#173, to-chk=1/175)
-whitelist_1k_report.json
-          2.21G 100%   14.86MB/s    0:02:21 (xfr#174, to-chk=0/175)          2.21G 100%   14.85MB/s    0:02:21 (xfr#174, to-chk=0/175)
-[exit=0] Tue Oct 13 09:13:56 PM CST 2026
-
-=================== rsync -a -z -h --partial --partial-dir=.rsync-partial --timeout=120 --info=name,progress2 --exclude=.rsync-partial/ --rsync-path=mkdir -p /hpc2hdd/home/aiaa3111_l01_008/DCR/data /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/extracted /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/extracted_10k /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/cm3p_embeddings /hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed /hpc2hdd/home/aiaa3111_l01_008/DCR/data/interim /hpc2hdd/home/aiaa3111_l01_008/DCR/data/osu_cache && rsync data/interim/ aiaa3111_l01_008@hpc2login.hpc.hkust-gz.edu.cn:/hpc2hdd/home/aiaa3111_l01_008/DCR/data/interim/ ===================
-Tue Oct 13 09:13:56 PM CST 2026
-./
-step0f_1k/
-step0f_1k/missing_sets.txt
-         11.61K   0%    0.00kB/s    0:00:00           11.61K   0%    0.00kB/s    0:00:00 (xfr#1, to-chk=1/4)         11.61K   0%    0.00kB/s    0:00:00 (xfr#1, to-chk=0/4)
-step0f_1k/pages.jsonl
-          4.00M 100%   88.42MB/s    0:00:00 (xfr#2, to-chk=0/4)          4.00M 100%   60.35MB/s    0:00:00 (xfr#2, to-chk=0/4)
-[exit=0] Tue Oct 13 09:13:59 PM CST 2026
-
-=================== rsync -a -z -h --partial --partial-dir=.rsync-partial --timeout=120 --info=name,progress2 --exclude=.rsync-partial/ --rsync-path=mkdir -p /hpc2hdd/home/aiaa3111_l01_008/DCR/data /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/extracted /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/extracted_10k /hpc2hdd/home/aiaa3111_l01_008/DCR/data/raw/cm3p_embeddings /hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed /hpc2hdd/home/aiaa3111_l01_008/DCR/data/interim /hpc2hdd/home/aiaa3111_l01_008/DCR/data/osu_cache && rsync data/osu_cache.zip aiaa3111_l01_008@hpc2login.hpc.hkust-gz.edu.cn:/hpc2hdd/home/aiaa3111_l01_008/DCR/data/ ===================
-Tue Oct 13 09:13:59 PM CST 2026
-osu_cache.zip
-         32.77K   0%    0.00kB/s    0:00:00           17.79M   9%   16.89MB/s    0:00:10           33.03M  17%   15.66MB/s    0:00:09           44.20M  22%   13.97MB/s    0:00:10           58.95M  30%   14.00MB/s    0:00:09           71.73M  37%   12.83MB/s    0:00:09           87.36M  45%   12.92MB/s    0:00:07          104.82M  54%   14.43MB/s    0:00:05          120.06M  62%   14.47MB/s    0:00:04          137.79M  71%   15.64MB/s    0:00:03          152.01M  79%   15.34MB/s    0:00:02          166.00M  86%   14.51MB/s    0:00:01          182.55M  94%   14.90MB/s    0:00:00          192.33M 100%   14.27MB/s    0:00:12 (xfr#1, to-chk=0/1)        192.33M 100%   14.11MB/s    0:00:13 (xfr#1, to-chk=0/1)
-[exit=0] Tue Oct 13 09:14:14 PM CST 2026
-
-ALL DONE (all batches exit=0)  Tue Oct 13 09:14:14 PM CST 2026
-
---------------- 传完后在远端做的事（手动，确认计数无误再删 zip）---------------
-ssh aiaa3111_l01_008@hpc2login.hpc.hkust-gz.edu.cn '
-  cd /hpc2hdd/home/aiaa3111_l01_008/DCR/data
-  unzip -q -n osu_cache.zip -d .        # -n 只补缺的，不动远端已有的 ~9,802 个
-  ls osu_cache/*.osu | wc -l            # 期望 21,950
-  # 计数确认无误后再执行下一行：
-  # rm -f osu_cache.zip
-'

@@ -32,6 +32,24 @@
 `cm3p_embed.slurm` 的默认值是"文件夹里自带"的路径：`OSU_CACHE=$REPO/data/osu_cache`、
 HF 权重优先 `$REPO/data/raw/hf_cache`（有就自动用），所以整份拷贝的自洽场景不需要额外导出变量。
 
+### 0.5 代码同步：远端 `git pull`
+
+上传的文件夹从 2026-10-13 起带 `.git`，远端 `/hpc2hdd/.../DCR` 就是正常 git checkout；
+仓库是 **public**，走 HTTPS 免密钥，所以改代码以后不用再 rsync：
+
+    ssh aiaa3111_l01_008@hpc2login.hpc.hkust-gz.edu.cn
+    cd /hpc2hdd/home/aiaa3111_l01_008/DCR
+    git pull          # 已设 pull.ff=only，只做 fast-forward
+    git status        # 只应看到 slurm_*.out/.err 这类未跟踪文件
+
+本地流程：改完 → `git add/commit/push` → 远端 `git pull`。数据（`data/`）仍走
+`copy_folder.sh` 的 rsync 批次；代码批次保留作兜底（本地始终处于已提交状态）。
+⚠️ **不要在服务器上 commit**（以本地为准），`.git` 不在 rsync 范围内，pull 出来的 refs 不会被覆盖。
+远端 `.git` 万一丢了，重建：
+
+    git init -q && git remote add origin https://github.com/mikechu-2006/DCR.git
+    git fetch origin && git checkout -f -B main origin/main && git config pull.ff only
+
 ---
 
 ## 1. 登录节点（有网）一次做完四件事
