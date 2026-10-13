@@ -1,0 +1,29 @@
+# 10k 全流程（需要 10k dump，约 190 MB parquet 产物）。
+#   python main.py -c configs/exp_10k.yaml
+name: full_10k
+tag: 10k
+io:
+  out_format: parquet     # 10k 的 play 表 1300 万行，CSV 没有意义
+steps:
+  step0:
+    version: preprocess
+    # whitelist_10k.csv（step0g 产物）存在时自动作为 --whitelist 输入；10k 的白名单
+    # 与 1k 相同（10k dump 没有 osu_beatmaps.sql，借用 1k 的表）
+    params:
+      dump_dir: data/raw/extracted_10k/2026_09_01_performance_mania_top_10000
+      beatmap_src: data/raw/extracted/2026_09_01_performance_mania_top_1000
+  step1:
+    version: clean
+    params:
+      train_frac: 0.70
+      split_method: pair-random
+      split_seed: 20260928
+      acc_floor: 0.90
+      drop_frac: 0.30
+      formats: parquet
+  step2:
+    version: predict
+    params:
+      models: [bias, mf_dot, mirt]
+      dim: 16
+      epochs: 60

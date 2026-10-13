@@ -62,7 +62,7 @@ step2 不知道也不使用 star；step3 不训练 play 级模型，只把 step2
 3. **步长均匀**：ACC 在高分段（0.98→0.99）的分辨率远低于 loss 空间，直接用 ACC 做 MSE 会让高分段样本几乎不起作用。
 
 代价（必须知道）：loss 单位自带 `1/(1−ACC)` 放大因子，所以**高 ACC 的样本在 loss 空间被放大**，
-同一模型在 ACC 单位下的"学习率排序"会翻转（见 [learning_rate_heterogeneity.md](learning_rate_heterogeneity.md)）。
+同一模型在 ACC 单位下的"学习率排序"会翻转（见 [learning_rate_heterogeneity.md](archive/learning_rate_heterogeneity.md)）。
 报告时**同时给 loss 与 pp 两套数**（§7 就是这么报的）。
 
 ### 2.2 观测单位：**play，唯一口径**
@@ -94,31 +94,40 @@ pair 有空洞），所以 `ln(playcount_cur)` 是"**该 cell 的第几条记录
 
 ### 2.3 泛化设定：**留出 30% 的 `(player_id, beatmap_id)` 有序对**（唯一设定）
 
+> **2026-10-12 起，划分在 step1 完成。** step1 按 `--split-method pair-random`（默认）把
+> 有序对随机分成 train / test（train 比例 `--train-frac`，默认 0.70），结果写成 `split` 列
+> （`"train"` / `"test"` / `"dropped"`）；step2 **只按这一列取数**，自己不划分。
+> 参数与列语义见 [step1_cleaning.md](step1_cleaning.md) §1.1。
+> 本节 §7 的历史数字来自划分还在 step2 的旧口径（见 §7 开头的口径提示）。
+
 ```
-pairs      = 有序对全集（默认取自 step0）
-test_pairs = 固定 seed 下随机 30%
-train      = step1 中 pair ∉ test_pairs 的全部 play      （step1，清洗后）
-test       = step0 中 pair ∈  test_pairs 的全部 play      （step0，未清洗）
+train   = step1 表中 split == "train"   的 play      （已清洗，用于拟合）
+test    = step1 表中 split == "test"    的 play      （未清洗，只用于算指标）
+dropped = step1 表中 split == "dropped" 的 play      （划入 train 但被清洗删掉，忽略）
 ```
 
-- **切分单位是有序对**，不是 cell、不是谱面、不是 play。一个 pair 只会落在一边。
+- **切分单位是有序对**（`pair-random`），不是 cell、不是谱面、不是 play。一个 pair 只会落在一边。
+  step1 的 `beatmap-random` 是**另一种泛化设定**（整张谱面留出，测试谱面在训练里完全不可见），
+  要在文档里写明用的是哪一种；本文档 §7 的数字全部是 `pair-random`。
 - **谱面与玩家都不留出**：留出的只是"某个玩家打某张图"这一对。所以每个测试谱面在训练里
   仍有别的玩家的 play，模型**能给测试对打分**（不像"留出谱面"那样是冷启动）。§7 实测覆盖率 **99.6%**。
-- **测试集取自 step0，这是刻意的。** step1 的两条规则（ACC > 0.90、每玩家最早 30%）是
-  **训练侧的处理手段**；用它们去筛测试集就是"以处理结果为条件"（[cleaning_plan.md](cleaning_plan.md) §3.2）。
-  所以测试标签用**未清洗**的 step0：它包含低 ACC 的乱打与入门期游玩，是**目标总体**的样子。
+- **测试集始终是未清洗的标签，这是刻意的。** step1 的两条规则（ACC > 0.90、每玩家最早 30%）是
+  **训练侧的处理手段**；用它们去筛测试集就是"以处理结果为条件"（[archive/cleaning_plan.md](archive/cleaning_plan.md) §3.2）。
+  所以测试标签用**未清洗**的取值：新流程里 step1 对 `split == "test"` 的行不做任何清洗，
+  旧路径里直接取 step0。它包含低 ACC 的乱打与入门期游玩，是**目标总体**的样子。
   模型在清洗过的数据上训练，却在没清洗过的数据上被评价 —— 这正是要测的东西。
-- **固定 seed**（`--split-seed`，默认 `20260928`），单次划分。测试集对所有配置完全相同，
+- **固定 seed**（step1 的 `--split-seed`，默认 `20260928`），单次划分。测试集对所有配置完全相同，
   RMSE **跨配置直接可比**，不需要 `excess` 之类的相对量。
-- 有序对池子由 `--pair-universe` 决定，默认 `step0`（见 §12.1 的讨论与 §7 的对照）。
+- **池子就是 step1 读到的整张 play 表**（= step0 的全部有序对）：测试对不被清洗筛过，
+  训练/测试又是同一批对的互补划分 —— §12.1 的老问题因此两边都满足。
 
 ### 2.4 特征三档
 
 | 档 | 特征 | 默认 | 依据 |
 |---|---|---|---|
 | **F0 静态** | 只用 `(player_id, beatmap_id)` 的 id → 潜向量 `P/C/D` + 偏置 | **✔** | 旧 stage-1 基线 |
-| **F1 + 顺序** | 加 `ln(playcount_cur)`（§2.2，原值，不重排） | 可选 | cell 内 ΔACC ≈ **0.0134·ln(n)**，60–100 次饱和；`beta_loss` 均值 **−0.377**（[play_order_analysis.md](play_order_analysis.md)、[learning_rate_heterogeneity.md](learning_rate_heterogeneity.md)） |
-| **F2 + 时间** | 玩家侧换成 `(player_id, 自然年)` 实体 + 年内线性漂移 | **✘（非默认，保留开关）** | 练习占 80–90%、日历漂移 10–20%（cell 内 γ≈0.146 pp/年）；冷启动首把 ≈1.0–1.1 pp/年（[practice_vs_time.md](practice_vs_time.md)） |
+| **F1 + 顺序** | 加 `ln(playcount_cur)`（§2.2，原值，不重排） | 可选 | cell 内 ΔACC ≈ **0.0134·ln(n)**，60–100 次饱和；`beta_loss` 均值 **−0.377**（[play_order_analysis.md](archive/play_order_analysis.md)、[learning_rate_heterogeneity.md](archive/learning_rate_heterogeneity.md)） |
+| **F2 + 时间** | 玩家侧换成 `(player_id, 自然年)` 实体 + 年内线性漂移 | **✘（非默认，保留开关）** | 练习占 80–90%、日历漂移 10–20%（cell 内 γ≈0.146 pp/年）；冷启动首把 ≈1.0–1.1 pp/年（[practice_vs_time.md](archive/practice_vs_time.md)） |
 
 **F2 默认关闭**，`--features F2 --entity player-year` 显式开启（§4.2）。
 
@@ -134,7 +143,8 @@ test       = step0 中 pair ∈  test_pairs 的全部 play      （step0，未�
 
 ## 3. 数据准备：直接用 step0 / step1，不产中间表
 
-step2 **直接读 `step1_{tag}`（训练）与 `step0_{tag}`（测试）**（`.parquet` 优先），不写任何中间表。
+step2 **只读 `step1_{tag}`**（`split` 列区分 train/test/dropped），**不写任何中间表**；
+训练用 `split == "train"` 的行，指标算在 `split == "test"` 的行上。
 内存里只做三件事：
 
 | 步骤 | 说明 |
@@ -298,16 +308,16 @@ log**。写成 log-sum-exp 就是 `ln Σ_i e^(ln D_mi − S_i)`；各项差距�
 ### 5.1 切分：30% 有序对（唯一设定，§2.3）
 
 ```
-ukey      = np.unique(pair_key)                       # 有序对全集（--pair-universe，默认 step0）
-is_test   = default_rng(20260928).random(len(ukey)) < 0.30
-train     = step1 rows with pair ∉ test_pairs
-test      = step0 rows with pair ∈  test_pairs
-test_clean= step1 rows with pair ∈  test_pairs        # 次要口径，见 §6.2
+lab   = step1 表的 split 列（--split-col，默认 "split"）
+train = step1 rows with lab == "train"      # 拟合只用这些行
+test  = step1 rows with lab == "test"       # 指标只在这些行上算
 ```
 
-- 一个 pair 只在一边；同一 pair 的所有 play（step0 与 step1 的）都归同一边。
-- 玩家与谱面**都不留出**（§2.3）。
+- 一个 pair 只在一边；同一 pair 的所有 play 都归同一边（step1 划分时即保证，step2 每次再校验）。
+- 玩家与谱面**都不留出**（§2.3；`beatmap-random` 例外，那时谱面是留出的）。
 - 单次固定划分；测试集固定 → RMSE 跨配置直接可比。
+- **只有一个测试口径**：step1 不对 test 行做清洗，所以测试标签就是原始标签；
+  旧版那种"test 对的清洗标签"副口径已随 step2 自划分一起取消。
 - **不再有双 eval 集**（初版的 E_full / E_clean 取消）：只有这一个测试集。
   训练侧处理（若将来引入收敛过滤等）**只作用于训练集**（`cleaning_plan.md` §3.2 的原则不变）。
 
@@ -373,7 +383,7 @@ test_clean= step1 rows with pair ∈  test_pairs        # 次要口径，见 §6
 | A2 | **`mirt`** | 主候选 |
 | B1 | `mirt` + F1 | 顺序特征是否值钱 |
 | B2 | `mirt` + F2 | 时间特征是否值钱（**非默认，仅消融**） |
-| C1 | `mirt` + `--pair-universe step1` | 换有序对池子（§12.1） |
+| C1 | step1 换 `--split-method beatmap-random` | 谱面级留出（更严格的泛化设定，见 [step1_cleaning.md](step1_cleaning.md) §1.1） |
 
 **验收标准（建议）：**
 
@@ -386,13 +396,23 @@ test_clean= step1 rows with pair ∈  test_pairs        # 次要口径，见 §6
 
 ## 7. 实测
 
+> **口径提示（2026-10-12）**：本节全部数字产生于「划分在 step2、step1 对**全部行**做清洗」的旧口径。
+> 当时的开关 `--pair-universe` / `--test-pair-frac` / `--split-seed` / `--split-from self`
+> 已随划分迁到 step1 一并移除，正文里提到它们的地方（含 §7 的换池子消融、§8.1 的文件名后缀）
+> 都只是历史记录。
+> 现在划分由 step1 的 `--split-method` / `--train-frac` / `--split-seed` 决定，
+> **测试对集合与本节完全相同**（pair-random + 同一 seed，已实测逐对一致；10k 的
+> `n_pairs`/`n_test_pairs` 也逐值相同），但训练行多出 **454（1k）/ 762（10k）** 行
+> —— 清洗的分母从"该玩家全部行"改成"该玩家 train 行"。因此本节 RMSE 在新口径下会在小数点后
+> 第 3–4 位有差异；要逐位复现本节数字，请用 2026-10-12 之前的提交运行。
+
 跑法：`python scripts/step2_predict.py --tag 1k --models bias,mf_dot,mirt --epochs 60`；
 10k 额外加 `--batch 32768`。**torch 实现**：`--device auto`（本机 `torch 2.13.0+cpu`，6 线程 CPU）。
 
 > 本节全部数字已于 2026-10-04 用 torch 引擎**原样复跑**：与旧 numpy 实现在同一划分、同一初值下
 > **逐条一致**（全部指标最大差 `5e-6`，即 JSON 六位小数的舍入），因此下表数字不变，只更新了运行时间。
 
-### 1k — 划分与规模（默认 `--pair-universe step0`）
+### 1k — 划分与规模（旧口径：默认 `--pair-universe step0`）
 
 | 量 | 值 |
 |---|---|
@@ -647,10 +667,9 @@ test_clean= step1 rows with pair ∈  test_pairs        # 次要口径，见 §6
 
 ### 8.1 潜向量文件
 
-`data/processed/step2_{tag}_{model}_{features}{_dimN}{_pd}{_dnonneg|_dsimplex}{_py}{_ustep1}_{target}.npz`
+`data/processed/step2_{tag}_{model}_{features}{_dimN}{_pd}{_dnonneg|_dsimplex}{_py}_{target}.npz`
 （`_dimN` 仅当 `--dim ≠ 16`；同上，`wd`/`epochs`/`seed` 等超参只记在 summary 的 `args` 里）
-（`_pd` 仅当 `--p-drift logpc`；`_d*` 仅当 `--d-constraint` 非默认；`_py` 仅当 `--entity player-year`；
-`_ustep1` 仅当 `--pair-universe step1`）：
+（`_pd` 仅当 `--p-drift logpc`；`_d*` 仅当 `--d-constraint` 非默认；`_py` 仅当 `--entity player-year`）：
 
 ```
 entity_ids    int64  (n_entities,)      # player_id；F2 时是 player_id*100+(year-2000)
@@ -712,9 +731,9 @@ bm            f32    (n_charts,)
 
 | # | 断言 | 期望 |
 |---|---|---|
-| 1 | `pair_never_crosses_split`：任一有序对的 play 只出现在一侧 | 恒成立 |
+| 1 | `pair_never_crosses_split`：任一划分单位（有序对；`beatmap-random` 时是谱面）的 play 只出现在一侧。`dropped` 行算 train 侧 | 恒成立 |
 | 2 | `train_and_test_disjoint`：训练行的 pair 与测试行的 pair 交集为空 | 恒成立 |
-| 3 | `test_pair_frac`：测试对数 / 池子对数 ≈ 0.30 | ±1% |
+| 3 | `test_pair_frac`：观测 test 单位占比 vs **step1 报告里的实际比例**（±2%）；报告 json 不在时只记录观测值 | 见左 |
 | 4 | `loss_in_range`：测试（step0）`loss ∈ [−12.4663, −0.2669]` | 恒成立 |
 | 5 | `coverage_reported`：每个配置都报覆盖率与 n_scored | 恒成立 |
 | 6 | `vocab_from_train_only`：词表 id 集合 == 训练行里出现的 id 集合 | 恒成立 |
@@ -736,9 +755,9 @@ bm            f32    (n_charts,)
 | `--epochs` / `--lr` / `--wd` / `--batch` | 60 / 0.02 / 1e-4 / 8192 | 优化 |
 | `--features` | `F0` | `F0 / F1 / F2`（§2.4） |
 | `--entity` | `player` | `player / player-year`（F2） |
-| `--pair-universe` | `step0` | 有序对池子取自哪张表（§12.1） |
-| `--test-pair-frac` | 0.30 | 测试对比例 |
-| `--split-seed` | 20260928 | 划分 seed |
+| `--train-path` | `{proc_dir}/step1_{tag}.{parquet,csv}` | step1 的输出表：train/test/dropped 都在它的 `split` 列里 |
+| `--split-col` | `split` | 读的标签列名 |
+| `--proc-dir` / `--out-dir` | `data/processed` | 输入目录 / 产物目录（`main.py` 会把后者指到实验目录的 `results/`） |
 | `--seed` | 0 | 训练 seed（初始化 / 打乱） |
 | `--eval-every` | 20 | 每多少个 epoch 打印一次测试 RMSE（仅监控） |
 | `--p-drift` | `none` | `none / logpc / time`：`logpc` = `P_eff = P + Pc·ln(playcount_cur)`（§4.4a）；`time` = `P_eff = P + Pc·t`，t = 距训练集平均时间戳的年数（§7f） |
@@ -755,14 +774,20 @@ bm            f32    (n_charts,)
 | `--threads` | 0 | `torch.set_num_threads()`；0 = 不动默认值（跨机器复现需相同线程数） |
 
 ```bash
-# 1k 主表
+# 推荐：走统一入口（step1 划分 + step2 训练，产物收进 experiments_{时间戳}/）
+python main.py -c configs/exp_std_1k.yaml
+python main.py -c configs/exp_std_1k.yaml --set steps.step2.params.dim=32 --set name=dim32
+
+# 直接跑脚本（先跑 step1 生成带 split 列的表）
+python scripts/step1_clean.py --tag 1k
 python scripts/step2_predict.py --tag 1k --models bias,mf_dot,mirt --epochs 60
 # 顺序特征消融
 python scripts/step2_predict.py --tag 1k --models mirt --features F1
 # 时间特征消融（非默认）
 python scripts/step2_predict.py --tag 1k --models mirt --features F2 --entity player-year
-# 换有序对池子
-python scripts/step2_predict.py --tag 1k --models mirt --pair-universe step1
+# 谱面级留出（划分换法在 step1）
+python scripts/step1_clean.py --tag 1k --split-method beatmap-random
+python scripts/step2_predict.py --tag 1k --models mirt
 # 10k
 python scripts/step2_predict.py --tag 10k --models bias,mf_dot,mirt --epochs 60 --batch 32768
 ```
@@ -771,12 +796,12 @@ python scripts/step2_predict.py --tag 10k --models bias,mf_dot,mirt --epochs 60 
 
 ## 12. 未决问题（需要拍板）
 
-1. **有序对池子取 step0 还是 step1？**（`--pair-universe`，默认 **step0**）
-   - **step0**：测试对是"全部有序对"的随机 30%，**不被清洗筛过** → 符合"测试集不由处理手段筛"的原则。
-     代价：测试对里有一批在 step1 里没有记录的对（1k 的池子 866,616 对，step1 只有 577,999）。
-   - **step1**：训练与测试是"同一批对"的互补划分，没有浪费；但**测试对本身是被清洗选出来的**
-     （§7 实测：RMSE 1.11 vs 1.46，明显更容易）。
-   - 本文档默认 step0，理由与 §7 的对照都写在上面。
+1. ~~有序对池子取 step0 还是 step1？~~ **已定（2026-10-12）**：池子 = step1 读到的那张 play 表
+   （= step0 的全部有序对，1k 866,616 对），划分在 step1 完成，**清洗只作用于 train 行** ——
+   测试对既不被清洗筛过，训练/测试又是同一批对的互补划分，两个诉求同时满足。
+   旧口径里"测试对有一批在 step1 里没有记录"的浪费也消失了：行全部保留，只是被标成
+   `train` / `test` / `dropped`。`beatmap-random`（整张谱面留出）是另一种更严格的泛化设定，
+   见 [step1_cleaning.md](step1_cleaning.md) §1.1 —— 值不值得作为主口径单独测，是新的未决问题。
 2. **F2 到底有没有用？** 现在它 RMSE 更低但覆盖率掉 16 pp，**必须换成同一子集再比**
    （例如只在"F2 也能打分的行"上重算 F0 的 RMSE）。建议下一步就做这个对照。
 3. **要不要加 paired bootstrap CI？** §6.1 列了，但脚本还没实现；主表里 `mf_dot` 与 `mirt` 只差 0.2%，

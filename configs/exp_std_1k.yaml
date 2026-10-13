@@ -1,0 +1,28 @@
+# 标准实验：step0 用 data/processed 的缓存，step1 做 train/test 划分 + 清洗，step2 训练评估。
+#   python main.py -c configs/exp_std_1k.yaml
+#   python main.py -c configs/exp_std_1k.yaml --set steps.step2.params.dim=32 --set name=dim32
+#
+# 划分在 step1 完成（split 列 = train/test/dropped），step2 只按这一列取数。
+name: std_1k
+tag: 1k
+steps:
+  step1:
+    version: clean
+    params:
+      train_frac: 0.70          # train 比例；test = 1 - 该值
+      split_method: pair-random # pair-random（默认）| beatmap-random
+      split_seed: 20260928
+      acc_floor: 0.90           # 只作用于划入 train 的行
+      drop_frac: 0.30           # 只作用于划入 train 的行
+  step2:
+    version: predict
+    params:
+      models: [bias, mf_dot, mirt]
+      dim: 16
+      epochs: 60
+      lr: 0.02
+      wd: 1.0e-4
+      features: F0
+      entity: player
+      seed: 0
+      device: auto

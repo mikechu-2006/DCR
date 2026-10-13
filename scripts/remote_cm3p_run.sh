@@ -16,14 +16,25 @@
 #      SKIP_FETCH=1     assume the .osu cache is already populated
 #      SKIP_PROBE=1     skip the audio-gap gate (not recommended)
 #      WORKERS=4        download concurrency
+#      FETCH=...        manifest to download into the cache
+#                       (default manifests/whitelist_1k.csv = the whole whitelist)
+#      EMBED=...        manifest to encode
+#                       (default manifests/whitelist_1k.csv = ALL 21,949 charts,
+#                        one no-audio convention; EMBED=manifests/cm3p_todo_1k.csv
+#                        encodes only what the published HF table misses)
+#      MERGE=1          fold the encoded rows into the canonical content table
+#
+#  The cache holds .osu TEXT BODIES only -- no .osz, no audio, no images.
 # =============================================================================
 set -euo pipefail
 
 CM3P_DIR=${CM3P_DIR:-external/cm3p}
-OSU_CACHE=${OSU_CACHE:-data/raw/osu_cache}
-TODO=${TODO:-manifests/cm3p_todo_1k.csv}
+OSU_CACHE=${OSU_CACHE:-data/osu_cache}            # .osu text only: no .osz/audio/images
+FETCH=${FETCH:-manifests/whitelist_1k.csv}        # what the cache should hold
+EMBED=${EMBED:-manifests/whitelist_1k.csv}        # what gets encoded (all 21,949)
 PROBE=${PROBE:-manifests/cm3p_probe_1k.csv}
-OUT_ADD=${OUT_ADD:-data/processed/chart_content_cm3p_add.parquet}
+TAG=${TAG:-1k}
+OUT_LOCAL=${OUT_LOCAL:-data/processed/chart_content_cm3p_local.parquet}
 OUT_PROBE=${OUT_PROBE:-data/processed/chart_content_cm3p_probe.parquet}
 WORKERS=${WORKERS:-4}
 PY=${PY:-python}
@@ -55,22 +66,41 @@ say "2/6 dependencies"
 if [ "${SKIP_INSTALL:-0}" = "1" ]; then
   echo "SKIP_INSTALL=1 -- not touching pip"
 else
-  # deliberately NOT 'pip install -r requirements.txt': that pins a CPU torch, and this box
-  # needs the CUDA build.  Only the inference-side deps are installed here.
-  $PY -m pip install --upgrade "transformers>=4.48" "huggingface_hub>=0.26" accelerate
+  # deliberately NOT 'pip install -r requirements.txt': that pins a CPU torch and belongs to
+  # pipeline B.  The inference-side list is requirements-cm3p.txt; its two load-bearing pins:
+  #   * transformers -- only 4.42-4.57 has processing_utils.CommonKwargs (<=4.41 lacks it,
+  #     >=5.0 removed it, same ImportError either way; the old ">=4.48" here allowed 5.x);
+  #   * hydra-core -- CM3P's config.py imports 'hydra' at module level and
+  #     utils/mmrs_dataset.py pulls it in, so '--source osu-dir' dies with
+  #     "No module named 'hydra'" without it, even though Hydra itself is never used.
+  $PY -m pip install --upgrade "transformers==4.55.0" "hydra-core>=1.3,<1.4" \
+      "huggingface_hub>=0.26" accelerate
   $PY -m pip install numpy pandas pyarrow
   # slider: NOT from GitHub (the cluster cannot reach it) and NOT "pip install slider"
   # (PyPI's slider is a different project).  The wheel is vendored in vendor/.
-  $PY -m pip install --user --no-index --no-deps vendor/slider-*.whl \
-    || $PY -c "import zipfile,glob;zipfile.ZipFile(glob.glob('vendor/slider-*.whl')[0]).extractall('vendor/_unpacked')"
+  if ! $PY -m pip install --user --no-index --no-deps vendor/slider-*.whl; then
+    $PY -c "import zipfile,glob;zipfile.ZipFile(glob.glob('vendor/slider-*.whl')[0]).extractall('vendor/_unpacked')"
+    export PYTHONPATH="$PWD/vendor/_unpacked:${PYTHONPATH:-}"
+  fi
+
+  # Same imports step0c makes: a dependency check is only useful if it is identical.
+  $PY - "$CM3P_DIR" <<'EOF'
+import sys
+sys.path.insert(0, sys.argv[1])
+from cm3p.processing_cm3p import CM3PProcessor                # noqa: F401  (slider, transformers)
+from cm3p.modeling_cm3p import CM3PModel                      # noqa: F401
+from utils.beatmap_files_dataset import BeatmapFilesDataset   # noqa: F401  (config -> hydra)
+print("CM3P imports OK")
+EOF
 fi
 
 say "3/6 fetch .osu files (resumable, md5-checked)"
 if [ "${SKIP_FETCH:-0}" = "1" ]; then
   echo "SKIP_FETCH=1 -- using whatever is in $OSU_CACHE"
 else
-  $PY scripts/step0d_fetch_osu.py --ids-file "$TODO"  --out-dir "$OSU_CACHE" --workers "$WORKERS"
-  $PY scripts/step0d_fetch_osu.py --ids-file "$PROBE" --out-dir "$OSU_CACHE" --workers "$WORKERS"
+  # the whole whitelist by default; the 256 probe ids are a subset of it, so one pass
+  # covers both.  Charts that are deleted/restricted (404/403/451) simply stay absent.
+  $PY scripts/step0d_fetch_osu.py --ids-file "$FETCH" --out-dir "$OSU_CACHE" --workers "$WORKERS"
 fi
 
 if [ "${SKIP_PROBE:-0}" != "1" ]; then
@@ -87,13 +117,25 @@ else
   say "4-5/6 probe skipped (SKIP_PROBE=1)"
 fi
 
-say "6/6 full run: remaining whitelist"
-$PY scripts/step0c_chart_content.py --source osu-dir --ids-file "$TODO" \
-    --osu-dir "$OSU_CACHE" --audio off --out "$OUT_ADD" --infer-batch 8
+say "6/6 full run: $EMBED"
+$PY scripts/step0c_chart_content.py --source osu-dir --ids-file "$EMBED" \
+    --osu-dir "$OSU_CACHE" --audio off --out "$OUT_LOCAL" --infer-batch "${INFER_BATCH:-8}"
+
+if [ "${MERGE:-0}" = "1" ]; then
+  say "6b/6 merge $OUT_LOCAL -> data/processed/chart_content_cm3p.parquet"
+  $PY scripts/step0c_chart_content.py --source table --in "$OUT_LOCAL" --tag "$TAG"
+fi
 
 say "done"
 echo "bring the result home (from the LOCAL machine):"
-echo "    scp <user>@<host>:<repo>/$OUT_ADD  <repo>/data/processed/"
+echo "    scp <user>@<host>:<repo>/$OUT_LOCAL  <repo>/data/processed/"
 echo "    scp <user>@<host>:<repo>/data/processed/cm3p_mix_report.json <repo>/data/processed/"
-echo "then merge locally:"
-echo "    python scripts/step0c_chart_content.py --source table --in $OUT_ADD --tag 1k"
+echo "then either use it directly (step2 --chart-content cm3p --content-path $OUT_LOCAL)"
+echo "or merge it into the canonical table:"
+echo "    python scripts/step0c_chart_content.py --source table --in $OUT_LOCAL --tag $TAG"
+echo
+echo "finally update the whitelist table, and let step0 drop the non-cacheable charts:"
+echo "    python scripts/step0g_whitelist.py --tag 1k --cache $OSU_CACHE \\"
+echo "        --out data/processed/whitelist_1k.csv --manifest-out manifests/whitelist_1k.csv"
+echo "    python scripts/step0_preprocess.py --dump-dir <1k dump> \\"
+echo "        --whitelist data/processed/whitelist_1k.csv"

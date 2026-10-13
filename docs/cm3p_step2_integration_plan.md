@@ -2,7 +2,7 @@
 
 > **状态**：**已实现并实测**（2026-10-09）。实现清单与全部实跑数字见
 > [docs/cm3p_step2_results.md](cm3p_step2_results.md)；本文保留设计与理由，不重复数字。
-> **上游**：[docs/beatmap_embedding_plan.md](beatmap_embedding_plan.md)（谱面 encoder 调研）。
+> **上游**：[docs/archive/beatmap_embedding_plan.md](archive/beatmap_embedding_plan.md)（谱面 encoder 调研）。
 > **v1 → v2 的变更**（按 2026-10-09 的规格重写）：
 > 1. **弃用 `mirt`**，只用点积 `mf_dot`：`L = b0 + bu[u] + bm[m] + <P_u, C_m>`；
 >    丢掉 `D`、`-C·D`、以及围绕它的 GL(K) 规范讨论。
@@ -293,7 +293,7 @@ CLI：
   * 1-hot 模型（A0）：索引 `-1` ⇒ **覆盖率 0，RMSE 未定义**（这就是结论本身）；
   * v2 模型：`bm = 0`（§4.4），照常打分 ⇒ 报 RMSE / coverage。
   * 必须按 `beatmapset_id` 而不是 `beatmap_id` 留出，否则同曲的其他难度会漏答案
-    （[docs/beatmap_embedding_plan.md](beatmap_embedding_plan.md) §3.2）。
+    （[docs/archive/beatmap_embedding_plan.md](archive/beatmap_embedding_plan.md) §3.2）。
 
 新增 `--holdout-charts-by {none,beatmapset}`，并加一条 checklist：**留出谱面不出现在训练行里**。
 
@@ -308,7 +308,7 @@ CLI：
 | **M2（管线 B）** | `step2_predict.py` 加 `--chart-content`，跑通 A0 / A1 / A2 | 先过滤后划分有断言；`C` 与 `item_ids` 行序断言；丢弃量进 summary；9 条 checklist 全过 | 1k 每模型分钟级 |
 | **M3** | `d` 扫描（A1 / A2 / A3） | ✅ **已完成**：`d ∈ {8,16,32,64,128,512}`，内部最优 `d=32`（1.57595），512 最差（1.59759）；wd 未扫 | 6 次 1k 训练 |
 | **M4** | CS1 / CS2 | CS2 上 A0 覆盖率 0、v2 > 0 且 RMSE 有限；CS1 分层表 | 需要 `--holdout-charts-by` |
-| **M5（管线 A 补全）** | 下载缺的 10,072 张 `.osu` + CM3P 推理，合并进表 | 覆盖率 → ~100%；与 HF 重叠部分余弦 ≥ 0.99（否则音频开关没对齐，R3） | GPU 作业，不阻塞 M1–M4 |
+| **M5（管线 A 补全）** | 下载缺的 10,072 张 `.osu` + CM3P 推理，合并进表。**2026-10-13 更新**：缓存方案改成**全量白名单 21,949 张都抓**（只抓 `.osu` 正文，无音频/图片），抓不到的（404/451）由 [step0_preprocessing.md](step0_preprocessing.md) §2.4 的白名单表在 step0 剔除 | 覆盖率 → ~100%；与 HF 重叠部分余弦 ≥ 0.99（否则音频开关没对齐，R3） | GPU 作业，不阻塞 M1–M4 |
 | **M6** | 10k 复现 + 文档回填 | 10k 覆盖子集同结论；更新 `docs/step2_prediction.md` §7 与 `docs/overview.md` §8 | 小时级 |
 
 ---
@@ -320,7 +320,7 @@ CLI：
 | **R1** | `d=512` 时 `P` 有 504,832 个参数 | 过拟合（`free_K16` 的 330k 已经翻车） | §4.3：`d` 与 wd 双扫；A1 只作为"字面规格"报告 |
 | **R2** | 覆盖率 54.1%，且全是 ≤2023 的图 | 外部效度：2024+ 的 9,217 张完全没有 | 写进文档；M5 补全；另报"2024+ 子集"对照 |
 | **R3** | HF 预计算带音频、自算不带音频 | 两种 `C_m` 不可混用（等于注入与谱面无关的域偏移） | `source` 列 + M5 的重叠双算余弦 ≥ 0.99 |
-| **R4** | CM3P 的 metadata 塔用 `DifficultyRating`（star）做对比学习 | `C_m` 可能携带 star ⇒ **step3 里只能当控制变量**，否则同义反复 | C4 对照；step3 表述按 [docs/beatmap_embedding_plan.md](beatmap_embedding_plan.md) §4.6 |
+| **R4** | CM3P 的 metadata 塔用 `DifficultyRating`（star）做对比学习 | `C_m` 可能携带 star ⇒ **step3 里只能当控制变量**，否则同义反复 | C4 对照；step3 表述按 [docs/archive/beatmap_embedding_plan.md](archive/beatmap_embedding_plan.md) §4.6 |
 | **R5** | 每图 3–15 个 16 s 窗 → 官方脚本一律均值池化 | 丢掉难度剖面；`n_windows=1` 的谱面信息量尤低 | 先均值；再试 `[mean; std; max]` 拼接作为增量 |
 | **R6** | 无 GPU，管线 A 的自算部分昂贵 | M5 阻塞 | 明确为独立 GPU 作业；M1 先走 HF 预计算 |
 | **R7** | 换口径后与原 README 数字（1.4582 / 1.3331）不可比 | 误报进步 / 退步 | 所有表标 `subset = cm3p-covered`；A0 永远是同一张表的第一行 |

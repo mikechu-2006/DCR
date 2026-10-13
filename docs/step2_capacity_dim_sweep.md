@@ -382,7 +382,7 @@ FM 只在 **7 维内容子空间**内表达玩家差异；自由低秩理论上�
 | # | 项 | 为什么重要 |
 |---|---|---|
 | 1 | **τ² 提纯实验** | 先用随机系数（每 cell 的 `ln playcount` 斜率）+ 时间漂移把已知结构扣掉，重测交互方差。**这是唯一能回答"交互还剩多少"的实验**，必须先做 |
-| 2 | **每 cell 的随机系数 `β_{um}` 建模** | [learning_rate_heterogeneity.md](learning_rate_heterogeneity.md) §3 已量化：`β` 的方差里玩家 46% / 谱面 13% / **交互 41%**。这 41% 是目前唯一被量化、却完全没建模的交互 |
+| 2 | **每 cell 的随机系数 `β_{um}` 建模** | [learning_rate_heterogeneity.md](archive/learning_rate_heterogeneity.md) §3 已量化：`β` 的方差里玩家 46% / 谱面 13% / **交互 41%**。这 41% 是目前唯一被量化、却完全没建模的交互 |
 | 3 | **内容锚定 + 分层收缩的正式实现** | 本文的 FM 是线性简化版；正式版应为 `D_m = MLP(content_m)` 并加 `β_u ln(playcount)` |
 | 4 | **时间漂移 × 维度联合扫描** | [cm3p_step2_results.md](cm3p_step2_results.md) §4.3 显示 `--p-drift time` 在 **全表** 上值 −5.7%；它和 K 的交互未测 |
 | 5 | **10k 复现** | 本文全部在 1k 上；10k 的稀疏度结构可能不同 |

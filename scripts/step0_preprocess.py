@@ -36,6 +36,12 @@ Design notes
 * The beatmap metadata table is a pure projection of `osu_beatmaps` over the same
   4K whitelist -- no derived columns, no status-code interpretation, no join to
   `osu_beatmapsets` / `osu_beatmap_difficulty` / `osu_beatmap_failtimes`.
+* The 4K whitelist can be narrowed by a table (`--whitelist`), which is how charts
+  that cannot be cached are dropped.  The table is what
+  `scripts/step0g_whitelist.py` writes: a `beatmap_id` column plus a `cacheable`
+  flag; rows with `cacheable == False` are excluded.  One id set drives the metadata
+  table *and* both play streams, so a play on a dropped chart disappears with its
+  beatmap.  Give the table as the tracked id manifest and every row is kept instead.
 * The 10k dump has no `osu_beatmaps.sql` and no `scores.sql`; `--beatmap-src`
   points the whitelist/metadata pass at the 1k dump, which is the same dump date.
 
@@ -50,6 +56,12 @@ Usage
         --dump-dir data/raw/extracted_10k/2026_09_01_performance_mania_top_10000 \
         --beatmap-src data/raw/extracted/2026_09_01_performance_mania_top_1000 \
         --tag 10k --out data/processed/step0_10k.parquet
+
+    # 1k, restricted to the charts whose .osu is in the cache: the non-cacheable
+    # charts are excluded here, so every play that survives has content available
+    python scripts/step0_preprocess.py \
+        --dump-dir data/raw/extracted/2026_09_01_performance_mania_top_1000 \
+        --whitelist data/processed/whitelist_1k.csv
 """
 from __future__ import annotations
 
@@ -65,7 +77,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "legacy"))  # parse_dump.py 已移到 scripts/legacy/
 from parse_dump import iter_insert_lines, parse_careful, rows_simple  # noqa: E402
 
 MANIA_RULESET = "3"
@@ -270,6 +282,38 @@ def decode_legacy_mods(mask: int, bits: tuple[tuple[int, str], ...]) -> frozense
     if "PF" in toks:
         toks.discard("SD")
     return frozenset(toks)
+
+
+TRUEISH = ("true", "1", "1.0", "yes", "y", "t")
+
+
+def read_whitelist(path: Path) -> tuple[set[int], pd.DataFrame]:
+    """A whitelist table -> (ids to keep, the table restricted to those rows).
+
+    The table is CSV or parquet with a `beatmap_id` column.  When it carries a
+    `cacheable` flag (what scripts/step0g_whitelist.py writes) only the true rows are
+    kept; an id manifest without the column keeps every row.  Extra columns are
+    ignored, so the tracked manifest and the runtime status table both work.
+    """
+    if not path.exists():
+        raise SystemExit(f"--whitelist {path} not found")
+    df = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_csv(path)
+    if "beatmap_id" not in df.columns:
+        raise SystemExit(f"--whitelist {path}: no beatmap_id column "
+                         f"(has {', '.join(map(str, df.columns))})")
+    df = df.copy()
+    df["beatmap_id"] = pd.to_numeric(df["beatmap_id"], errors="coerce").astype("int64")
+    for col in ("cacheable", "osu_cached", "cached"):
+        if col in df.columns:
+            flag = df[col].astype(str).str.strip().str.lower().isin(TRUEISH)
+            print(f"[step0] whitelist flag {col}: {int(flag.sum())} of {len(df)} rows "
+                  f"kept", flush=True)
+            df = df[flag]
+            break
+    if df.beatmap_id.duplicated().any():
+        n = int(df.beatmap_id.duplicated().sum())
+        raise SystemExit(f"--whitelist {path}: {n} duplicate beatmap_id rows")
+    return set(df.beatmap_id.tolist()), df
 
 
 # ------------------------------------------------- 4K whitelist + metadata
@@ -494,6 +538,11 @@ def main() -> None:
                     help="directory holding osu_beatmaps.sql (default: --dump-dir). "
                          "The 10k dump has no osu_beatmaps.sql, so it points here "
                          "at the 1k dump -- same dump date, same table.")
+    ap.add_argument("--whitelist", type=Path, default=None,
+                    help="restrict the 4K whitelist to a table (CSV/parquet with a "
+                         "beatmap_id column); rows whose cacheable/osu_cached flag is "
+                         "false are dropped.  This is how charts whose .osu cannot be "
+                         "cached are excluded -- see scripts/step0g_whitelist.py")
     ap.add_argument("--tag", default="1k", help="label for the output filename")
     ap.add_argument("--out", type=Path, default=None,
                     help="play table; .parquet writes parquet, anything else CSV")
@@ -564,6 +613,29 @@ def main() -> None:
           f"{STATS.get('beatmap_short', 0)} too short, from {beatmap_src})", flush=True)
     if not ids:
         raise SystemExit("no beatmaps found -- wrong --beatmap-src / --mode / --keys?")
+
+    # The whitelist filter is applied to the id set *before* either stream is read, so
+    # the metadata table and both play streams can only ever contain the same charts.
+    if args.whitelist:
+        keep, wl = read_whitelist(args.whitelist)
+        n_before = len(ids)
+        unknown = keep - ids
+        ids &= keep
+        print(f"[step0] --whitelist {args.whitelist}: keeping {len(ids)} of {n_before} "
+              f"4K beatmaps (dropped {n_before - len(ids)})", flush=True)
+        if unknown:
+            print(f"[step0] WARNING: {len(unknown)} whitelist ids are not in the dump's "
+                  f"4K set and are ignored (e.g. {sorted(unknown)[:5]})", flush=True)
+        if not ids:
+            raise SystemExit("--whitelist left no beatmaps -- wrong table?")
+        meta = meta[meta.beatmap_id.isin(ids)].reset_index(drop=True)
+        if "checksum" in wl.columns and "checksum" in meta.columns:
+            both = meta[["beatmap_id", "checksum"]].merge(
+                wl[["beatmap_id", "checksum"]], on="beatmap_id", suffixes=("", "_wl"))
+            diff = int((both.checksum != both.checksum_wl.astype(str).str.lower()).sum())
+            if diff:
+                print(f"[step0] WARNING: {diff} whitelist rows carry a checksum that "
+                      f"differs from the dump snapshot", flush=True)
 
     if not args.no_meta:
         write_beatmap_meta(meta, meta_out)

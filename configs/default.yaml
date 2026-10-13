@@ -1,0 +1,77 @@
+# ==============================================================================
+# DCR 实验配置模板 / template
+#   python main.py -c configs/default.yaml --print-config   # 看解析后的完整配置
+#
+# 一次实验 = 一个 YAML = 一个 experiments_{时间戳}[_{name}]/ 目录，
+# 里面集中放：配置快照、日志、中间文件（artifacts/）、结果（results/）、manifest.json。
+# 字段全部可省略，省略时用 dcr/config.py 里的 DEFAULTS。
+#
+# 现成可跑的配置见：
+#   configs/exp_std_1k.yaml    只跑 step2，复用 data/processed 里的缓存（最快）
+#   configs/exp_full_1k.yaml   从 raw dump 全流程跑 1k
+#   configs/exp_cm3p_1k.yaml   step2 + CM3P 内容向量
+#   configs/exp_10k.yaml       10k 全流程（需要 10k dump）
+# ==============================================================================
+
+name: template          # 实验名，拼在目录名后面：experiments_20261012_153012_template
+tag: 1k                 # 数据集标签：决定 step0_{tag} / step1_{tag} 等文件名
+python: null            # 解释器；null = 用与 main.py 相同的解释器（推荐）
+cache_dir: data/processed   # 上游产物缓存目录：没跑的 step 自动从这里取产物
+osu_cache_dir: data/osu_cache  # .osu 谱面缓存（只有正文，无音频/图片；跨实验共享）
+env: {}                 # 追加的环境变量，如 {OMP_NUM_THREADS: "4"}
+
+io:
+  out_format: parquet   # step0 play 表格式：parquet | csv
+  link_cache: true      # 复用缓存产物时，在 artifacts/ 里建相对符号链接（实验目录自描述）
+  hash: true            # 记录产物 sha256（> hash_max_mb 的文件跳过）
+  hash_max_mb: 512
+
+# ------------------------------------------------------------------ 只写要跑的 step
+# 没写的 step 不跑；输入按「配置里的 inputs → 本次上游产物 → cache_dir」顺序解析。
+# 参数名 = 脚本的长选项（下划线换横线）；null/false 表示不传该参数；
+# 列表默认按逗号拼成一个参数。
+steps: {}
+
+#   step0:
+#     version: preprocess          # 可用版本见 python main.py --list-steps
+#     params:
+#       dump_dir: data/raw/extracted/2026_09_01_performance_mania_top_1000
+#     # 白名单表是可选输入：不写 inputs.whitelist 时自动取 cache_dir/whitelist_{tag}.csv，
+#     # 有它就把 cacheable=False（抓不到 .osu）的谱面连同其 play 一起剔除（docs/procedure.md 4.3）
+#     # inputs:
+#     #   whitelist: data/processed/whitelist_1k.csv
+#
+#   # step0 的其它版本（一次只能选一个，可分别跑）：
+#   #   fetch_osu      抓 .osu 正文到 osu_cache_dir（默认 manifests/whitelist_1k.csv = 全量白名单）
+#   #   whitelist      beatmap_meta_{tag}.csv + .osu 缓存 → whitelist_{tag}.csv（含 cacheable 列）
+#   #   chart_content  beatmap_id → CM3P 内容向量（HF 预计算或本地 osu-dir 推理）
+#   #   fetch_tags / validate_mix
+#   step1:
+#     version: clean               # train/test 划分 + 清洗，输出带 split 列
+#     inputs:                      # 可选：显式指定输入，跳过 cache 自动查找
+#       plays: data/processed/step0_1k.parquet
+#     params:
+#       train_frac: 0.70           # train 比例；test = 1 - 该值
+#       split_method: pair-random  # pair-random（默认，按 (player, beatmap) 对）
+#                                  # | beatmap-random（随机挑谱面，整张谱面去 test）
+#       split_seed: 20260928
+#       acc_floor: 0.90            # 只作用于划入 train 的行
+#       drop_frac: 0.30            # 同上
+#   step2:
+#     version: predict             # 取 split=train 的行训练，在 split=test 的行上报指标
+#     params:
+#       models: [bias, mf_dot, mirt]
+#       dim: 16
+#       epochs: 60
+#       # split_col: split         # step1 写标签的列名（默认 split）
+
+# --------------------------------------------------- 任意脚本也能挂进同一套编排
+# extra_steps:
+#   - name: my_analysis
+#     script: scripts/xxxx.py       # 或 cmd: [bash, scripts/xxx.sh]
+#     after: [step2]                # 只影响 extra_steps 之间的顺序
+#     params:                       # 参数同样下划线换横线
+#       tag: "{tag}"                # 占位符：{tag} {exp} {artifacts} {results} {logs} {figures}
+#       out-dir: "{results}"
+#     outputs:                      # 产物（可用通配符），会记进 manifest
+#       - "{results}/my_analysis_*.csv"

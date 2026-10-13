@@ -17,6 +17,9 @@ Sources
       Run the CM3P beatmap tower on local .osu files.  Needs transformers + the CM3P
       checkout + the HF checkpoint, and a GPU to be practical.  Reuses upstream's own
       BeatmapFilesDataset so the windowing/averaging matches the published pipeline.
+      The cache now holds *every* whitelist chart (scripts/step0d_fetch_osu.py, only
+      .osu bodies -- no audio/images), so this path can cover the whole 21,949 instead
+      of the 11,877 the published table happens to contain.
 
 Embedding convention (matches upstream extract_beatmap_embeddings.py):
   one 512-d, L2-normalised vector per beatmap = mean over its 16-second windows,
@@ -59,9 +62,9 @@ COLUMNS = ["beatmap_id", "embedding", "n_windows", "checksum_ok", "source", "cm3
 
 
 # --------------------------------------------------------------------------- helpers
-def whitelist(tag: str) -> pd.DataFrame:
+def whitelist(tag: str, meta_dir: Path = PROC) -> pd.DataFrame:
     """The 4K mania whitelist from step0's beatmap metadata (beatmap_id + checksum)."""
-    path = PROC / f"beatmap_meta_{tag}.csv"
+    path = Path(meta_dir) / f"beatmap_meta_{tag}.csv"
     if not path.exists():
         raise SystemExit(f"{path} not found -- run scripts/step0_preprocess.py first")
     df = pd.read_csv(path, usecols=["beatmap_id", "checksum"])
@@ -76,18 +79,34 @@ def load_want(args) -> pd.DataFrame:
         df = from_ids_file(args.ids_file)
         print(f"[ids-file] {args.ids_file}: {len(df):,} beatmaps")
         return df
-    return whitelist(args.tag)
+    return whitelist(args.tag, args.meta_dir)
+
+
+TRUEISH = ("true", "1", "1.0", "yes", "y", "t")
 
 
 def from_ids_file(path: str) -> pd.DataFrame:
-    """(beatmap_id, checksum) from a manifest; header optional, extra columns ignored."""
+    """(beatmap_id, checksum) from a manifest; header optional, extra columns ignored.
+
+    When the manifest carries a `cacheable` flag (the whitelist table that
+    scripts/step0g_whitelist.py writes) only the true rows are kept, so an
+    `--source osu-dir` run targets exactly the charts that are in the cache and the
+    coverage report stays meaningful instead of counting charts that cannot exist.
+    """
     df = pd.read_csv(path, dtype=str)
     cols = {c.strip().lower(): c for c in df.columns}
     if "beatmap_id" not in cols:                     # no header row -> re-read it as data
         df = pd.read_csv(path, dtype=str, header=None, names=["beatmap_id", "checksum"])
         cols = {"beatmap_id": "beatmap_id", "checksum": "checksum"}
-    out = pd.DataFrame({"beatmap_id": df[cols["beatmap_id"]].astype("int64")})
-    out["checksum"] = (df[cols["checksum"]].astype(str).str.lower()
+    keep = None
+    for flag in ("cacheable", "osu_cached", "cached"):
+        if flag in cols:
+            keep = df[cols[flag]].astype(str).str.strip().str.lower().isin(TRUEISH).to_numpy()
+            print(f"[ids-file] {flag}: keeping {int(keep.sum())} of {len(df)} rows")
+            break
+    idx = df.index[keep] if keep is not None else df.index
+    out = pd.DataFrame({"beatmap_id": df.loc[idx, cols["beatmap_id"]].astype("int64")})
+    out["checksum"] = (df.loc[idx, cols["checksum"]].astype(str).str.lower()
                        if "checksum" in cols else "")
     return out.drop_duplicates("beatmap_id").reset_index(drop=True)
 
@@ -185,9 +204,16 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
         from cm3p.modeling_cm3p import CM3PModel
         from utils.beatmap_files_dataset import BeatmapFilesDataset
     except Exception as exc:                                   # pragma: no cover
+        hint = ""
+        if "hydra" in str(exc):
+            hint = ("\n  hydra-core: CM3P's config.py imports 'hydra' at module level (it only "
+                    "builds\n  train.py's ConfigStore) and utils/mmrs_dataset.py pulls it in, so "
+                    "the embed\n  path needs it even though Hydra itself is never used:  "
+                    "pip install 'hydra-core>=1.3,<1.4'")
         raise SystemExit(
-            "the osu-dir path needs transformers + torch (pip install -r "
-            f"external/cm3p/requirements.txt); import failed with: {exc}")
+            "the osu-dir path needs the CM3P inference env (torch, transformers==4.55.0, "
+            "hydra-core, slider) -- see requirements-cm3p.txt and docs/cm3p_hpc_slurm.md "
+            f"section 1; import failed with: {exc}{hint}")
 
     if device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -299,10 +325,14 @@ def parse_args(argv=None):
     ap.add_argument("--tag", default="1k", help="which beatmap_meta_{tag}.csv is the whitelist")
     ap.add_argument("--source", default="hf-precomputed",
                     choices=["hf-precomputed", "osu-dir", "table"])
+    ap.add_argument("--meta-dir", type=Path, default=PROC,
+                    help="beatmap_meta_{tag}.csv 所在目录（默认 data/processed）")
     ap.add_argument("--ids-file", default=None,
                     help="beatmap_id[,checksum] per line (header optional).  Overrides "
                          "beatmap_meta_{tag}.csv -- use this on a fresh clone, e.g. "
-                         "manifests/cm3p_todo_1k.csv")
+                         "manifests/whitelist_1k.csv (the whole whitelist) or "
+                         "manifests/cm3p_todo_1k.csv (only what the HF table misses).  "
+                         "Rows with cacheable=False are skipped when the column exists")
     ap.add_argument("--in", dest="in_path", default=None,
                     help="--source table: an already-computed content table to merge in")
     ap.add_argument("--infer-batch", type=int, default=8,

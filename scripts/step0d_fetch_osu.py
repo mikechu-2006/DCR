@@ -1,24 +1,40 @@
 #!/usr/bin/env python
-"""Step 0d - download the .osu bodies a content run needs (pipeline A, remote box).
+"""Step 0d - download the .osu bodies the whitelist needs (pipeline A, remote box).
 
-The dumps ship beatmap metadata but no chart files, so the part of the whitelist that the
-published CM3P table does not cover has to be fetched.  This script is deliberately dumb and
-resumable:
+The dumps ship beatmap metadata but no chart files, so every chart we want content
+vectors for has to be fetched.  Since 2026-10 the target is the **whole** whitelist, not
+just the part the published CM3P table misses: the HF table covers 11,877 of the 21,949
+4K mania charts, and those 11,877 were never in the cache, which made a full-corpus
+re-embed (--source osu-dir) impossible.  So the default manifest is the full whitelist
+(manifests/whitelist_1k.csv, produced by scripts/step0g_whitelist.py); the older
+manifests/cm3p_todo_1k.csv is still there for the "only what HF misses" job.
+
+This script is deliberately dumb and resumable:
 
   * one request per beatmap id against the public endpoint
         https://osu.ppy.sh/osu/{beatmap_id}
-    (no OAuth, returns the .osu text);
+    (no OAuth, returns the .osu **text body only** -- this cache never holds .osz
+    archives, audio, background images or any other asset, and it never needs to:
+    CM3P's no-audio path parses the .osu alone);
   * the MD5 is compared with the checksum recorded in the 2026-09-01 dump snapshot, so a
     chart the mapper has since updated is DETECTED rather than silently encoded;
   * a file that is already correct is never re-downloaded, so re-running after a network
-    failure only fetches what is still missing.
+    failure only fetches what is still missing;
+  * the payload check tolerates a UTF-8 BOM (osu! serves some charts with one) and the
+    bytes are stored untouched -- re-encoding the file would break the md5 against the
+    dump snapshot for no reason.
 
-Input manifest: manifests/cm3p_todo_1k.csv  (columns beatmap_id, checksum[, beatmapset_id])
+Input manifest: manifests/whitelist_1k.csv  (columns beatmap_id, checksum[, beatmapset_id]).
+A step0 metadata table works too: --ids-file data/processed/beatmap_meta_1k.csv
 
 Then:
     python scripts/step0c_chart_content.py --source osu-dir \
-        --ids-file manifests/cm3p_todo_1k.csv --osu-dir data/raw/osu_cache \
-        --out data/processed/chart_content_cm3p_add.parquet
+        --ids-file manifests/whitelist_1k.csv --osu-dir data/osu_cache \
+        --out data/processed/chart_content_cm3p_local.parquet
+
+Afterwards scripts/step0g_whitelist.py turns the cache + _fetch_state.json into the
+whitelist table step0 reads, so charts that cannot be cached are dropped in step 0 instead
+of silently missing from the content table later.
 """
 from __future__ import annotations
 
@@ -34,6 +50,8 @@ from pathlib import Path
 
 URL = "https://osu.ppy.sh/osu/{bid}"
 UA = "DenseConstantRegressor-cm3p-fetch/0.1 (+research; contact: repo owner)"
+BOM = b"\xef\xbb\xbf"     # some .osu bodies start with a UTF-8 BOM; the header is still
+                            # "osu file format", just three bytes later
 
 
 def md5_file(p: Path) -> str:
@@ -68,7 +86,10 @@ def fetch_one(bid: int, want_ck: str, out_dir: Path, timeout: float, retries: in
             req = urllib.request.Request(URL.format(bid=bid), headers={"User-Agent": UA})
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 body = resp.read()
-            if not body.lstrip().startswith(b"osu file format"):
+            head = body[:64]
+            if head.startswith(BOM):
+                head = head[len(BOM):]
+            if not head.lstrip().startswith(b"osu file format"):
                 last = f"not a .osu payload ({len(body)} bytes)"
                 raise ValueError(last)
             dst.write_bytes(body)
@@ -89,15 +110,17 @@ def fetch_one(bid: int, want_ck: str, out_dir: Path, timeout: float, retries: in
 
 def parse_args(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--ids-file", default="manifests/cm3p_todo_1k.csv")
-    ap.add_argument("--out-dir", default="data/raw/osu_cache")
+    ap.add_argument("--ids-file", default="manifests/whitelist_1k.csv",
+                    help="the full 4K whitelist by default; manifests/cm3p_todo_1k.csv "
+                         "is the 'only what the HF table misses' subset")
+    ap.add_argument("--out-dir", default="data/osu_cache")
     ap.add_argument("--workers", type=int, default=4, help="be polite: osu! is a donation-funded site")
     ap.add_argument("--delay", type=float, default=0.25, help="seconds between requests per worker")
     ap.add_argument("--timeout", type=float, default=30.0)
     ap.add_argument("--retries", type=int, default=4)
     ap.add_argument("--limit", type=int, default=0, help="debug: only the first N ids")
     ap.add_argument("--dry-run", action="store_true", help="list what would be fetched, fetch nothing")
-    ap.add_argument("--state", default="data/raw/osu_cache/_fetch_state.json")
+    ap.add_argument("--state", default="data/osu_cache/_fetch_state.json")
     return ap.parse_args(argv)
 
 
@@ -161,8 +184,9 @@ def main() -> None:
             print(f"  {k:9s}: {counts[k]:,}")
     bad = [b for b, v in state.items() if v["status"] in ("missing", "failed")]
     if bad:
-        print(f"  NOTE: {len(bad):,} ids have no usable file; they will simply be absent from "
-              f"the content table and step2 will drop them (they are reported, not guessed)")
+        print(f"  NOTE: {len(bad):,} ids have no usable file.  Re-run to retry the transient "
+              f"ones; the rest stay absent and scripts/step0g_whitelist.py will mark them "
+              f"non-cacheable so step0 drops the charts (reported, not guessed).")
     print(f"done in {time.time() - t0:.0f}s")
 
 

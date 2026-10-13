@@ -5,13 +5,15 @@ Design (docs/step2_prediction.md):
 
   * observation unit is the **play**; the label is step0's "loss".  No cell table, no
     per-cell medians, no aggregation of any kind.
-  * **train** on step1_{tag} (the cleaned play table).
-  * **test** on step0_{tag} (the raw play table) -- step1's two rules are a
-    *training-side* treatment, so letting them select the test rows would be
-    conditioning on the treatment (docs/cleaning_plan.md section 3.2).
-  * **split**: a fixed-seed random 30% of the (player_id, beatmap_id) *ordered pairs*
-    goes to the test set; the remaining pairs supply the training plays.  A pair is never
-    on both sides, so every test pair is unseen in training.
+  * **the split comes from step1.**  --train-path points at step1_{tag}, whose split
+    column (--split-col) labels every row "train" / "test" / "dropped"; step2 draws no
+    split of its own.
+  * **train on the "train" rows** (step1-cleaned).  **"test" rows are only evaluated,
+    never trained on**; "dropped" rows are ignored.  step1's two rules are a *training-side*
+    treatment, so letting them also touch the test rows would condition on the treatment
+    (docs/archive/cleaning_plan.md section 3.2).
+  * **every metric is computed on the test rows** -- one result block per model, keyed by
+    the model name.
 
 Engine: **PyTorch**.  Forward, backward and the optimiser are autograd + torch.optim.Adam
 (the reference numpy implementation -- explicit gradients + hand written Adam -- is kept at
@@ -74,18 +76,61 @@ LOSS_RANGE = {"1k": (-12.4663, -0.2669), "10k": (-12.4663, -0.1358)}
 
 
 # ----------------------------------------------------------------------------- io
-def load_play_table(tag: str, which: str, cols: list) -> pd.DataFrame:
-    """which in {'step0','step1'} -> that play table for tag (.parquet preferred)."""
-    pq, csv = PROC / f"{which}_{tag}.parquet", PROC / f"{which}_{tag}.csv"
-    if pq.exists():
-        df, src = pd.read_parquet(pq, columns=cols), pq
-    elif csv.exists():
-        df, src = pd.read_csv(csv, usecols=cols), csv
+def table_has_column(path: Path, col: str) -> bool:
+    """表里有没有这一列（parquet 看 schema，csv 看表头）；读不出来就当有，让真正的读报错。"""
+    try:
+        if Path(path).suffix == ".parquet":
+            import pyarrow.parquet as pq_
+            return col in set(pq_.ParquetFile(path).schema.names)
+        return col in set(pd.read_csv(path, nrows=0).columns)
+    except Exception:
+        return True
+
+
+def load_play_table(tag: str, which: str, cols: list, path: Path | None = None,
+                    proc_dir: Path = PROC, optional_cols: tuple = ()) -> pd.DataFrame:
+    """which in {'step0','step1'} -> that play table (.parquet preferred).
+
+    path 非空时直接读该文件（--train-path / --test-path）；否则在 proc_dir
+    里按 {which}_{tag}.{parquet,csv} 找。optional_cols 里的列缺失时不报错（用于
+    兼容没有 split 列的旧 step1 表）。
+    """
+    if path is not None:
+        src = Path(path)
+        if not src.exists():
+            raise SystemExit(f"--{which}-path not found: {src}")
+        want = list(cols) + [c for c in optional_cols if table_has_column(src, c)]
+        df = (pd.read_parquet(src, columns=want) if src.suffix == ".parquet"
+              else pd.read_csv(src, usecols=want))
     else:
-        raise SystemExit(f"neither {pq} nor {csv} exists")
+        pq, csv = proc_dir / f"{which}_{tag}.parquet", proc_dir / f"{which}_{tag}.csv"
+        src = pq if pq.exists() else (csv if csv.exists() else None)
+        if src is None:
+            raise SystemExit(f"neither {pq} nor {csv} exists")
+        want = list(cols) + [c for c in optional_cols if table_has_column(src, c)]
+        df = (pd.read_parquet(src, columns=want) if src.suffix == ".parquet"
+              else pd.read_csv(src, usecols=want))
     print(f"[{which}] {src.name}: {len(df):,} rows, {df.player_id.nunique():,} players, "
           f"{df.beatmap_id.nunique():,} beatmaps", flush=True)
     return df
+
+
+def read_split_spec(train_path: Path | None, proc_dir: Path, tag: str) -> dict | None:
+    """读 step1 表旁边的报告 json 里的 split 定义（method/train_frac/seed/unit/实际比例）。
+
+    找不到就当没有：调用方会退回 --test-pair-frac 做容差检查，只影响一处自检的基准。
+    """
+    base = Path(train_path) if train_path else proc_dir / f"step1_{tag}"
+    for cand in (base.with_suffix(".json"), proc_dir / f"step1_{tag}.json"):
+        try:
+            if cand.exists():
+                data = json.loads(cand.read_text(encoding="utf-8"))
+                spec = data.get("split") if isinstance(data, dict) else None
+                if isinstance(spec, dict):
+                    return spec
+        except (OSError, json.JSONDecodeError):
+            continue
+    return None
 
 
 def pair_keys(player, beatmap, k: int) -> np.ndarray:
@@ -345,12 +390,17 @@ def parse_args(argv=None):
     ap.add_argument("--batch", type=int, default=8192)
     ap.add_argument("--features", default="F0", choices=["F0", "F1", "F2"])
     ap.add_argument("--entity", default="player", choices=["player", "player-year"])
-    ap.add_argument("--pair-universe", default="step0", choices=["step0", "step1"],
-                    help="which table's (player_id, beatmap_id) pairs the 30%% split is drawn from")
-    ap.add_argument("--test-pair-frac", type=float, default=0.30)
-    ap.add_argument("--split-seed", type=int, default=20260928)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out-prefix", default="step2")
+    ap.add_argument("--proc-dir", type=Path, default=PROC,
+                    help="输入表的目录（默认 data/processed）；--train-path 优先")
+    ap.add_argument("--out-dir", type=Path, default=None,
+                    help="产物目录（npz + summary json）；默认与 --proc-dir 相同")
+    ap.add_argument("--train-path", type=Path, default=None,
+                    help="step1 的输出表（train/test/dropped 都在它的 split 列里）；"
+                         "默认 {proc_dir}/step1_{tag}.{parquet,csv}")
+    ap.add_argument("--split-col", default="split",
+                    help="step1 表里的划分标签列（train / test / dropped）")
     ap.add_argument("--eval-every", type=int, default=20)
     ap.add_argument("--p-drift", default="none", choices=["none", "logpc", "time"],
                     help="player-side drift: 'logpc' -> P_eff = P[u] + Pc[u]*ln(playcount_cur); "
@@ -448,6 +498,8 @@ def pick_device(name: str) -> torch.device:
 def main():
     args = parse_args()
     t_start = time.time()
+    out_dir = Path(args.out_dir) if args.out_dir else args.proc_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
     device = pick_device(args.device)
     if args.threads:
         torch.set_num_threads(args.threads)
@@ -468,74 +520,79 @@ def main():
     cols = BASE_COLS + [args.target] \
         + (["playcount_cur"] if need_pc else []) + (["timestamp"] if need_ts else [])
 
-    tr_all = load_play_table(args.tag, "step1", cols)
-    te_all = load_play_table(args.tag, "step0", cols)
+    # 只读 step1 的表：train/test/dropped 全在它的 split 列里（划分在 step1 完成）。
+    tr_all = load_play_table(args.tag, "step1", cols, path=args.train_path,
+                             proc_dir=args.proc_dir, optional_cols=(args.split_col,))
 
     # ------------------------------------------------- content availability filter
     # BEFORE the split, always.  Dropping charts after the split would change which pairs
     # are held out, so the run would no longer be comparable with the 1-hot baseline.
     content_ids = content_E = None
-    content_drop = {"step1_rows_dropped": 0, "step0_rows_dropped": 0,
-                    "step1_rows_total": None, "step0_rows_total": None}
+    content_drop = {"rows_dropped": 0, "rows_total": None}
     if args.chart_content != "none" or args.restrict_to_content == "on":
         content_ids, content_E = load_content_table(args.content_path)
         have = set(content_ids.tolist())
-        n_tr, n_te = len(tr_all), len(te_all)
+        n_all = len(tr_all)
         tr_all = tr_all[tr_all.beatmap_id.isin(have)].reset_index(drop=True)
-        te_all = te_all[te_all.beatmap_id.isin(have)].reset_index(drop=True)
-        content_drop = {"step1_rows_dropped": n_tr - len(tr_all), "step0_rows_dropped": n_te - len(te_all),
-                        "step1_rows_total": n_tr, "step0_rows_total": n_te}
+        content_drop = {"rows_dropped": n_all - len(tr_all), "rows_total": n_all}
         print(f"[content] charts with a vector: {len(have):,} of {args.tag} whitelist; dropped "
-              f"{n_tr - len(tr_all):,}/{n_tr:,} step1 rows, "
-              f"{n_te - len(te_all):,}/{n_te:,} step0 rows", flush=True)
-        if len(tr_all) == 0 or len(te_all) == 0:
+              f"{n_all - len(tr_all):,}/{n_all:,} rows (train 与 test 两侧都裁)", flush=True)
+        if len(tr_all) == 0:
             raise SystemExit("no plays left after the content filter")
 
-    universe = te_all if args.pair_universe == "step0" else tr_all
-    k = int(universe.beatmap_id.max()) + 1
+    # ------------------------------------------------------------------- split
+    # 划分在 step1 完成：这里只按 split 列取 train / test，dropped 忽略。
+    if args.split_col not in tr_all.columns:
+        raise SystemExit(
+            f"step1 表里没有 '{args.split_col}' 列 —— train/test 划分应在 step1 完成。\n"
+            f"  请重跑 step1（新版本会写这一列；若用 --resume 跳过了 step1，加 --force 强制重跑）")
+    lab = tr_all[args.split_col].astype(str).to_numpy()
+    unknown = sorted(set(lab.tolist()) - {"train", "test", "dropped"})
+    if unknown:
+        raise SystemExit(f"'{args.split_col}' 列出现未知标签 {unknown}"
+                         f"（只允许 train/test/dropped）")
+    tr_mask, te_mask = lab == "train", lab == "test"
+    train = tr_all[tr_mask].reset_index(drop=True)     # 训练：step1 清洗过
+    test = tr_all[te_mask].reset_index(drop=True)      # 评估：step1 未清洗（原始标签）
+    n_dropped = int((lab == "dropped").sum())
+    if len(train) == 0 or len(test) == 0:
+        raise SystemExit(f"step1 表里 train={len(train):,} / test={len(test):,} 行，"
+                         f"无法训练或评估")
 
-    # ---------------------------------------------------------------- split (by pair)
-    ukey = np.unique(pair_keys(universe.player_id.to_numpy(), universe.beatmap_id.to_numpy(), k))
-    rng = np.random.default_rng(args.split_seed)
-    is_test = rng.random(ukey.size) < args.test_pair_frac
-    n_test_pairs = int(is_test.sum())
-    print(f"pair universe = {args.pair_universe}: {ukey.size:,} ordered pairs -> test "
-          f"{n_test_pairs:,} ({is_test.mean():.2%})", flush=True)
-
-    def test_flag(df):
-        """True iff the row's pair is one of the held-out pairs.
-
-        With --pair-universe step0 every key is present by construction.  With step1 the
-        step0 table also holds pairs that never survived cleaning; those are outside the
-        universe and simply are not test rows (they are reported as rows_outside_universe).
-        """
-        keys = pair_keys(df.player_id.to_numpy(), df.beatmap_id.to_numpy(), k)
-        pos = np.searchsorted(ukey, keys)
-        found = ukey[pos] == keys
-        return np.where(found, is_test[pos], False), int((~found).sum())
-
-    tr_flag, tr_out = test_flag(tr_all)                  # step1 rows of a *test* pair
-    te_flag, te_out = test_flag(te_all)                  # step0 rows of a *test* pair
-    if te_out:
-        print(f"note: {te_out:,} step0 rows are outside the '{args.pair_universe}' pair universe "
-              f"and are neither train nor test", flush=True)
-    train = tr_all[~tr_flag].reset_index(drop=True)      # train plays  (step1, 70% pairs)
-    test = te_all[te_flag].reset_index(drop=True)        # test plays   (step0, 30% pairs)
-    test_clean = tr_all[tr_flag].reset_index(drop=True)  # secondary: same pairs, step1 labels
-    del tr_all, te_all
+    # 划分单位（pair 或 beatmap）；dropped 行也算 train 侧 —— 它们只是被清洗删掉
+    split_spec = read_split_spec(args.train_path, args.proc_dir, args.tag)
+    k = int(max(int(train.beatmap_id.max()), int(test.beatmap_id.max()))) + 1
+    row_keys = pair_keys(tr_all.player_id.to_numpy(), tr_all.beatmap_id.to_numpy(), k)
+    unit_kind = (split_spec or {}).get("unit", "pair")
+    if unit_kind == "beatmap":
+        ids = tr_all.beatmap_id.to_numpy()
+        unit_tr, unit_te = np.unique(ids[lab != "test"]), np.unique(ids[te_mask])
+    else:
+        unit_tr = np.unique(row_keys[lab != "test"])
+        unit_te = np.unique(row_keys[te_mask])
+    units_all = np.union1d(unit_tr, unit_te)
+    is_test = np.isin(units_all, unit_te)              # 仅用于统计 test 单位占比
+    n_pairs, n_test_pairs = int(units_all.size), int(unit_te.size)
+    cross_units = np.intersect1d(unit_tr, unit_te, assume_unique=True)
+    test_pairs = np.unique(row_keys[te_mask])
+    tr_pairs = np.unique(row_keys[tr_mask])
+    expected_test_frac = float((split_spec or {}).get("actual_test_frac")
+                               or (n_test_pairs / max(n_pairs, 1)))
+    frac_tol = 0.02
+    print(f"[split] step1 表的 '{args.split_col}' 列：train {len(train):,} 行 / "
+          f"test {len(test):,} 行 / dropped {n_dropped:,} 行 | "
+          f"单位 {unit_kind}: train 侧 {unit_tr.size:,} / test 侧 {unit_te.size:,}"
+          + (f" | step1 报告: {split_spec.get('method')} "
+             f"train_frac={split_spec.get('train_frac')} seed={split_spec.get('seed')}"
+             if split_spec else " | 未找到 step1 报告 json（跳过比例比对）"), flush=True)
+    del row_keys, lab, tr_all
     gc.collect()
-    print(f"train plays = {len(train):,} (step1)   test plays = {len(test):,} (step0)   "
-          f"test pairs' step1 rows = {len(test_clean):,}", flush=True)
 
     # ------------------------------------------------------------- checklist 1-3 (split)
     chk = Checklist()
-    n_pairs = int(ukey.size)
-    test_pairs = ukey[is_test]
-    tr_pairs = np.unique(pair_keys(train.player_id.to_numpy(), train.beatmap_id.to_numpy(), k))
-    shared = np.intersect1d(tr_pairs, test_pairs, assume_unique=True)
-    chk.check("pair_never_crosses_split", shared.size == 0,
-              f"{shared.size} ordered pairs on both sides (train {tr_pairs.size:,} / "
-              f"test {test_pairs.size:,} unique pairs)")
+    chk.check("pair_never_crosses_split", cross_units.size == 0,
+              f"{cross_units.size} 个划分单位同时出现在两侧 "
+              f"(train 侧 {unit_tr.size:,} / test 侧 {unit_te.size:,})")
     tr_keys = pair_keys(train.player_id.to_numpy(), train.beatmap_id.to_numpy(), k)
     te_keys = pair_keys(test.player_id.to_numpy(), test.beatmap_id.to_numpy(), k)
     tr_in_test = np.isin(tr_keys, test_pairs)
@@ -544,9 +601,16 @@ def main():
               (not tr_in_test.any()) and bool(te_in_test.all()),
               f"train rows on a held-out pair = {int(tr_in_test.sum()):,}; "
               f"test rows on a held-out pair = {int(te_in_test.sum()):,}/{len(test):,}")
-    chk.check("test_pair_frac", abs(float(is_test.mean()) - args.test_pair_frac) <= 0.01,
-              f"{is_test.mean():.4%} vs target {args.test_pair_frac:.2%} (tolerance 1%)")
-    del tr_keys, te_keys, tr_in_test, te_in_test, shared
+    if split_spec:
+        frac_ok = abs(float(is_test.mean()) - expected_test_frac) <= frac_tol
+        frac_detail = (f"观测 test 单位占比 {is_test.mean():.4%} vs step1 报告 "
+                       f"{expected_test_frac:.2%}（容差 {frac_tol:.0%}）")
+    else:
+        frac_ok = True
+        frac_detail = (f"未找到 step1 报告 json：只记录观测 test 单位占比 "
+                       f"{is_test.mean():.4%}（{n_test_pairs:,}/{n_pairs:,}）")
+    chk.check("test_pair_frac", frac_ok, frac_detail)
+    del tr_keys, te_keys, tr_in_test, te_in_test
     gc.collect()
 
     # ------------------------------------------------------------- entity / item ids
@@ -556,7 +620,7 @@ def main():
             return df.assign(entity=df.player_id.to_numpy(np.int64) * 100 + (y - 2000))
         return df.assign(entity=df.player_id.to_numpy(np.int64))
 
-    train, test, test_clean = add_entity(train), add_entity(test), add_entity(test_clean)
+    train, test = add_entity(train), add_entity(test)
     ent_ids = np.unique(train.entity.to_numpy())
     item_ids = np.unique(train.beatmap_id.to_numpy())
     ents = {e: i for i, e in enumerate(ent_ids)}
@@ -602,10 +666,8 @@ def main():
 
     tr_e, tr_i, tr_x, tr_tau, tr_t, tr_y = encode(train)
     te_e, te_i, te_x, te_tau, te_t, te_y = encode(test)
-    tc_e, tc_i, tc_x, tc_tau, tc_t, tc_y = encode(test_clean)
     tr_ok = (tr_e >= 0) & (tr_i >= 0)
     te_ok = (te_e >= 0) & (te_i >= 0)
-    tc_ok = (tc_e >= 0) & (tc_i >= 0)
     print(f"train rows in vocab = {int(tr_ok.sum()):,}/{len(train):,}   "
           f"test rows covered = {int(te_ok.sum()):,}/{len(test):,} ({te_ok.mean():.2%})", flush=True)
 
@@ -651,14 +713,8 @@ def main():
     te_x_t = dev(te_x[te_ok]) if te_x is not None else None
     te_tau_t = dev(te_tau[te_ok]) if te_tau is not None else None
     te_t_t = dev(te_t[te_ok]) if te_t is not None else None
-    tc_e_t, tc_i_t = dev(tc_e[tc_ok]), dev(tc_i[tc_ok])
-    tc_y_np = tc_y[tc_ok]
-    tc_x_t = dev(tc_x[tc_ok]) if tc_x is not None else None
-    tc_tau_t = dev(tc_tau[tc_ok]) if tc_tau is not None else None
-    tc_t_t = dev(tc_t[tc_ok]) if tc_t is not None else None
     idx_tr = np.flatnonzero(tr_ok).astype(np.int64)
-    del tr_e, tr_i, tr_x, tr_tau, tr_t, tr_y, te_e, te_i, te_x, te_tau, te_t, te_y, \
-        tc_e, tc_i, tc_x, tc_tau, tc_t, tc_y
+    del tr_e, tr_i, tr_x, tr_tau, tr_t, tr_y, te_e, te_i, te_x, te_tau, te_t, te_y
     gc.collect()
 
     # ---------------------------------------------------------------------- training
@@ -702,17 +758,15 @@ def main():
                 opt.step()
             if args.eval_every and (ep + 1) % args.eval_every == 0:
                 pv = model.predict(te_e_t, te_i_t, te_x_t, te_tau_t, te_t_t)
-                print(f"  [{kind}] epoch {ep+1:3d}  test RMSE(step0) = "
+                print(f"  [{kind}] epoch {ep+1:3d}  test RMSE = "
                       f"{np.sqrt(((pv - te_y_np) ** 2).mean()):.5f}  ({time.time()-t0:.1f}s)",
                       flush=True)
+        # 指标只算在 test 行上（train 行只用于拟合，从不进入这里）
         pv = model.predict(te_e_t, te_i_t, te_x_t, te_tau_t, te_t_t)
-        results[f"{kind}|step0"] = report(pv, te_y_np, len(test))
-        if tc_ok.any():
-            pc = model.predict(tc_e_t, tc_i_t, tc_x_t, tc_tau_t, tc_t_t)
-            results[f"{kind}|step1"] = report(pc, tc_y_np, len(test_clean))
+        results[kind] = report(pv, te_y_np, len(test))
         fitted[kind] = model
-        print(f"{kind:8s} step0 rmse={results[f'{kind}|step0']['rmse']:.5f} "
-              f"cov={results[f'{kind}|step0']['coverage']:.3f}", flush=True)
+        print(f"{kind:8s} test rmse={results[kind]['rmse']:.5f} "
+              f"cov={results[kind]['coverage']:.3f}", flush=True)
 
     # ----------------------------------------------- checklist 5, 7 (coverage / leak)
     chk.check("coverage_reported",
@@ -735,8 +789,6 @@ def main():
         variant += f"_{args.features}"
     if args.entity != "player":
         variant += f"_{args.entity.replace('player-year', 'py')}"
-    if args.pair_universe != "step0":
-        variant += f"_{args.pair_universe}"
     if args.p_drift != "none":
         variant += {"logpc": "_pd", "time": "_pdt"}[args.p_drift]
     if args.chart_content != "none":
@@ -757,14 +809,13 @@ def main():
     beatmap_ids = np.array(list(inv_i.values()), dtype=np.int32)
     npz_paths = {}
     for kind, model in fitted.items():
-        path = PROC / f"{args.out_prefix}_{args.tag}_{kind}_{args.features}" \
+        path = out_dir / f"{args.out_prefix}_{args.tag}_{kind}_{args.features}" \
                       f"{'' if args.chart_content != 'none' else ('_cov' if args.restrict_to_content == 'on' else '')}" \
                       f"{'' if args.chart_content == 'none' else '_cm3p'}" \
                       f"{'' if args.dim == 16 else '_dim' + str(args.dim)}" \
                       f"{'' if args.p_drift == 'none' else ('_pd' if args.p_drift == 'logpc' else '_pdt')}" \
                       f"{'' if args.d_constraint == 'none' else '_d' + args.d_constraint}" \
                       f"{'' if args.entity == 'player' else '_py'}" \
-                      f"{'' if args.pair_universe == 'step0' else '_u' + args.pair_universe}" \
                       f"_{args.target}.npz"
         extra = {}
         if "Pc" in model.p:
@@ -821,7 +872,9 @@ def main():
     chk.require()
 
     summary = {
-        "variant": variant, "args": vars(args),
+        "variant": variant,
+        # --train-path / --out-dir 等是 Path，json 里统一存字符串
+        "args": {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()},
         "mechanism": {"p_drift": args.p_drift, "d_constraint": args.d_constraint,
                       "d_init_std": args.d_init_std if args.d_init_std is not None
                       else (0.5 if args.d_constraint == "simplex" else 0.05),
@@ -829,12 +882,13 @@ def main():
         "engine": {"name": "torch", "version": torch.__version__, "device": str(device),
                    "threads": torch.get_num_threads(),
                    "deterministic_algorithms": torch.are_deterministic_algorithms_enabled()},
-        "split": {"universe": args.pair_universe, "n_pairs": n_pairs,
-                  "n_test_pairs": n_test_pairs, "test_pair_frac": float(is_test.mean()),
-                  "split_seed": args.split_seed},
+        "split": {"from": "step1", "col": args.split_col, "spec": split_spec,
+                  "unit": unit_kind, "n_units": n_pairs, "n_test_units": n_test_pairs,
+                  "observed_test_frac": float(is_test.mean()),
+                  "rows": {"train": int(len(train)), "test": int(len(test)),
+                           "dropped": n_dropped}},
         "sizes": {"train_plays": int(len(train)), "test_plays": int(len(test)),
-                  "test_pairs_step1_rows": int(len(test_clean)),
-                  "rows_outside_universe": int(te_out),
+                  "dropped_rows": n_dropped,
                   "n_entities": len(ents), "n_items": len(items),
                   "train_rows_in_vocab": int(tr_ok.sum()),
                   "test_rows_covered": int(te_ok.sum())},
@@ -842,7 +896,7 @@ def main():
             "mode": args.chart_content, "path": str(args.content_path),
             "dim": args.dim, "reduce": args.content_reduce,
             "n_charts_with_vector": int(len(content_ids)),
-            "dropped": content_drop,
+            "filtered_rows": content_drop,
         },
         "time_drift": None if args.p_drift != "time" else {
             "t_ref_year_ce": round(t_ref, 4), "unit": "years",
@@ -852,7 +906,7 @@ def main():
         "checks": chk.items,
         "seconds": round(time.time() - t_start, 1),
     }
-    merged_path = PROC / f"{args.out_prefix}_{args.tag}_summary_{args.target}.json"
+    merged_path = out_dir / f"{args.out_prefix}_{args.tag}_summary_{args.target}.json"
     merged = json.loads(merged_path.read_text()) if merged_path.exists() else {"runs": {}}
     merged["runs"][variant] = summary
     merged_path.write_text(json.dumps(merged, indent=2, ensure_ascii=False))

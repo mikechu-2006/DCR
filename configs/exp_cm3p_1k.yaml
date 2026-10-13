@@ -1,0 +1,31 @@
+# 内容向量实验：冻结 CM3P 谱面向量 + 纯点积（见 docs/cm3p_step2_integration_plan.md）。
+# 内容向量表从 cache_dir 取（data/processed/chart_content_cm3p.parquet）；
+# 要现算就同时加上 step0 的 chart_content 版本，见文件末尾注释。
+# 注意：这个配置只跑 step1/step2，读的是 cache_dir 里的缓存表；白名单表只影响
+# step0 的产物，要让「不可缓存的谱面」在数据里生效，先重跑 step0（docs/procedure.md 4.3）。
+#   python main.py -c configs/exp_cm3p_1k.yaml
+name: cm3p_1k
+tag: 1k
+steps:
+  step1:
+    version: clean
+    params:
+      train_frac: 0.70
+      split_method: pair-random
+      split_seed: 20260928
+      acc_floor: 0.90
+      drop_frac: 0.30
+  step2:
+    version: predict
+    params:
+      models: [mf_dot]
+      chart_content: cm3p
+      content_dim: 64
+      content_reduce: pca
+      epochs: 60
+      p_drift: none
+      d_constraint: none
+
+#   step0:
+#     version: chart_content
+#     params: {source: hf-precomputed}

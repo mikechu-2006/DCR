@@ -1,0 +1,27 @@
+# 全流程实验：raw dump → step0 → step1 → step2，全部产物收进实验目录。
+#   python main.py -c configs/exp_full_1k.yaml
+#   python main.py -c configs/exp_full_1k.yaml --skip step0        # 复用缓存里的 step0
+name: full_1k
+tag: 1k
+steps:
+  step0:
+    version: preprocess
+    # data/processed/whitelist_1k.csv 存在时会自动作为 --whitelist 输入：
+    # cacheable=False（抓不到 .osu）的谱面连同它们的 play 一起被剔除（docs/procedure.md 4.3）
+    params:
+      dump_dir: data/raw/extracted/2026_09_01_performance_mania_top_1000
+  step1:
+    version: clean
+    params:
+      train_frac: 0.70          # train 比例；test = 1 - 该值
+      split_method: pair-random # pair-random（默认）| beatmap-random
+      split_seed: 20260928
+      acc_floor: 0.90           # 只作用于划入 train 的行
+      drop_frac: 0.30
+      formats: both             # 同时写 CSV 与 parquet
+  step2:
+    version: predict
+    params:
+      models: [bias, mf_dot, mirt]
+      dim: 16
+      epochs: 60

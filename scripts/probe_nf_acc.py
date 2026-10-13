@@ -22,7 +22,7 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "legacy"))  # parse_dump.py 已移到 scripts/legacy/
 from parse_dump import iter_insert_lines, rows_simple  # noqa: E402
 import step0_preprocess as s  # noqa: E402
 

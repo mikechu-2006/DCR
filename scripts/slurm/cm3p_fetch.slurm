@@ -9,11 +9,13 @@
 #      srun -n 1 --time=00:05:00 bash -c \
 #        'curl -sS -o /dev/null -w "%{http_code}\n" --max-time 20 https://osu.ppy.sh/osu/222593'
 #  200 -> submit this job.  Anything else -> run the same command on the LOGIN node
-#  inside tmux/nohup instead (it is light: ~10.3k small GETs, ~40 min):
+#  inside tmux/nohup instead (it is light: ~22k small GETs, ~100 min):
 #      tmux new -s fetch
-#      python scripts/step0d_fetch_osu.py --ids-file manifests/cm3p_todo_1k.csv \
-#             --out-dir data/raw/osu_cache --workers 4
+#      python scripts/step0d_fetch_osu.py --workers 4     # the full whitelist by default
 #      # Ctrl-b d to detach
+#
+#  What is downloaded is the .osu TEXT BODY only (https://osu.ppy.sh/osu/{id}) -- no
+#  .osz archives, no audio, no images.  ~60 KB per chart, ~1.3 GB for the whole set.
 #
 #  Resumable: a file whose md5 already matches is skipped, so re-submitting after
 #  a timeout only fetches what is still missing.
@@ -42,20 +44,25 @@ fi
 
 # module load anaconda3        # <- uncomment / adapt for your site
 PY="${PY:-python}"
-OSU_CACHE="${OSU_CACHE:-$REPO/data/raw/osu_cache}"
+# the whole whitelist by default (the 256 probe ids are a subset of it); set
+# MANIFEST=manifests/cm3p_todo_1k.csv to fetch only what the published HF table misses
+MANIFEST="${MANIFEST:-manifests/whitelist_1k.csv}"
+OSU_CACHE="${OSU_CACHE:-$REPO/data/osu_cache}"
 WORKERS="${WORKERS:-4}"
 
 echo "host=$(hostname)  repo=$REPO  python=$($PY -V 2>&1)"
+echo "manifest=$MANIFEST"
 echo "cache=$OSU_CACHE"
 mkdir -p "$OSU_CACHE"
 
 $PY scripts/step0d_fetch_osu.py \
-    --ids-file manifests/cm3p_todo_1k.csv \
+    --ids-file "$MANIFEST" \
     --out-dir  "$OSU_CACHE" --workers "$WORKERS" --delay 0.25 || exit 1
 
-$PY scripts/step0d_fetch_osu.py \
-    --ids-file manifests/cm3p_probe_1k.csv \
-    --out-dir  "$OSU_CACHE" --workers "$WORKERS" --delay 0.25 || exit 1
+echo
+echo "NOTE: charts that are deleted/restricted (HTTP 404/403/451) can never be fetched."
+echo "      After this job, run scripts/step0g_whitelist.py to mark them non-cacheable;"
+echo "      step0 then drops those charts (docs/step0_preprocessing.md section 2.4)."
 
 echo
 echo "files now in the cache: $(ls "$OSU_CACHE"/*.osu 2>/dev/null | wc -l)"

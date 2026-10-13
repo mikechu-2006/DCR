@@ -57,6 +57,16 @@ DCR.bundle
 *.bin
 
 # ------------------------------------------------------------------------------
+# 实验目录 / Experiment directories
+# ------------------------------------------------------------------------------
+# 每次 python main.py -c configs/*.yaml 都会生成 experiments_{时间戳}[_{name}]/，
+# 里面是配置快照、日志、中间产物（artifacts/）与结果（results/），体积与 data/ 同级。
+# 参数与结论请沉淀到 configs/ 与 docs/，不要提交实验目录本身。
+# Each run writes experiments_{timestamp}[_{name}]/ (config snapshot, logs, artifacts,
+# results). Keep the config, not the run directory.
+experiments_*/
+
+# ------------------------------------------------------------------------------
 # 第三方仓库 / Third-party checkouts
 # ------------------------------------------------------------------------------
 # external/bobert 是 token03/bobert 的独立克隆（自带 .git），只作参考资料。

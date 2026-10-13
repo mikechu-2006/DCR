@@ -23,7 +23,7 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "legacy"))  # parse_dump.py 已移到 scripts/legacy/
 from parse_dump import iter_insert_lines  # noqa: E402
 from step0_preprocess import N_TAIL, read_beatmaps  # noqa: E402
 

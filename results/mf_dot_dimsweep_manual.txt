@@ -1,0 +1,9 @@
+
+  mf_dot_dim32                 mf_dot           1.4589    0.7621    418,876
+  mf_dot                       mf_dot           1.4594    0.7619    418,876
+  mf_dot_dim8                  mf_dot           1.4592    0.7621    418,876
+  mf_dot_dim6                  mf_dot           1.4600    0.7617    418,876
+  mf_dot_dim4                  mf_dot           1.4652    0.7596    418,876
+  mf_dot_dim3                  mf_dot           1.4691    0.7581    418,876
+  mf_dot_dim2                  mf_dot           1.4791    0.7535    418,876
+  

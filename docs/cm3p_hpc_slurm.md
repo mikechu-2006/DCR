@@ -6,18 +6,22 @@
 
 ---
 
-## 0. 上传之后先确认三件事
+## 0. 上传之后先确认这几件事
 
     cd <你上传的文件夹>          # 下文一律记作 $REPO
-    pwd && ls scripts/step0c_chart_content.py manifests/cm3p_todo_1k.csv
+    pwd && ls scripts/step0c_chart_content.py manifests/whitelist_1k.csv
     ls external/cm3p/cm3p >/dev/null 2>&1 && echo "CM3P checkout 在" || echo "CM3P checkout 缺"
+    ls data/osu_cache/*.osu 2>/dev/null | wc -l     # 期望 21,949（整份文件夹拷过来时）
+    ls vendor/slider-*.whl                          # 推理要用，缺了 embed 作业会明确报错
     du -sh . ; df -h . | tail -1
 
 | 检查项 | 为什么 |
 |---|---|
-| `manifests/` 里三个文件都在 | 这是远程唯一的输入清单，缺了就没法知道要算哪些图 |
+| `manifests/` 里清单和探针夹具都在 | 全量白名单 `whitelist_1k.csv` + 256 张探针 `cm3p_probe_1k.*`，缺了不知道要算哪些图、也没法做 gate |
+| `data/osu_cache/` 有 21,949 个 `.osu` | 整份文件夹拷贝时会一起过来（只有正文，~1.2 GB）；没拷到就在登录节点补下（§2） |
 | `external/cm3p/` 在不在 | 不在就要在有网的登录节点 `git clone` 一次 |
-| 磁盘配额 | `.osu` 缓存 ~300 MB + HF 权重 1–2 GB；**家目录配额通常很小**，建议整份放到 scratch |
+| `vendor/slider-*.whl` 在不在 | 计算节点连不上 GitHub，slider 只能从仓库自带的 wheel 装 |
+| 磁盘配额 | `.osu` 缓存 ~1.2 GB + HF 权重 1–2 GB；**家目录配额通常很小**，建议整份放到 scratch |
 
 **建议**：把 `HF_HOME` 和 `OSU_CACHE` 指到 scratch，例如
 
@@ -25,6 +29,8 @@
     export OSU_CACHE=/scratch/$USER/dcr/osu_cache
 
 ⚠️ 这两个变量在**提交作业时也要带同样的值**，否则计算节点会去别处找权重而失败（见 §3）。
+`cm3p_embed.slurm` 的默认值是"文件夹里自带"的路径：`OSU_CACHE=$REPO/data/osu_cache`、
+HF 权重优先 `$REPO/data/raw/hf_cache`（有就自动用），所以整份拷贝的自洽场景不需要额外导出变量。
 
 ---
 
@@ -33,7 +39,8 @@
     module load anaconda3                 # 按站点实际模块名调整
     PY=python
 
-    # ① 依赖：只装推理侧。不要装 requirements.txt（它把 torch 钉在 CPU 版）
+    # ① 依赖：只装推理侧。不要装 requirements.txt（那是管线 B 的环境，torch 钉在 CPU 版）；
+    #    推理侧依赖的单一来源是 requirements-cm3p.txt，下面的 pip 行与它等价。
     # transformers 必须钉在 4.42–4.57 这个窗口里，两头都会炸：
     #   <=4.41 → 没有 processing_utils.CommonKwargs → ImportError
     #   >=5.0  → 这个类被删掉了                     → 一模一样的 ImportError
@@ -42,9 +49,15 @@
     # 而且不带上限时 pip 会直接拿 5.x（CommonKwargs 已被删除）。
     # 已经被 --user 装坏了就这样修回来（两个方向都能修）：
     #   $PY -m pip install --user -U "transformers==4.55.0"
-    $PY -m pip install -U "transformers==4.55.0" accelerate numpy pandas pyarrow
+    #    hydra-core 也在这张清单里：上游 config.py 在模块顶层 import hydra（它只是 train.py
+    #    的 ConfigStore），而 utils/mmrs_dataset.py → utils/beatmap_files_dataset.py 会把它
+    #    拽进来 —— 少了它 --source osu-dir 会死在 "No module named 'hydra'"，而且是在预检
+    #    之后、真正开始跑的时候才炸。发行名是 hydra-core，import 名才是 hydra。
+    #    （等价写法：$PY -m pip install -r requirements-cm3p.txt）
+    $PY -m pip install -U "transformers==4.55.0" "hydra-core>=1.3,<1.4" accelerate numpy pandas pyarrow
     $PY -c "import transformers;print(transformers.__version__, transformers.__file__)"
     $PY -c "from transformers.processing_utils import CommonKwargs;print('CommonKwargs ok')"
+    $PY -c "import hydra;print('hydra', hydra.__version__)"
     # 若无 CUDA 版 torch：
     $PY -m pip install --user torch --index-url https://download.pytorch.org/whl/cu124
 
@@ -80,8 +93,8 @@
 
 | 作业 | 队列 | 资源 | 干什么 | 为什么这么配 |
 |---|---|---|---|---|
-| `cm3p_fetch.slurm` | **不写 `-p`**，走站点默认队列 | 4 核 / 8G / 6 h | 1 万次小 HTTP GET，把 `.osu` 下下来 | **纯网络 IO，用不着 GPU**。GPU 队列是稀缺资源（要排队、时限常常更短），拿它下文件是浪费，也会挤掉别人的训练 |
-| `cm3p_embed.slurm` | `i64m1tga800u` | **1 GPU** + 8 核 / 64G / 24 h | 探针 → 混用 gate → 10,072 张推理 | CM3P 是 22 层 Transformer，GPU 必需；那 8 个核是给 dataloader/tokenizer 和 `OMP_NUM_THREADS` 的，不是拿来算矩阵的 |
+| `cm3p_fetch.slurm` | **不写 `-p`**，走站点默认队列 | 4 核 / 8G / 6 h | 2.2 万次小 HTTP GET，把 `.osu` 下下来（只补算时 1 万次） | **纯网络 IO，用不着 GPU**。GPU 队列是稀缺资源（要排队、时限常常更短），拿它下文件是浪费，也会挤掉别人的训练 |
+| `cm3p_embed.slurm` | `i64m1tga800u` | **1 GPU** + 8 核 / 64G / 24 h | 探针 → 混用 gate → 21,949 张推理（只补算时 10,072 张） | CM3P 是 22 层 Transformer，GPU 必需；那 8 个核是给 dataloader/tokenizer 和 `OMP_NUM_THREADS` 的，不是拿来算矩阵的 |
 
 如果站点要求 CPU 作业也必须指定队列，把 `cm3p_fetch.slurm` 里的注释打开（`#SBATCH -p <cpu-partition>`），
 队列名用 `sinfo` / `sinfo -s` 查。GPU 作业换队列不用改文件，命令行覆盖即可：
@@ -102,14 +115,14 @@
 **B. 计算节点不能上网**（更常见）→ 在**登录节点**用 tmux 跑（负载很轻：1 万次小 GET）：
 
     tmux new -s fetch
-    $PY scripts/step0d_fetch_osu.py --ids-file manifests/cm3p_todo_1k.csv \
-        --out-dir "$OSU_CACHE" --workers 4 --delay 0.25
-    $PY scripts/step0d_fetch_osu.py --ids-file manifests/cm3p_probe_1k.csv \
-        --out-dir "$OSU_CACHE" --workers 4 --delay 0.25
+    $PY scripts/step0d_fetch_osu.py --out-dir "$OSU_CACHE" --workers 4 --delay 0.25
+    #    默认清单就是全量白名单（manifests/whitelist_1k.csv，21,949 张）；
+    #    只补 HF 表缺的 10,072 张：--ids-file manifests/cm3p_todo_1k.csv
     #    Ctrl-b 然后 d 脱离；tmux attach -t fetch 回来看
 
-两个清单都要下：`cm3p_todo_1k.csv`（10,072 张，要算的）+ `cm3p_probe_1k.csv`（256 张，探针用的）。
-跑完确认：`ls "$OSU_CACHE"/*.osu | wc -l` 应该在 1 万上下。
+默认下**整个白名单**（`manifests/whitelist_1k.csv`，21,949 张；256 张探针是它的子集，
+不用单独下一遍）。缓存里**只有 `.osu` 正文**，没有 `.osz`、没有音频、没有图片。
+跑完确认：`ls "$OSU_CACHE"/*.osu | wc -l` 全量应在 2 万上下，只补算在 1 万上下。
 
 ---
 
@@ -117,10 +130,17 @@
 
     sbatch scripts/slurm/cm3p_embed.slurm
 
+默认编码**整个白名单**（`manifests/whitelist_1k.csv`，21,949 张——缓存里 100% 都有），
+只算 HF 表缺的那 10,072 张就加 `EMBED_MANIFEST=manifests/cm3p_todo_1k.csv`。
+
 如果 §0 里改过路径，提交时带上同名变量：
 
     HF_HOME=/scratch/$USER/dcr/hf_cache OSU_CACHE=/scratch/$USER/dcr/osu_cache \
         sbatch scripts/slurm/cm3p_embed.slurm
+
+HF 权重：脚本按 `data/raw/hf_cache` → `HF_HOME` → `~/.cache/huggingface` 的顺序找。
+整份文件夹拷过来时，把预热好的 `~/.cache/huggingface` 一起放进 `data/raw/hf_cache`
+就自带权重了；三处都没有会在预检 B 里 10 秒内报错，并打印预热命令。
 
 脚本自带的资源请求（可以在命令行覆盖）：
 
@@ -129,17 +149,22 @@
 | `-p` | `i64m1tga800u` | 改队列就 `sbatch -p <其他>` 覆盖（用 `sinfo` 查） |
 | `-n` | 8 | CPU 核；同时喂给 `OMP_NUM_THREADS` |
 | `--gres` | `gpu:1` | **必须**是 `gpu:1` 这种写法；官方示例里的 `--gres 1` 是错的 |
-| `--mem` | 64G | 十万级 `.osu` 解析 + 模型 |
-| `--time` | `1-00:00:00` | A800 上推理估 20–40 min，给足 24 h 不用管队列策略；跑完节点立刻释放，不会浪费 |
+| `--mem` | 64G | 两万级 `.osu` 解析 + 模型 |
+| `--time` | `1-00:00:00` | A800 上 21,949 张估 45–90 min（只补 10,072 张 20–40 min）；给足 24 h 不用管队列策略，跑完节点立刻释放 |
 | `-o/-e` | `slurm_cm3p_embed_%j.out/.err` | `%j` 是作业号；**在仓库根目录提交**，文件就落在这里 |
 
 作业内部顺序（这就是为什么它必须离线自洽）：
 
-    环境自检 → 预检（GPU / import / 输入清单，10 秒内失败而不是 10 分钟后）
-      → 探针 256 张 → 混用 gate（do-not-mix 则 exit 2 停住）
-      → 全量 10,072 张 → 写 data/processed/chart_content_cm3p_add.parquet
+    环境自检 → 预检 A（GPU / torch / transformers 窗口 / cm3p+hydra+slider，10 秒内失败）
+      → 预检 B（.osu 语料、HF 权重、探针清单：缺什么直接给出补法）
+      → 探针 256 张 → 混用 gate
+      → 全量 21,949 张 → 写 data/processed/chart_content_cm3p_local.parquet
+      → MERGE=1 时并进 data/processed/chart_content_cm3p.parquet
+      → 覆盖率汇总（缺哪些 id、checksum_ok=False 几张）
 
-调参用环境变量：`INFER_BATCH=4`（显存不够时）、`SKIP_PROBE=1`（不建议）、`PY=...`。
+调参用环境变量：`INFER_BATCH=4`（显存不够时）、`SKIP_PROBE=1`（不建议）、
+`EMBED_MANIFEST=...`、`EMBED_OUT=...`、`MERGE=1`、`GATE_STOP=0/1`、
+`FETCH_FIRST=1`（计算节点有网时自己下 `.osu`）、`PY=...`。
 例：`INFER_BATCH=4 sbatch scripts/slurm/cm3p_embed.slurm`
 
 ---
@@ -166,7 +191,9 @@
 **已发布的 244K 表是带音频算的，你这里只能不带音频算**，两者是不同的输入分布。
 不同图之间的余弦本来就有 **0.576** 那么高，所以"看着 0.9 挺像"**不算通过**；
 要看 `Mantel corr ≥ 0.8` 且 `recall@1 ≥ 0.95`。
-`do-not-mix` 时作业会 `exit 2` 停住，全量不会开始 —— 这是故意的。
+`do-not-mix` 的处理分两种：**补算再合并**（`EMBED_MANIFEST=manifests/cm3p_todo_1k.csv`）
+会 `exit 2` 停住，全量不开始——这是故意的；**全量重算**（默认清单）不涉及混用，
+verdict 只记录不停（`GATE_STOP=1` 可强制停）。
 
 探针顺带是吞吐标定：256 张的耗时 ×40 ≈ 全量耗时，先看这个再决定 `--time` 给多少。
 
@@ -176,17 +203,30 @@
 
 需要带回**两个**文件：
 
-    data/processed/chart_content_cm3p_add.parquet      # 新算的 ~10k 行
+    data/processed/chart_content_cm3p_local.parquet    # 全量 21,949 行（只补算时 ~10k 行）
     data/processed/cm3p_mix_report.json                # 探针结论，必须一起归档
 
 在**有那 11,877 行已发布表的机器上**（也就是本地）执行：
 
+    # (a) 直接当内容表用（口径完全统一，不涉及混用）：
+    #     step2 --chart-content cm3p --content-path data/processed/chart_content_cm3p_local.parquet
+    # (b) 或者并进规范表：按 beatmap_id 求并集，新行覆盖旧行 —— 全量重算会把
+    #     21,949 行全部换成 source=1 的本地无音频行，"覆盖子集 54%" 不再存在
     python scripts/step0c_chart_content.py --source table \
-        --in data/processed/chart_content_cm3p_add.parquet --tag 1k
+        --in data/processed/chart_content_cm3p_local.parquet --tag 1k
 
-幂等：按 `beatmap_id` 求并集，新行覆盖旧行，已有的 11,877 行不动。
+幂等：按 `beatmap_id` 求并集，新行覆盖旧行；只补算时已发布的行不动。
 合并后 `source` 列会区分 `0 = HF 预计算` / `1 = 本地无音频`，
 `cm3p_rev` 记录模型 revision —— 审计"这一行是哪种口径算的"就靠这两列。
+
+缓存抓完后，把白名单更新成表并让 step0 剔除抓不到的谱面（详见
+[docs/step0_preprocessing.md](step0_preprocessing.md) §2.4）：
+
+    python scripts/step0g_whitelist.py --tag 1k --cache data/osu_cache \
+        --out data/processed/whitelist_1k.csv \
+        --manifest-out manifests/whitelist_1k.csv
+    python scripts/step0_preprocess.py --dump-dir <1k dump> \
+        --whitelist data/processed/whitelist_1k.csv
 
 ---
 
@@ -203,7 +243,7 @@
 | `ERROR: submit this job from the repo root` | `SLURM_SUBMIT_DIR` 不是仓库根。要么先 `cd` 到仓库再提交，要么用上面的 `REPO=...` 显式指定 |
 | `no such file: manifests/...` | 作业没在仓库里跑。先 `cd` 到仓库再提交，或用 `REPO=...` |
 | CUDA OOM | `INFER_BATCH=4`（或 2）重投；只影响吞吐，不影响结果 |
-| 大量 `missing`（404/451） | 谱面已删/受限，不会进内容表，step2 会把它们丢掉并报数，不会瞎猜 |
+| 大量 `missing`（404/451） | 谱面已删/受限，缓存里永远不会有。`step0g` 标 `cacheable=False`，step0 把谱面连同它的 play 一起剔除，清单在 `whitelist_1k_dropped.csv` |
 | 大量 `mismatch` | 谱面被 mapper 改过；文件保留、`checksum_ok=False`，单独统计 |
 | 作业到点被杀 | 直接重投，幂等（§4） |
 

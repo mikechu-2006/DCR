@@ -8,9 +8,27 @@
 #   pip install torch --index-url https://download.pytorch.org/whl/cu124
 # The step2 trainer honours --device auto (CUDA when present, else CPU).
 
+# PyYAML: dcr/ 编排层读 configs/*.yaml（step 脚本本身不依赖它）
+PyYAML==6.0.3
+
 numpy==2.3.5
 pandas==2.3.3
 pyarrow==21.0.0
 scipy==1.16.3
 matplotlib==3.10.6
 torch==2.13.0
+
+# ---------------------------------------------------------------------------
+# Pipeline A (the CM3P beatmap tower, scripts/step0c_chart_content.py --source osu-dir) is
+# NOT installed from this file.  It lives in its own env file -- requirements-cm3p.txt --
+# because it needs a CUDA build of torch, transformers==4.55.0 and hydra-core, while this file
+# stays the verified pipeline-B env (CPU torch; pipeline B must not import transformers, see
+# docs/cm3p_step2_integration_plan.md section 5).
+#
+#   pip install -r requirements-cm3p.txt        # GPU box / HPC login node
+#
+# The hydra-core entry there is the one that bites: it surfaces as "No module named 'hydra'"
+# the first time step0c imports upstream's BeatmapFilesDataset, because CM3P's config.py
+# imports hydra at module level even though the embed path never uses Hydra.
+# Setup walkthrough: docs/cm3p_hpc_slurm.md section 1.
+

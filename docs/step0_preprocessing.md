@@ -251,6 +251,69 @@ the metadata table reads exactly one more table than the whitelist already neede
 The two tables that were considered and rejected for `playcount_cur` are discussed
 in §9 **D2**; the four rejected for the metadata table are in §9 **D5**.
 
+### 2.4 The whitelist table, and the `.osu` cache behind it
+
+Step 0's whitelist is the 4K mania set of the dump, but the dump ships no chart files.
+The CM3P content pipeline needs the `.osu` **text body**, so every whitelist chart is
+fetched into `data/osu_cache` by `scripts/step0d_fetch_osu.py` (one GET against
+`https://osu.ppy.sh/osu/{id}`).  The cache holds `.osu` bodies only -- no `.osz`
+archives, no audio, no background images, and it never needs them: CM3P's no-audio path
+parses the `.osu` alone.  A chart that is deleted or restricted (HTTP 404/403/451) can
+never be cached, and without a `.osu` it can never produce a content vector.
+
+`--whitelist TABLE` narrows the 4K set to a table (CSV or parquet with a `beatmap_id`
+column).  `scripts/step0g_whitelist.py` writes that table from the cache:
+
+| File | Contents | Audience |
+|---|---|---|
+| `manifests/whitelist_1k.csv` (`--manifest-out`) | 21,949 rows: `beatmap_id,checksum,beatmapset_id` | tracked in git; the full whitelist a fresh clone / the HPC side fetches from |
+| `data/processed/whitelist_1k.csv` (`--out`) | the same 21,949 rows + `cached,valid,md5_ok,cacheable,fetch_status` | what step 0 reads |
+| `data/processed/whitelist_1k_dropped.csv`, `..._report.json` | the non-cacheable charts and why | audit trail |
+
+`cacheable` is `cached and valid`: the file exists *and* starts with an `osu file
+format` header (BOM-tolerant).  The md5 against the dump `checksum` is **not** part of
+it -- a chart the mapper has since updated is a later revision, kept and flagged
+`md5_ok=False`, the same rule as `checksum_ok` in `step0c`.  `fetch_status` comes from
+`step0d`'s `_fetch_state.json` (`ok / cached / mismatch / missing / failed`) and is for
+diagnosis only.
+
+The filter is applied to the id set **before** either score stream is read, so the
+metadata table and both halves of the play table can only ever contain the same charts:
+a play on an unavailable chart disappears with it, and the cross-file check of §6.2 keeps
+holding by construction.  A table without the flag (the tracked manifest) keeps every
+row, which is the explicit way to run the old full-whitelist population.
+
+**Measured 2026-10-13** (whole whitelist attempted; 1k dump):
+
+| | charts | plays | players |
+|---|---|---|---|
+| dump whitelist, no `--whitelist` | 21,949 | 1,399,615 | 990 |
+| cacheable subset, `--whitelist` | **21,949** | **1,399,615** | **990** |
+| `.osu` cache | 21,949 files, 1,180 MB, md5_ok 21,948 + 1 later revision | | |
+
+The cache is complete: 21,831 downloads + 117 files that were already correct + 1 md5
+mismatch (a later revision, kept), with **zero** HTTP 404/403/451, in 2 h 10 min at
+~2 requests/s (6 workers -- more concurrency does not help, osu! throttles per source
+and 12 workers measured no faster than 4).  The filter itself was exercised while the
+cache was still half full: at 10,823 cacheable charts the same command produced 568,685
+plays / 9,728 charts and `whitelist_1k_dropped.csv` listed the other 11,126 with their
+reasons.  `dropped` is empty now, and that is the point -- the mechanism is what keeps
+the content table at 100% of what step 0 emits instead of the 54% a partial cache
+implied, and it stays honest if a chart is deleted later.
+
+The orchestrator picks the table up on its own: `step0/preprocess` declares `whitelist`
+as an optional input, so `cache_dir/whitelist_{tag}.csv` is used without being named
+anywhere (docs/procedure.md §4.3).  By hand:
+
+```bash
+python scripts/step0g_whitelist.py --tag 1k --cache data/osu_cache \
+    --out data/processed/whitelist_1k.csv \
+    --manifest-out manifests/whitelist_1k.csv
+python scripts/step0_preprocess.py \
+    --dump-dir data/raw/extracted/2026_09_01_performance_mania_top_1000 \
+    --whitelist data/processed/whitelist_1k.csv
+```
+
 ---
 
 ## 3. What the dump actually contains
@@ -580,7 +643,8 @@ preprocessing.
 2. `star > 0`, `count_total > 0`, `bpm > 0` for every row;
 3. `hit_length <= total_length`;
 4. every `beatmap_id` in the play table is present in the metadata table;
-5. row count == number of 4K mania beatmaps in the whitelist.
+5. row count == number of 4K mania beatmaps in the whitelist (after `--whitelist`,
+   i.e. the narrowed set — §2.4).
 
 Check 4 is the only cross-file invariant. It holds because both files are built
 from the same whitelist, and it is worth asserting because a mismatch means the two
@@ -593,6 +657,11 @@ halves of step 0 were generated from different dumps.
 Both dumps, produced by `scripts/step0_preprocess.py` reading the raw SQL directly.
 The commands are in §10. Wall time moves by a few seconds between runs with
 disk-cache state.
+
+These are the **full 4K population** (no `--whitelist`).  With the complete `.osu`
+cache of §2.4 the narrowed run is identical -- 21,949 charts / 1,399,615 plays for 1k --
+because nothing is non-cacheable at the moment; a partial cache shrinks it, and §2.4 has
+that measurement.
 
 | | 1k | 10k |
 |---|---|---|
@@ -1307,6 +1376,7 @@ Nothing is hard-coded. The reference implementation exposes:
 |---|---|---|
 | `--dump-dir` | required | directory holding the score tables |
 | `--beatmap-src` | `--dump-dir` | directory holding `osu_beatmaps.sql`; the 10k dump has none, so it points at the 1k dump |
+| `--whitelist` | off | narrow the 4K whitelist to a table (CSV/parquet, `beatmap_id` column); rows with a false `cacheable`/`osu_cached`/`cached` flag are dropped — see §2.4 |
 | `--tag` | `1k` | label used for the output filenames (`1k` / `10k`) |
 | `--out` | `data/processed/step0_{tag}.csv` | play table; a `.parquet` suffix writes parquet |
 | `--meta-out` | `data/processed/beatmap_meta_{tag}.csv` | beatmap metadata CSV |
@@ -1361,6 +1431,16 @@ python scripts/step0_preprocess.py \
 
 # play table only (skip the metadata projection)
 python scripts/step0_preprocess.py --dump-dir ... --tag 1k --no-meta
+
+# restricted to the charts whose .osu is in the cache (§2.4): the non-cacheable
+# charts, and every play on them, are gone from both output tables
+python scripts/step0_preprocess.py \
+    --dump-dir data/raw/extracted/2026_09_01_performance_mania_top_1000 \
+    --whitelist data/processed/whitelist_1k.csv
+
+# the tracked id manifest has no cacheable flag -> the full 4K population
+python scripts/step0_preprocess.py --dump-dir ... \
+    --whitelist manifests/whitelist_1k.csv
 ```
 
 The 10k run uses `--out ....parquet` because 13.4 M rows as CSV would be ~700 MB

@@ -1,0 +1,55 @@
+# CM3P beatmap tower -- pipeline A dependencies:
+#     python scripts/step0c_chart_content.py --source osu-dir ...
+#
+#   pip install -r requirements-cm3p.txt
+#
+# Why this is a SEPARATE file (not merged into requirements.txt)
+#   requirements.txt is pipeline B (step0/1/2), verified on Python 3.13 with the CPU build of
+#   torch.  The embed run wants the CUDA build instead, and docs/cm3p_step2_integration_plan.md
+#   section 5 keeps the pipelines apart on purpose ("pipeline B must not import transformers").
+#
+# torch is NOT listed here on purpose -- the wheel depends on the driver, so install it first:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124    # cu121 / cu118 ...
+#
+# slider is NOT listed here either: PyPI's "slider" is a different project, and upstream ships
+# only a legacy setup.py on GitHub (pip's build isolation dies on it).  The built wheel is
+# vendored -- see vendor/README.md:
+#   pip install --user --no-index --no-deps vendor/slider-0.8.2-py3-none-any.whl
+#
+# The CM3P checkout itself is not a pip package either: step0c imports it from $CM3P_ROOT
+# (default external/cm3p), i.e. git clone https://github.com/OliBomby/CM3P .
+#
+# Offline compute nodes (the usual case on HPC): install all of this on the LOGIN node with the
+# same interpreter the job will use -- never 'pip install --user transformers', because ~/.local
+# shadows a conda env in sys.path.  Walkthrough: docs/cm3p_hpc_slurm.md section 1.
+
+# transformers: pinned inside the 4.42-4.57 window.  CM3P imports
+# transformers.processing_utils.CommonKwargs / AudioKwargs at module level; <=4.41 does not
+# have them and >=5.0 deleted them, so both ends fail with the identical ImportError.
+# 4.55.0 is what upstream's own Dockerfile pins.
+transformers==4.55.0
+huggingface_hub>=0.26
+
+# hydra-core: the PyPI distribution is "hydra-core", the import name is "hydra" (so
+# 'pip install hydra' installs the wrong thing).  CM3P's config.py imports
+# hydra.core.config_store at module level -- it only registers the ConfigStore used by train.py
+# -- and utils/mmrs_dataset.py imports config.py, which utils/beatmap_files_dataset.py (the
+# dataset step0c instantiates) imports in turn.  Result: the embed path raises
+# "No module named 'hydra'" even though nothing in it ever uses Hydra.
+hydra-core>=1.3,<1.4
+
+accelerate
+
+# Keep these at least at the versions pipeline B pins (numpy 2.3.5 / pandas 2.3.3 /
+# pyarrow 21.0.0), so a table written on the cluster reads back identically on the machine
+# that merges it (step0c --source table).  Left as >= on purpose: exact pins fail at
+# resolution time on an older cluster Python, and pip then installs NOTHING -- not even
+# hydra-core, which is exactly the trap this file exists to close.
+numpy>=2.3.5
+pandas>=2.3.3
+pyarrow>=21.0.0
+
+# Only needed for --audio on.  The HPC run uses --audio off and never imports them.
+# soxr
+# librosa
+
