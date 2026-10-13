@@ -38,7 +38,7 @@
 #  The compute node is assumed OFFLINE.  pip, the CM3P checkout, the HF weights
 #  and the .osu files must already be on disk -- docs/cm3p_hpc_slurm.md section 0.
 # =============================================================================
-#SBATCH -p i64m1tga800u
+#SBATCH -p i64m1tga800ue
 #SBATCH -J cm3p-embed
 #SBATCH -o slurm_cm3p_embed_%j.out
 #SBATCH -e slurm_cm3p_embed_%j.err

@@ -21,6 +21,7 @@
 #  a timeout only fetches what is still missing.
 # =============================================================================
 #SBATCH -J cm3p-fetch
+#SBATCH -p i64m512ue
 #SBATCH -o slurm_cm3p_fetch_%j.out
 #SBATCH -e slurm_cm3p_fetch_%j.err
 #SBATCH -n 4
