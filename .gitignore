@@ -65,6 +65,8 @@ DCR.bundle
 # Each run writes experiments_{timestamp}[_{name}]/ (config snapshot, logs, artifacts,
 # results). Keep the config, not the run directory.
 experiments_*/
+slurm_*.out
+slurm_*.err
 
 # ------------------------------------------------------------------------------
 # 第三方仓库 / Third-party checkouts
