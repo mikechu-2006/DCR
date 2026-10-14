@@ -41,6 +41,7 @@ import argparse
 import hashlib
 import os
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -202,6 +203,36 @@ def from_hf_precomputed(src: Path, want: pd.DataFrame, rev: str, batch: int) -> 
     return _pack(ids, embs, wins, oks, srcs, revs)
 
 
+def _locate_osu(dirs, ids: set[int]) -> dict[int, Path]:
+    """beatmap_id -> .osu path, for the wanted charts only.
+
+    The cache stores one `{beatmap_id}.osu` per chart, so this is one stat per wanted id;
+    a directory that does not follow that convention is walked once instead.  Doing it
+    here is what lets from_osu_dir hand upstream a corpus limited to the target set.
+    """
+    found: dict[int, Path] = {}
+    for d in dirs:
+        p = Path(d)
+        if p.is_file():
+            stem = p.stem.split(" ")[0]
+            if stem.isdigit() and int(stem) in ids:
+                found.setdefault(int(stem), p)
+            continue
+        if not p.is_dir():
+            continue
+        before = len(found)
+        for bid in ids:
+            q = p / f"{bid}.osu"
+            if q.is_file():
+                found.setdefault(bid, q)
+        if len(found) == before:                  # convention does not apply -> walk once
+            for q in p.rglob("*.osu"):
+                stem = q.stem.split(" ")[0]
+                if stem.isdigit() and int(stem) in ids:
+                    found.setdefault(int(stem), q)
+    return found
+
+
 def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
                  device: str) -> pd.DataFrame:
     """Run the CM3P beatmap tower on local .osu/.osz files (upstream dataset + model)."""
@@ -247,12 +278,53 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
     model = model.to(device=device, dtype=mdt).eval()
     print(f"[osu] model dtype {mdt}, attn={attn}", flush=True)
 
-    ds = BeatmapFilesDataset([str(d) for d in dirs], processor=processor,
+    # ---- the corpus: only the charts we actually want ----------------------------
+    # Upstream parses EVERY .osu under the paths it is given, before the first batch.
+    # On 21,949 files that is minutes of silence on a network filesystem -- and the
+    # 256-chart probe would pay exactly the same price.  So locate the wanted files and
+    # hand upstream a symlink farm holding only those: the scan, the per-chart parse and
+    # the final md5 pass all shrink to the target set.
+    keep = {int(b) for b in want["beatmap_id"].tolist()}
+    csum = {int(b): c for b, c in zip(want["beatmap_id"], want["checksum"])}
+    found = _locate_osu(dirs, keep)
+    missing = sorted(keep - set(found))
+    if missing:
+        print(f"[osu] WARNING: {len(missing):,} wanted charts have no .osu under "
+              f"{[str(d) for d in dirs]} (e.g. {missing[:5]})", flush=True)
+    farm = tempfile.TemporaryDirectory(prefix="cm3p_subset_")
+    for bid, src in found.items():
+        try:
+            os.symlink(os.path.abspath(src), Path(farm.name) / f"{bid}.osu")
+        except OSError as exc:                                    # pragma: no cover
+            print(f"[osu] WARNING: cannot stage {src}: {exc}", flush=True)
+    n_files = len(list(Path(farm.name).glob("*.osu")))
+    print(f"[osu] corpus: {n_files:,} .osu staged for {len(keep):,} wanted charts", flush=True)
+    print("[osu] parsing them now -- upstream reads every file once before batch 1, which "
+          "is the long silent phase on a network FS", flush=True)
+
+    # progress inside that scan: upstream calls the module-global _parse_osu_file, so a
+    # thin wrapper is enough (best effort -- if upstream renames it we just lose progress)
+    try:
+        import utils.beatmap_files_dataset as _bfd
+        _orig_parse = _bfd._parse_osu_file
+        _scan = {"n": 0, "t0": time.time()}
+
+        def _parse_with_progress(path):
+            row = _orig_parse(path)
+            _scan["n"] += 1
+            if _scan["n"] % 2000 == 0:
+                el = time.time() - _scan["t0"]
+                print(f"[osu] parsed {_scan['n']:,}/{n_files:,} .osu "
+                      f"({el:.0f}s, {_scan['n'] / max(el, 1e-9):.0f} files/s)", flush=True)
+            return row
+
+        _bfd._parse_osu_file = _parse_with_progress
+    except Exception as exc:                                      # pragma: no cover
+        print(f"[osu] (scan progress unavailable: {exc})", flush=True)
+
+    ds = BeatmapFilesDataset([farm.name], processor=processor,
                              include_audio=audio, include_beatmap=True, include_metadata=False)
     loader = DataLoader(ds, batch_size=batch, num_workers=0, drop_last=False)
-
-    keep = set(want["beatmap_id"].tolist())
-    csum = dict(zip(want["beatmap_id"], want["checksum"]))
 
     # map beatmap_id -> the .osu we are about to encode, so checksum_ok can be verified
     # against the 2026-09-01 dump snapshot instead of being asserted blindly
@@ -272,8 +344,10 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
                 h.update(chunk)
         return h.hexdigest()
 
+    print(f"[osu] metadata rows: {len(meta):,} -> encoding with batch={batch}", flush=True)
     acc: dict[int, list] = {}
     dtype = torch.bfloat16 if device == "cuda" else torch.float32
+    t0 = time.time()
     with torch.no_grad():
         for batch_i, b in enumerate(loader):
             if len(b.get("input_ids", [])) == 0:
@@ -288,11 +362,15 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
                 if bid is None or int(bid) not in keep:
                     continue
                 acc.setdefault(int(bid), []).append(emb[i])
-            if batch_i % 50 == 0:
-                print(f"[osu] batch {batch_i}: {len(acc):,} beatmaps accumulated", flush=True)
+            if batch_i % 10 == 0:
+                el = time.time() - t0
+                print(f"[osu] batch {batch_i + 1}: {len(acc):,}/{n_files:,} charts seen, "
+                      f"{el:.0f}s elapsed ({(batch_i + 1) / max(el, 1e-9):.2f} batch/s)",
+                      flush=True)
 
     ids, embs, wins, oks, srcs, revs = [], [], [], [], [], []
-    for bid, vecs in acc.items():
+    total = len(acc)
+    for k, (bid, vecs) in enumerate(acc.items()):
         m = np.mean(np.stack(vecs), axis=0)
         n = float(np.linalg.norm(m))
         want_ck = csum.get(bid, "")
@@ -305,6 +383,9 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
         oks.append((got_ck == want_ck) if want_ck else None)
         srcs.append(SRC_LOCAL_AUDIO if audio else SRC_LOCAL_NOAUDIO)
         revs.append(rev)
+        if k and k % 2000 == 0:
+            print(f"[osu] checksums {k:,}/{total:,} (second silent pass over the corpus)",
+                  flush=True)
     print(f"[osu] {len(ids):,} beatmaps embedded")
     if not ids:
         return empty_table()

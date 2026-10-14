@@ -8,8 +8,16 @@
 #   torch.  The embed run wants the CUDA build instead, and docs/cm3p_step2_integration_plan.md
 #   section 5 keeps the pipelines apart on purpose ("pipeline B must not import transformers").
 #
-# torch is NOT listed here on purpose -- the wheel depends on the driver, so install it first:
-#   pip install torch --index-url https://download.pytorch.org/whl/cu124    # cu121 / cu118 ...
+# torch is NOT listed here on purpose -- the wheel depends on the driver, so install it first.
+# Measured on the HKUST-GZ A800 partition i64m1tga800u (2026-10-14): its 13 nodes MIX driver
+# 570.86.10 (CUDA 12.8 max) and 590.48.01 (CUDA 13), and Slurm picks the node for you. A cu130
+# wheel therefore works only when you land on a r590 node; on a r570 node preflight A aborts with
+#   UserWarning: CUDA initialization: The NVIDIA driver on your system is too old (found version 12080)
+#   AssertionError: no GPU visible: check --gres=gpu:1 and the site cuda module
+# -- even though --gres=gpu:1 worked and nvidia-smi shows the A800. A CUDA 12 build runs on BOTH
+# driver generations; cu128 has no 2.12/2.13 build, so 2.11.0 is the newest one:
+#   pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cu128
+#   # older fleets: cu121 / cu118 -- never pick a CUDA major above what the driver reports
 #
 # slider is NOT listed here either: PyPI's "slider" is a different project, and upstream ships
 # only a legacy setup.py on GitHub (pip's build isolation dies on it).  The built wheel is

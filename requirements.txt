@@ -3,9 +3,16 @@
 #
 #   pip install -r requirements.txt
 #
-# torch: the reference runs used the CPU build. For CUDA, install the matching
-# wheel for your driver instead, e.g.
-#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+# torch: the reference runs used the CPU build. For CUDA, install the wheel that
+# matches your DRIVER, not the newest release -- the wheel's CUDA major must be <=
+# what the driver supports, or torch.cuda dies with "driver too old":
+#   driver >= r580 (CUDA 13)   -> pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cu130
+#   driver r525..r57x (CUDA 12)-> pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cu128
+#   (there is NO 2.12/2.13 cu128 build -- cu128 stops at 2.11.0)
+# The HKUST-GZ A800 partition i64m1tga800u MIXES drivers 570.86.10 and 590.48.01, and
+# Slurm picks the node, so the cluster env must use the cu128 build -- see
+# requirements-cm3p.txt. This pin stays the CPU reference (2.13.0+cpu) that the
+# docs' step2 numbers were produced with.
 # The step2 trainer honours --device auto (CUDA when present, else CPU).
 
 # PyYAML: dcr/ 编排层读 configs/*.yaml（step 脚本本身不依赖它）

@@ -266,6 +266,7 @@ verdict 只记录不停（`GATE_STOP=1` 可强制停）。
 | 大量 `missing`（404/451） | 谱面已删/受限，缓存里永远不会有。`step0g` 标 `cacheable=False`，step0 把谱面连同它的 play 一起剔除，清单在 `whitelist_1k_dropped.csv` |
 | 大量 `mismatch` | 谱面被 mapper 改过；文件保留、`checksum_ok=False`，单独统计 |
 | 作业到点被杀 | 直接重投，幂等（§4） |
+| 改资源配置后**保存脚本卡住**（网页 IDE 显示 "Saving ...: Writing into file..."） | 编辑器的"保存"不是一次 12 KB 写：它通常**写临时文件 → rename → fsync**，随后 watcher/indexer 再 stat 一遍目录；家目录/scratch 是网络文件系统（NFS/Lustre/CephFS），每个元数据操作都要排队。常见诱因：**同一个文件系统上还在跑 rsync/scp 拷贝那 10 GB 的文件夹**、网页 IDE 打开了仓库根目录（`data/osu_cache` 2.2 万个文件 + `data/raw/extracted` 6.5 GB 会引发 stat 风暴）、文件系统本身降级。<br>先量一下：`time dd if=/dev/zero of=~/.wt bs=4k count=1 conv=fsync; rm ~/.wt`、`pgrep -a rsync`、`df -hT ~`、`uptime`。<br>**最快的绕法：根本不改文件** —— `sbatch` 的命令行选项覆盖 `#SBATCH`：<br>`sbatch -p <队列> --time=08:00:00 --mem=64G --gres=gpu:1 -n 8 scripts/slurm/cm3p_embed.slurm`<br>一定要改文件就用 `sed -i` 或 `rsync` 单文件覆盖，别开网页编辑器；也尽量别用网页 IDE 打开仓库根目录（打开 `scripts/slurm/` 即可）。 |
 
 ---
 

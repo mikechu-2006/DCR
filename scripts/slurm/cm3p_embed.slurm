@@ -40,18 +40,18 @@
 #  The compute node is assumed OFFLINE.  pip, the CM3P checkout, the HF weights
 #  and the .osu files must already be on disk -- docs/cm3p_hpc_slurm.md section 0.
 # =============================================================================
-#SBATCH -p i64m1tga800ue
+#SBATCH -p i64m1tga800u
 #SBATCH -J cm3p-embed
 #SBATCH -o slurm_cm3p_embed_%j.out
 #SBATCH -e slurm_cm3p_embed_%j.err
 #SBATCH -n 8
 #SBATCH --gres=gpu:1
-#SBATCH --mem=64G
+#SBATCH --mem=32G
 #SBATCH --time=1-00:00:00
 
 set -uo pipefail
 # Slurm spools the batch script elsewhere, so "$0" is NOT this file and
-"$(dirname "$0")" is NOT scripts/slurm/ -- resolving the repo from $0 silently
+# "$(dirname "$0")" is NOT scripts/slurm/ -- resolving the repo from $0 silently
 # breaks.  SLURM_SUBMIT_DIR is the directory sbatch was invoked from; that is the
 # contract here.  REPO can be passed explicitly at submit time, which is the only
 # reliable override when you are not standing in the repo:
