@@ -8,13 +8,14 @@ name: cm3p_1k
 tag: 1k
 steps:
   step1:
-    version: clean
+    version: clean   # legacy play 级；默认口径是 pairbest（见 configs/exp_pairbest_1k.yaml）
     params:
       train_frac: 0.70
       split_method: pair-random
       split_seed: 20260928
       acc_floor: 0.90
       drop_frac: 0.30
+      min_plays_per_player: 200  # 全表记录数 < 200 的玩家整人剔除（先于划分）
   step2:
     version: predict
     params:

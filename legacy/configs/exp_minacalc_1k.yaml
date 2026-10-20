@@ -1,0 +1,41 @@
+# MinaCalc MSD 作为冻结谱面特征（L1）。见 docs/step2_minacalc.md。
+#
+# 前置：data/processed/minacalc_msd_1k.parquet 已经产出（或者把 step0/minacalc_msd 加进
+# 这个 config 里一起跑 —— 它需要 .osu 缓存 + libminacalc.so，见文件末尾注释）。
+# step2 只按 step1 的 split 列取数，产物写到 results/。
+#   python main.py -c configs/exp_minacalc_1k.yaml
+name: minacalc_1k
+tag: 1k
+steps:
+  step1:
+    version: clean   # legacy play 级；默认口径是 pairbest（见 configs/exp_pairbest_1k.yaml）
+    params:
+      train_frac: 0.70
+      split_method: pair-random
+      split_seed: 20260928
+      acc_floor: 0.90
+      drop_frac: 0.30
+      min_plays_per_player: 200  # 全表记录数 < 200 的玩家整人剔除（先于划分）
+  step2:
+    version: minacalc_as_feature
+    params:
+      # bias  = step2/predict 的同一基线，但跑在"有 MSD 的谱面"这个子集上（可直接比）
+      # msd_add = 只有 alpha . D_std[m] 主效应（没有 P，没有交互）
+      # msd   = b0 + bu + bm + alpha . D_std[m] + <P_u, C_unit[m]>
+      models: [bias, msd, msd_add]
+      msd_main: true        # 加主效应项；去掉这一行（或 false）就只有点积交互
+      msd_bm: free          # msd = 去掉 bm[m]，谱面截距完全由 MSD 生成（每图自由参数 0）
+      msd_reduce: zscore    # raw / zscore / pca（pca 时 --dim 是主成分数）
+      msd_skills: stream,jumpstream,handstream,stamina,jackspeed,chordjack,technical
+      dim: 7                # zscore/raw 时必须等于维数；pca 时是主成分数
+      epochs: 60
+      p_drift: none
+
+# 想从 .osu 现算 MSD（需要 .osu 缓存 + 编译好的 libminacalc.so）时，把下面这段也打开：
+#   step0:
+#     version: minacalc_msd
+#     params: {lib: build/libminacalc.so, jobs: 8}
+# 只想复算某一档 goal 的曲线（给 L2/R2 用）时，直接跑脚本：
+#   python scripts/step0h_minacalc_msd.py --tag 1k --ids manifests/whitelist_1k.csv \
+#       --cache data/osu_cache --lib build/libminacalc.so --goal 0.97 \
+#       --out data/processed/minacalc_msd_1k_g097.parquet

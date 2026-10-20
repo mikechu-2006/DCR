@@ -1,4 +1,5 @@
-# 全流程实验：raw dump → step0 → step1 → step2，全部产物收进实验目录。
+# 全流程实验（legacy play 级 clean）：raw dump → step0 → step1 → step2，产物收进实验目录。
+# 默认口径是 step1/pairbest（见 configs/exp_pairbest_1k.yaml）。
 #   python main.py -c configs/exp_full_1k.yaml
 #   python main.py -c configs/exp_full_1k.yaml --skip step0        # 复用缓存里的 step0
 name: full_1k
@@ -18,6 +19,7 @@ steps:
       split_seed: 20260928
       acc_floor: 0.90           # 只作用于划入 train 的行
       drop_frac: 0.30
+      min_plays_per_player: 200  # 全表记录数 < 200 的玩家整人剔除（先于划分）
       formats: both             # 同时写 CSV 与 parquet
   step2:
     version: predict

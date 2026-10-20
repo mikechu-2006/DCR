@@ -11,6 +11,9 @@ from typing import Any, Mapping
 #: 这样无论从哪个工作目录调用 main.py，行为都一致。
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
+#: 实验目录的默认父目录：每次运行生成 experiments/<时间戳>[_{name}]/。
+DEFAULT_EXPERIMENT_ROOT = REPO_ROOT / "experiments"
+
 
 def resolve_path(value: Any, base: Path | None = None) -> Path:
     """把配置里的路径字符串解析成绝对路径（~ 与环境变量会被展开）。"""

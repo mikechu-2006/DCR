@@ -5,7 +5,7 @@
     beatmap_meta_{tag}.csv       beatmap_id -> star, bpm, count_total, ...
 
 one row per qualifying play and one row per 4K mania beatmap.  See
-docs/step0_preprocessing.md for the full spec.
+legacy/docs/step0_preprocessing.md for the full spec.
 
 Design notes
 ------------
@@ -77,7 +77,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "legacy"))  # parse_dump.py 已移到 scripts/legacy/
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # parse_dump.py 就在同目录
 from parse_dump import iter_insert_lines, parse_careful, rows_simple  # noqa: E402
 
 MANIA_RULESET = "3"
@@ -126,7 +126,7 @@ NEUTRAL_MODS = "MR,SD,PF"
 #
 # So NF is *rejected* by the whitelist test rather than canonicalised away.  It
 # is listed here only so the intent is greppable and so the startup log records
-# it; it is not a switch.  See docs/step0_preprocessing.md 8.13b and 9 D1.
+# it; it is not a switch.  See legacy/docs/step0_preprocessing.md 8.13b and 9 D1.
 REJECTED_CHART_NEUTRAL_MODS = "NF"
 
 # acronym -> bit in the legacy `enabled_mods` bitmask.  This table is the set of
@@ -670,7 +670,7 @@ def main() -> None:
     if not args.keep_raw:
         raw_path.unlink(missing_ok=True)
 
-    # ---- post-conditions (docs/step0_preprocessing.md section 6) -------------
+    # ---- post-conditions (legacy/docs/step0_preprocessing.md section 6) -------------
     dup = int(result.duplicated(["player_id", "beatmap_id", "playcount_cur"]).sum())
     grp = result.groupby(["player_id", "beatmap_id"], sort=False)["playcount_cur"]
     contiguous = bool((grp.max() == grp.size()).all()) and bool((grp.min() == 1).all())
@@ -684,7 +684,7 @@ def main() -> None:
           f"playcount_cur mean {result.playcount_cur.mean():.3f} max "
           f"{result.playcount_cur.max()}")
 
-    # ---- beatmap metadata post-conditions (docs/step0_preprocessing.md 6.2) --
+    # ---- beatmap metadata post-conditions (legacy/docs/step0_preprocessing.md 6.2) --
     if not args.no_meta:
         dup = int(meta.beatmap_id.duplicated().sum())
         monotone = bool(meta.beatmap_id.is_monotonic_increasing)

@@ -1,0 +1,262 @@
+{
+  "run": "mirt+mirt_1, tag=1k, dim=16, 60 epochs, seed=0, step1 pair split",
+  "test_metrics": {
+    "mirt": {
+      "n_scored": 418876,
+      "coverage": 0.996373,
+      "rmse": 1.460396,
+      "mae": 1.061181,
+      "spearman": 0.763169,
+      "pp_p50": 0.242742,
+      "pp_p90": 2.875674,
+      "pp_mean": 1.040529,
+      "pp_gt1_frac": 0.266867,
+      "pp_gt5_frac": 0.039327
+    },
+    "mirt_1": {
+      "n_scored": 418876,
+      "coverage": 0.996373,
+      "rmse": 1.458506,
+      "mae": 1.065243,
+      "spearman": 0.762612,
+      "pp_p50": 0.244056,
+      "pp_p90": 2.908142,
+      "pp_mean": 1.046571,
+      "pp_gt1_frac": 0.269688,
+      "pp_gt5_frac": 0.039635
+    }
+  },
+  "train_rmse_from_npz": {
+    "mirt": 0.925482,
+    "mirt_1": 0.959058
+  },
+  "test_rmse_from_npz": {
+    "mirt": 1.460396,
+    "mirt_1": 1.458506
+  },
+  "C_shape": [
+    19640,
+    16
+  ],
+  "mirt_unconstrained": {
+    "negative_entries": 159282,
+    "n_entries": 314240,
+    "negative_fraction": 0.50688,
+    "charts_with_any_negative": 19640,
+    "charts_all_negative": 0,
+    "charts_total": 19640,
+    "negative_count_per_dim": [
+      9709,
+      9688,
+      10261,
+      9476,
+      9831,
+      9545,
+      9615,
+      11044,
+      9816,
+      12876,
+      9205,
+      8501,
+      10362,
+      10271,
+      9485,
+      9597
+    ],
+    "negative_fraction_per_dim": [
+      0.494348,
+      0.493279,
+      0.522454,
+      0.482485,
+      0.50056,
+      0.485998,
+      0.489562,
+      0.562322,
+      0.499796,
+      0.655601,
+      0.468686,
+      0.432841,
+      0.527597,
+      0.522963,
+      0.482943,
+      0.488646
+    ],
+    "negative_value_quantiles": [
+      -1.961884,
+      -0.213304,
+      -0.07333,
+      -0.028371,
+      -0.007386,
+      -0.000644,
+      -0.0
+    ],
+    "C_min": -1.961884,
+    "C_max": 1.216232,
+    "C_mean_per_dim": [
+      -0.000107,
+      -0.002411,
+      -0.001338,
+      -0.000904,
+      -0.00026,
+      0.00034,
+      -0.00135,
+      -0.001593,
+      0.000949,
+      0.002808,
+      -0.001487,
+      0.016636,
+      0.0102,
+      0.000366,
+      0.000228,
+      -6e-05
+    ],
+    "C_sd_per_dim": [
+      0.061727,
+      0.082358,
+      0.064903,
+      0.069228,
+      0.043798,
+      0.079309,
+      0.069388,
+      0.085572,
+      0.084085,
+      0.283284,
+      0.072794,
+      0.226913,
+      0.145122,
+      0.076659,
+      0.051136,
+      0.047257
+    ],
+    "per_chart_negative_count_hist": {
+      "1": 2,
+      "2": 25,
+      "3": 137,
+      "4": 478,
+      "5": 1223,
+      "6": 2237,
+      "7": 3355,
+      "8": 3820,
+      "9": 3560,
+      "10": 2572,
+      "11": 1476,
+      "12": 520,
+      "13": 202,
+      "14": 32,
+      "15": 1
+    },
+    "best_per_dim_sign_flip": {
+      "flipped_dims": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        10,
+        15
+      ],
+      "negative_entries_after_flip": 159190,
+      "negative_fraction_after_flip": 0.506587,
+      "charts_with_any_negative_after_flip": 19640,
+      "negative_fraction_per_dim_after_flip": [
+        0.505652,
+        0.506721,
+        0.477546,
+        0.517515,
+        0.49944,
+        0.485998,
+        0.510438,
+        0.437678,
+        0.499796,
+        0.655601,
+        0.531314,
+        0.432841,
+        0.527597,
+        0.522963,
+        0.482943,
+        0.511354
+      ]
+    },
+    "negative_count_by_tolerance": {
+      "C < 0": 159282,
+      "C < -1e-06": 159246,
+      "C < -0.0001": 157485,
+      "C < -0.001": 148375,
+      "C < -0.01": 112161,
+      "C < -0.1": 27876
+    }
+  },
+  "mirt_1_constrained_C_ge_0": {
+    "negative_entries": 0,
+    "n_entries": 314240,
+    "C_min": 3.832e-05,
+    "C_max": 2.004546,
+    "C_mean": 0.046351,
+    "C_sd": 0.096253,
+    "C_sd_per_dim": [
+      0.032143,
+      0.054037,
+      0.051279,
+      0.055345,
+      0.047756,
+      0.077449,
+      0.107504,
+      0.033454,
+      0.061228,
+      0.065521,
+      0.034975,
+      0.031982,
+      0.263071,
+      0.103541,
+      0.139917,
+      0.032155
+    ],
+    "C_quantiles": [
+      3.8e-05,
+      0.001722,
+      0.00678,
+      0.017766,
+      0.048524,
+      0.166522,
+      2.004546
+    ],
+    "fraction_C_lt_1e-3": 0.028074
+  },
+  "paired_bootstrap": {
+    "rows": 418876,
+    "clusters": 258164,
+    "cluster_unit": "pair",
+    "n_boot": 1000,
+    "a": {
+      "file": "step2_1k_preds_loss.npz",
+      "key": "pred_mirt_1",
+      "rmse": 1.458506,
+      "variant": "mirt+mirt_1"
+    },
+    "b": {
+      "file": "step2_1k_preds_loss.npz",
+      "key": "pred_mirt",
+      "rmse": 1.460396,
+      "variant": "mirt+mirt_1"
+    },
+    "delta_rmse": -0.00189,
+    "delta_pct_of_b": -0.1294,
+    "ci95": [
+      -0.002886,
+      -0.000821
+    ],
+    "t_stat": -4.381,
+    "verdict": "A better (95% CI excludes 0)",
+    "caveat": "deff ~ 5.4 (docs/step2_capacity_dim_sweep.md 6.3): the row-level CI is too narrow, so --cluster row is reported only for contrast"
+  },
+  "stability_check": {
+    "note": "same recipe, seed=1, mirt only: 158255/314240 = 0.503612 negative; all 19640 charts mixed",
+    "seed": 1,
+    "negative_entries": 158255,
+    "negative_fraction": 0.503612,
+    "charts_with_any_negative": 19640,
+    "test_rmse": 1.460542
+  }
+}

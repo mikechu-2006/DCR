@@ -1,0 +1,238 @@
+{
+  "runs": {
+    "mirt+mirt_1": {
+      "variant": "mirt+mirt_1",
+      "args": {
+        "tag": "1k",
+        "target": "loss",
+        "models": "mirt,mirt_1",
+        "dim": 16,
+        "epochs": 60,
+        "lr": 0.02,
+        "wd": 0.0001,
+        "batch": 8192,
+        "features": "F0",
+        "entity": "player",
+        "seed": 0,
+        "out_prefix": "step2",
+        "proc_dir": "data/processed",
+        "out_dir": "results/mirt_cnonneg_1k",
+        "train_path": null,
+        "split_col": "split",
+        "eval_every": 20,
+        "p_drift": "none",
+        "chart_content": "none",
+        "restrict_to_content": "off",
+        "content_path": "data/processed/chart_content_cm3p.parquet",
+        "content_dim": 64,
+        "content_reduce": "pca",
+        "d_constraint": "none",
+        "d_logit_wd": null,
+        "c_logit_wd": null,
+        "c_init_std": null,
+        "drop_bias": "none",
+        "d_init_std": null,
+        "device": "auto",
+        "threads": 6,
+        "save_preds": true
+      },
+      "mechanism": {
+        "p_drift": "none",
+        "d_constraint": "none",
+        "d_init_std": 0.05,
+        "by_model": {
+          "mirt": {
+            "d_constraint": "none",
+            "c_constraint": "none",
+            "c_eff_wd": 0.0,
+            "d_logit_wd": 0.0001,
+            "c_logit_wd": 0.0001,
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "bm": 0.0001,
+              "P": 0.0001,
+              "C": 0.0001,
+              "D": 0.0001
+            },
+            "no_decay": []
+          },
+          "mirt_1": {
+            "d_constraint": "none",
+            "c_constraint": "nonneg",
+            "c_eff_wd": 0.0001,
+            "d_logit_wd": 0.0001,
+            "c_logit_wd": 0.0,
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "bm": 0.0001,
+              "P": 0.0001,
+              "C": 0.0,
+              "D": 0.0001
+            },
+            "no_decay": [
+              "C"
+            ]
+          }
+        }
+      },
+      "engine": {
+        "name": "torch",
+        "version": "2.13.0+cpu",
+        "device": "cpu",
+        "threads": 6,
+        "deterministic_algorithms": true
+      },
+      "split": {
+        "from": "step1",
+        "col": "split",
+        "spec": {
+          "method": "pair-random",
+          "unit": "pair",
+          "n_units": 866616,
+          "n_train_units": 607116,
+          "n_test_units": 259500,
+          "actual_train_frac": 0.7005594173197818,
+          "actual_test_frac": 0.2994405826802182,
+          "seed": 20260928,
+          "train_frac": 0.7,
+          "test_frac": 0.30000000000000004,
+          "col": "split",
+          "labels": [
+            "train",
+            "test",
+            "dropped"
+          ],
+          "rows": {
+            "train": 674890,
+            "test": 420401,
+            "dropped": 304324
+          }
+        },
+        "unit": "pair",
+        "n_units": 866616,
+        "n_test_units": 259500,
+        "observed_test_frac": 0.2994405826802182,
+        "rows": {
+          "train": 674890,
+          "test": 420401,
+          "dropped": 304324
+        }
+      },
+      "sizes": {
+        "train_plays": 674890,
+        "test_plays": 420401,
+        "dropped_rows": 304324,
+        "n_entities": 987,
+        "n_items": 19640,
+        "train_rows_in_vocab": 674890,
+        "test_rows_covered": 418876
+      },
+      "content": null,
+      "time_drift": null,
+      "results": {
+        "mirt": {
+          "n_scored": 418876,
+          "coverage": 0.996373,
+          "rmse": 1.460396,
+          "mae": 1.061181,
+          "spearman": 0.763169,
+          "pp_p50": 0.242742,
+          "pp_p90": 2.875674,
+          "pp_mean": 1.040529,
+          "pp_gt1_frac": 0.266867,
+          "pp_gt5_frac": 0.039327
+        },
+        "mirt_1": {
+          "n_scored": 418876,
+          "coverage": 0.996373,
+          "rmse": 1.458506,
+          "mae": 1.065243,
+          "spearman": 0.762612,
+          "pp_p50": 0.244056,
+          "pp_p90": 2.908142,
+          "pp_mean": 1.046571,
+          "pp_gt1_frac": 0.269688,
+          "pp_gt5_frac": 0.039635
+        }
+      },
+      "degeneracy": {
+        "mirt": {
+          "D_sd_across_charts": 0.040299,
+          "C_neg_count": 159282,
+          "C_numel": 314240,
+          "C_neg_frac": 0.50688,
+          "charts_with_neg_C": 19640,
+          "charts_total": 19640,
+          "C_min": -1.961884,
+          "C_max": 1.216232
+        },
+        "mirt_1": {
+          "D_sd_across_charts": 0.036508,
+          "C_neg_count": 0,
+          "C_numel": 314240,
+          "C_neg_frac": 0.0,
+          "charts_with_neg_C": 0,
+          "charts_total": 19640,
+          "C_min": 3.8e-05,
+          "C_max": 2.004546
+        }
+      },
+      "preds_path": "results/mirt_cnonneg_1k/step2_1k_preds_loss.npz",
+      "checks": [
+        {
+          "name": "pair_never_crosses_split",
+          "ok": true,
+          "detail": "0 个划分单位同时出现在两侧 (train 侧 607,116 / test 侧 259,500)"
+        },
+        {
+          "name": "train_and_test_disjoint",
+          "ok": true,
+          "detail": "train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401"
+        },
+        {
+          "name": "test_pair_frac",
+          "ok": true,
+          "detail": "观测 test 单位占比 29.9441% vs step1 报告 29.94%（容差 2%）"
+        },
+        {
+          "name": "loss_in_range",
+          "ok": true,
+          "detail": "test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]"
+        },
+        {
+          "name": "vocab_from_train_only",
+          "ok": true,
+          "detail": "987 entities / 19,640 items == unique train ids"
+        },
+        {
+          "name": "determinism_selftest",
+          "ok": true,
+          "detail": "same seed -> bitwise identical parameters on a synthetic training path"
+        },
+        {
+          "name": "coverage_reported",
+          "ok": true,
+          "detail": "2 result blocks carry coverage + n_scored"
+        },
+        {
+          "name": "no_test_leak",
+          "ok": true,
+          "detail": "training rows used = 674,890; of those on a held-out pair = 0; test tensors never enter the optimiser"
+        },
+        {
+          "name": "npz_matches_summary",
+          "ok": true,
+          "detail": "mirt:ok mirt_1:ok"
+        },
+        {
+          "name": "c_constraint_holds",
+          "ok": true,
+          "detail": "mirt_1: C>=0, min C = 3.832e-05, frac(C==0) = 0.00e+00"
+        }
+      ],
+      "seconds": 170.2
+    }
+  }
+}

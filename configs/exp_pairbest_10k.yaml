@@ -1,0 +1,32 @@
+# 10k 版：默认口径 A（step1/pairbest）+ bias / mf_dot dim=8。
+#   python main.py -c configs/exp_pairbest_10k.yaml
+# step0_10k.parquet 已存在时 step1 直接从 cache_dir 取；step1 只写 parquet（1300 万行 CSV 没必要）。
+name: pairbest_10k
+tag: 10k
+io:
+  out_format: parquet
+steps:
+  step1:
+    version: pairbest
+    params:
+      train_frac: 0.70
+      split_method: pair-random
+      split_seed: 20260928
+      min_plays_per_pair: 2
+      max_best_acc: 0.998
+      acc_floor: 0.90
+      gap_days: 365
+      min_plays_per_player: 20
+      formats: parquet
+  step2:
+    version: predict
+    params:
+      models: [bias, mf_dot]
+      dim: 8
+      epochs: 60
+      lr: 0.02
+      wd: 1.0e-4
+      features: F0
+      entity: player
+      seed: 0
+      device: auto

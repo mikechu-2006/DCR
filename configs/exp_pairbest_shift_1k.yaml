@@ -1,0 +1,37 @@
+# 消融 C（**不是默认**）：把标签从 log(1-ACC) 换成 log(1.001-ACC)。
+# 默认口径 A 见 configs/exp_pairbest_1k.yaml；shift 没有依据，只作比较。
+#   python main.py -c configs/exp_pairbest_shift_1k.yaml
+#
+# 其余口径与 exp_pairbest_1k 相同（玩家<20、1 年空窗、每对最高成绩、单次对、
+# ACC 窗口 (0.90, 0.998]、pair-random 70/30）。label_shift=0.001 同时传给
+# step1（重算 loss）和 step2（loss_in_range 自检 + 产物命名）。
+name: pairbest_shift_1k
+tag: 1k
+io:
+  out_format: parquet
+steps:
+  step1:
+    version: pairbest
+    params:
+      train_frac: 0.70
+      split_method: pair-random
+      split_seed: 20260928
+      min_plays_per_pair: 2
+      max_best_acc: 0.998
+      acc_floor: 0.90
+      gap_days: 365
+      min_plays_per_player: 20
+      label_shift: 0.001
+  step2:
+    version: predict
+    params:
+      models: [bias, mf_dot]
+      dim: 8
+      epochs: 60
+      lr: 0.02
+      wd: 1.0e-4
+      features: F0
+      entity: player
+      seed: 0
+      device: auto
+      label_shift: 0.001

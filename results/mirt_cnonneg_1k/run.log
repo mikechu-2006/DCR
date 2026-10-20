@@ -1,0 +1,59 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+mechanism: p_drift=none (P_eff = P + Pc*ln(playcount_cur))  d_constraint=none  d_logit_wd=None
+note: mirt_1 = mirt with C = softplus(Z) >= 0 (exact reparameterisation).  The interaction is <D-P, C>; with C >= 0 higher ability P lowers the loss and higher difficulty D raises it.  C's wd defaults to 0 (--c-logit-wd), C_raw = Z is saved.
+[step1] step1_1k.parquet: 1,399,615 rows, 990 players, 20,655 beatmaps
+[split] step1 表的 'split' 列：train 674,890 行 / test 420,401 行 / dropped 304,324 行 | 单位 pair: train 侧 607,116 / test 侧 259,500 | step1 报告: pair-random train_frac=0.7 seed=20260928
+  [check] PASS  pair_never_crosses_split: 0 个划分单位同时出现在两侧 (train 侧 607,116 / test 侧 259,500)
+  [check] PASS  train_and_test_disjoint: train rows on a held-out pair = 0; test rows on a held-out pair = 420,401/420,401
+  [check] PASS  test_pair_frac: 观测 test 单位占比 29.9441% vs step1 报告 29.94%（容差 2%）
+train vocab: 987 entities, 19,640 items
+train rows in vocab = 674,890/674,890   test rows covered = 418,876/420,401 (99.64%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], expected [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,640 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters on a synthetic training path
+  [mirt] epoch  20  test RMSE = 1.44799  (24.7s)
+  [mirt] epoch  40  test RMSE = 1.46224  (47.8s)
+  [mirt] epoch  60  test RMSE = 1.46040  (72.1s)
+  [warn] mirt: 参数退化 —— D 跨谱面 sd=0.0403（难度趋同 = 全部退回 e^D=1）  → 检查该参数的 wd 是否为 0、初始化宽度是否够大
+mirt     test rmse=1.46040 cov=0.996
+  [mirt_1] no-decay 参数: C=0
+  [mirt_1] effective-C L2 = 0.0001 (penalty on C, not on Z)
+  [mirt_1] epoch  20  test RMSE = 1.47449  (31.5s)
+  [mirt_1] epoch  40  test RMSE = 1.46425  (61.5s)
+  [mirt_1] epoch  60  test RMSE = 1.45851  (92.6s)
+  [warn] mirt_1: 参数退化 —— D 跨谱面 sd=0.0365（难度趋同 = 全部退回 e^D=1）  → 检查该参数的 wd 是否为 0、初始化宽度是否够大
+mirt_1   test rmse=1.45851 cov=0.996
+  [check] PASS  coverage_reported: 2 result blocks carry coverage + n_scored
+  [check] PASS  no_test_leak: training rows used = 674,890; of those on a held-out pair = 0; test tensors never enter the optimiser
+  [check] PASS  npz_matches_summary: mirt:ok mirt_1:ok
+  [check] PASS  c_constraint_holds: mirt_1: C>=0, min C = 3.832e-05, frac(C==0) = 0.00e+00
+wrote step2_1k_preds_loss.npz (418,876 test rows)
+
+wrote npz per model + step2_1k_summary_loss.json (170.2s total)
+{
+  "mirt": {
+    "n_scored": 418876,
+    "coverage": 0.996373,
+    "rmse": 1.460396,
+    "mae": 1.061181,
+    "spearman": 0.763169,
+    "pp_p50": 0.242742,
+    "pp_p90": 2.875674,
+    "pp_mean": 1.040529,
+    "pp_gt1_frac": 0.266867,
+    "pp_gt5_frac": 0.039327
+  },
+  "mirt_1": {
+    "n_scored": 418876,
+    "coverage": 0.996373,
+    "rmse": 1.458506,
+    "mae": 1.065243,
+    "spearman": 0.762612,
+    "pp_p50": 0.244056,
+    "pp_p90": 2.908142,
+    "pp_mean": 1.046571,
+    "pp_gt1_frac": 0.269688,
+    "pp_gt5_frac": 0.039635
+  }
+}

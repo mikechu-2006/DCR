@@ -33,7 +33,7 @@
 #  an A800, so the 24 h request is ample -- do not cut --time short.
 #
 #  This file ALSO runs without Slurm (useful when sbatch itself is broken):
-#      bash scripts/slurm/cm3p_embed.slurm 2>&1 | tee logs/cm3p_embed_$(date +%F).log
+#      mkdir -p logs && bash scripts/slurm/cm3p_embed.slurm 2>&1 | tee logs/cm3p_embed_$(date +%F).log
 #  Every SLURM_* variable below is read with a default, so nothing breaks outside
 #  of a job.
 #
@@ -327,7 +327,8 @@ if bad:
     print(f"checksum_ok=False: {bad:,} (a later .osu revision -- kept and flagged)")
 missing = sorted(ids - got)
 if missing:
-    print(f"missing {len(missing):,} target ids, e.g. {missing[:10]} (no .osu in the cache)")
+    print(f"missing {len(missing):,} target ids, e.g. {missing[:10]} "
+          f"(no .osu in the cache, or its body does not name this id -- check the [osu] lines)")
 EOF
 echo
 echo "next steps:"

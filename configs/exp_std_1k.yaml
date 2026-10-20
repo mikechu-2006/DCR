@@ -1,4 +1,5 @@
-# 标准实验：step0 用 data/processed 的缓存，step1 做 train/test 划分 + 清洗，step2 训练评估。
+# legacy play 级实验：step0 用 data/processed 的缓存，step1/clean 做划分 + 清洗，step2 训练评估。
+# 默认口径是 step1/pairbest（见 configs/exp_pairbest_1k.yaml）；本配置显式保留 clean。
 #   python main.py -c configs/exp_std_1k.yaml
 #   python main.py -c configs/exp_std_1k.yaml --set steps.step2.params.dim=32 --set name=dim32
 #
@@ -14,6 +15,7 @@ steps:
       split_seed: 20260928
       acc_floor: 0.90           # 只作用于划入 train 的行
       drop_frac: 0.30           # 只作用于划入 train 的行
+      min_plays_per_player: 200  # 全表记录数 < 200 的玩家整人剔除（先于划分）
   step2:
     version: predict
     params:

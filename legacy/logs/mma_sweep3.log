@@ -1,0 +1,217 @@
+=== 15:51:41 --set name=mma_pca7_est --set steps.step2.params.feat_groups=est --set steps.step2.params.feat_reduce=pca --set steps.step2.params.dim=7 --set steps.step2.params.models=[bias,fc] --set steps.step2.params.save_preds=false
+[实验] /home/mikechu/Documents/Projects/DCR/experiments_20261017_155142_mma_pca7_est
+[配置] configs/exp_map_analyser_1k.yaml
+[步骤] step1/clean → step2/map_analyser
+
+==============================================================================
+[1/2] step1/clean  划分 + 清洗：train/test 分离，然后 ACC 门槛 + 每玩家热身截断
+==============================================================================
+  输入 plays    [cache] data/processed/step0_1k.csv
+  命令 /home/mikechu/anaconda3/bin/python /home/mikechu/Documents/Projects/DCR/scripts/step1_clean.py --tag 1k --in /home/mikechu/Documents/Projects/DCR/data/processed/step0_1k.csv --out /home/mikechu/Documents/Projects/DCR/experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.csv --train-frac 0.7 --split-method pair-random --split-seed 20260928 --acc-floor 0.9 --drop-frac 0.3
+OMP: Warning #179: Function Can't set size of SHM failed:
+[step1] tag=1k  in=/home/mikechu/Documents/Projects/DCR/data/processed/step0_1k.csv
+[step1] input rows=1,399,615 players=990 beatmaps=20,655
+[step1] split: method=pair-random train_frac=0.7 seed=20260928
+[step1] split: 866,616 pair -> train 607,116 (70.0559%) / test 259,500 (29.9441%) | rows: test 420,401
+[step1] rule 1 (train only): 979,214 -> dropped 15,710 -> 963,504 rows
+[step1] rule 2 (train only): 963,504 -> dropped 288,614 -> train 674,890 rows
+[step1] split column: train 674,890 / test 420,401 / dropped 304,324
+[step1] train rows=674,890 players=987 beatmaps=19,640 cells=866,616
+[step1] train loss mean -5.9792 sd 2.1336 min -12.4663 max -2.3026 | min ACC 0.900000
+[step1] pc mean 2.253 max 125 | cells with pc gaps 0
+[step1] checks: 12/12 ok
+[step1] wrote /home/mikechu/Documents/Projects/DCR/experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.csv (77.5 MB) + /home/mikechu/Documents/Projects/DCR/experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.parquet (21.1 MB)  11.1s
+  [完成] 11.9s  experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.json (2.6 KB), experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.parquet (20.1 MB), experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.csv (73.9 MB)
+
+==============================================================================
+[2/2] step2/map_analyser  训练 + 推理：osumania_map_analyser 特征（主效应 + 点积交互，与 L1 同一模型）
+==============================================================================
+  输入 train    [step:step1] experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.parquet
+  输入 feat     [cache] data/processed/map_analyser_1k.parquet
+  命令 /home/mikechu/anaconda3/bin/python /home/mikechu/Documents/Projects/DCR/scripts/step2_map_analyser.py --tag 1k --train-path /home/mikechu/Documents/Projects/DCR/experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.parquet --proc-dir /home/mikechu/Documents/Projects/DCR/experiments_20261017_155142_mma_pca7_est/artifacts --out-dir /home/mikechu/Documents/Projects/DCR/experiments_20261017_155142_mma_pca7_est/results --out-prefix step2 --feat-path /home/mikechu/Documents/Projects/DCR/data/processed/map_analyser_1k.parquet --models bias,fc --feat-groups est --feat-reduce pca --feat-main --feat-bm free --dim 7 --epochs 60 --p-drift none
+OMP: Warning #179: Function Can't set size of SHM failed:
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+[step1] step1_1k.parquet: 1,399,615 rows, 990 players, 20,655 beatmaps
+[feat] 有特征的谱面 21,949 张；play 表裁掉 0/1,399,615 行
+[feat] map_analyser_1k.parquet: 21,949 张谱面, 14 维 (+1 个缺失指示), analyser 2.1.0
+[split] train 674,890 行 / test 420,401 行 / dropped 304,324 行 | 单位 pair: train 607,116 / test 259,500 | step1: pair-random train_frac=0.7 seed=20260928
+  [check] PASS  pair_never_crosses_split: 0 个划分单位同时出现在两侧
+  [check] PASS  train_and_test_disjoint: train 落在留出对上的行 = 0; test 落在留出对上的行 = 420,401/420,401
+  [check] PASS  test_pair_frac: 观测 test 单位占比 29.9441% vs step1 报告 29.94%（容差 2%）
+train vocab: 987 entities, 19,640 items
+[feat] 训练谱面上 37,767 个缺失值用列中位数填补（5 列受影响）
+[feat] 特征 19,640 x 7  reduce=pca  行范数(unit)=1  标准化前 |Z| 均值 2.448
+[feat] P = (987, 7)；每图自由参数: bm 一张 (19,640)
+train rows in vocab = 674,890/674,890   test rows covered = 418,876/420,401 (99.64%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], 期望 [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,640 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters
+  [check] PASS  feat_aligned_with_item_ids: 19,640 训练谱面; 64 个探针 id 全部命中; row norm in [1.0000, 1.0000]
+  [bias] MSD 开关对它无效（它没有任何谱面特征）；跑的就是 step2/predict 同一个基线，只是谱面子集被裁到有 MSD 的那些
+  [bias] epoch  20  test RMSE = 1.52157  (11.9s)
+  [bias] epoch  40  test RMSE = 1.52550  (26.4s)
+  [bias] epoch  60  test RMSE = 1.52711  (36.4s)
+bias     test rmse=1.52711 cov=0.996
+  [fc] epoch  20  test RMSE = 1.50077  (20.9s)
+  [fc] epoch  40  test RMSE = 1.52903  (43.3s)
+  [fc] epoch  60  test RMSE = 1.53444  (57.4s)
+fc       test rmse=1.53444 cov=0.996  |alpha|=2.3063
+  [check] PASS  coverage_reported: 2 个结果块带 coverage + n_scored
+  [check] PASS  no_test_leak: 训练用行 = 674,890；其中落在留出对上的 = 0
+  [check] PASS  npz_matches_summary: bias:ok fc:ok
+
+wrote npz per model + step2_1k_summary_loss.json (100.5s total)
+{
+  "bias": {
+    "n_scored": 418876,
+    "coverage": 0.996373,
+    "rmse": 1.527107,
+    "mae": 1.179669,
+    "spearman": 0.732945,
+    "pp_p50": 0.27226,
+    "pp_p90": 3.27607,
+    "pp_mean": 1.161135,
+    "pp_gt1_frac": 0.294562,
+    "pp_gt5_frac": 0.047219
+  },
+  "fc": {
+    "n_scored": 418876,
+    "coverage": 0.996373,
+    "rmse": 1.534441,
+    "mae": 1.119114,
+    "spearman": 0.738431,
+    "pp_p50": 0.245763,
+    "pp_p90": 3.079399,
+    "pp_mean": 1.112099,
+    "pp_gt1_frac": 0.279061,
+    "pp_gt5_frac": 0.043949
+  }
+}
+  [完成] 103.9s  experiments_20261017_155142_mma_pca7_est/results/step2_1k_summary_loss.json (10.8 KB), experiments_20261017_155142_mma_pca7_est/results/step2_1k_*.npz (-)
+
+==============================================================================
+实验汇总
+==============================================================================
+实验目录  experiments_20261017_155142_mma_pca7_est
+步骤
+  step1    clean          ok                 11.9s  experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.json, experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.parquet, experiments_20261017_155142_mma_pca7_est/artifacts/step1_1k.csv
+  step2    map_analyser   ok                103.9s  experiments_20261017_155142_mma_pca7_est/results/step2_1k_summary_loss.json, experiments_20261017_155142_mma_pca7_est/results/step2_1k_bias_F0est_pca7_main_loss.npz, experiments_20261017_155142_mma_pca7_est/results/step2_1k_fc_F0est_pca7_main_loss.npz
+
+模型指标（全部算在 split=test 的行上；split=train 的行只用于拟合）
+  变体                           模型                 RMSE  Spearman   n_scored
+  bias+fc_est_pca7_main        bias             1.5271    0.7329    418,876
+  bias+fc_est_pca7_main        fc               1.5344    0.7384    418,876
+
+划分方式  pair-random  train_frac=0.7  seed=20260928  单位=pair（866,616，train 607,116 / test 259,500）
+行数      step0 1,399,615 → test 420,401 / train 候选 979,214 → 删 ACC 15,710 → 删热身 288,614 → train 674,890（占全部 48.2%）  校验全部通过
+[完成] manifest: experiments_20261017_155142_mma_pca7_est/manifest.json
+=== exit=0 15:53:38
+=== 15:53:38 --set name=mma_pca7_pattstruct --set steps.step2.params.feat_groups=patt,struct --set steps.step2.params.feat_reduce=pca --set steps.step2.params.dim=7 --set steps.step2.params.models=[bias,fc] --set steps.step2.params.save_preds=false
+[实验] /home/mikechu/Documents/Projects/DCR/experiments_20261017_155338_mma_pca7_pattstruct
+[配置] configs/exp_map_analyser_1k.yaml
+[步骤] step1/clean → step2/map_analyser
+
+==============================================================================
+[1/2] step1/clean  划分 + 清洗：train/test 分离，然后 ACC 门槛 + 每玩家热身截断
+==============================================================================
+  输入 plays    [cache] data/processed/step0_1k.csv
+  命令 /home/mikechu/anaconda3/bin/python /home/mikechu/Documents/Projects/DCR/scripts/step1_clean.py --tag 1k --in /home/mikechu/Documents/Projects/DCR/data/processed/step0_1k.csv --out /home/mikechu/Documents/Projects/DCR/experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.csv --train-frac 0.7 --split-method pair-random --split-seed 20260928 --acc-floor 0.9 --drop-frac 0.3
+OMP: Warning #179: Function Can't set size of SHM failed:
+[step1] tag=1k  in=/home/mikechu/Documents/Projects/DCR/data/processed/step0_1k.csv
+[step1] input rows=1,399,615 players=990 beatmaps=20,655
+[step1] split: method=pair-random train_frac=0.7 seed=20260928
+[step1] split: 866,616 pair -> train 607,116 (70.0559%) / test 259,500 (29.9441%) | rows: test 420,401
+[step1] rule 1 (train only): 979,214 -> dropped 15,710 -> 963,504 rows
+[step1] rule 2 (train only): 963,504 -> dropped 288,614 -> train 674,890 rows
+[step1] split column: train 674,890 / test 420,401 / dropped 304,324
+[step1] train rows=674,890 players=987 beatmaps=19,640 cells=866,616
+[step1] train loss mean -5.9792 sd 2.1336 min -12.4663 max -2.3026 | min ACC 0.900000
+[step1] pc mean 2.253 max 125 | cells with pc gaps 0
+[step1] checks: 12/12 ok
+[step1] wrote /home/mikechu/Documents/Projects/DCR/experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.csv (77.5 MB) + /home/mikechu/Documents/Projects/DCR/experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.parquet (21.1 MB)  9.9s
+  [完成] 10.7s  experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.json (2.7 KB), experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.parquet (20.1 MB), experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.csv (73.9 MB)
+
+==============================================================================
+[2/2] step2/map_analyser  训练 + 推理：osumania_map_analyser 特征（主效应 + 点积交互，与 L1 同一模型）
+==============================================================================
+  输入 train    [step:step1] experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.parquet
+  输入 feat     [cache] data/processed/map_analyser_1k.parquet
+  命令 /home/mikechu/anaconda3/bin/python /home/mikechu/Documents/Projects/DCR/scripts/step2_map_analyser.py --tag 1k --train-path /home/mikechu/Documents/Projects/DCR/experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.parquet --proc-dir /home/mikechu/Documents/Projects/DCR/experiments_20261017_155338_mma_pca7_pattstruct/artifacts --out-dir /home/mikechu/Documents/Projects/DCR/experiments_20261017_155338_mma_pca7_pattstruct/results --out-prefix step2 --feat-path /home/mikechu/Documents/Projects/DCR/data/processed/map_analyser_1k.parquet --models bias,fc --feat-groups patt,struct --feat-reduce pca --feat-main --feat-bm free --dim 7 --epochs 60 --p-drift none
+OMP: Warning #179: Function Can't set size of SHM failed:
+engine: torch 2.13.0+cpu on cpu, threads=6, deterministic_algorithms=True
+[step1] step1_1k.parquet: 1,399,615 rows, 990 players, 20,655 beatmaps
+[feat] 有特征的谱面 21,949 张；play 表裁掉 0/1,399,615 行
+[feat] map_analyser_1k.parquet: 21,949 张谱面, 48 维 (+0 个缺失指示), analyser 2.1.0
+[split] train 674,890 行 / test 420,401 行 / dropped 304,324 行 | 单位 pair: train 607,116 / test 259,500 | step1: pair-random train_frac=0.7 seed=20260928
+  [check] PASS  pair_never_crosses_split: 0 个划分单位同时出现在两侧
+  [check] PASS  train_and_test_disjoint: train 落在留出对上的行 = 0; test 落在留出对上的行 = 420,401/420,401
+  [check] PASS  test_pair_frac: 观测 test 单位占比 29.9441% vs step1 报告 29.94%（容差 2%）
+train vocab: 987 entities, 19,640 items
+[feat] 训练谱面上 38,737 个缺失值用列中位数填补（34 列受影响）
+[feat] 特征 19,640 x 7  reduce=pca  行范数(unit)=1  标准化前 |Z| 均值 1.545
+[feat] P = (987, 7)；每图自由参数: bm 一张 (19,640)
+train rows in vocab = 674,890/674,890   test rows covered = 418,876/420,401 (99.64%)
+  [check] PASS  loss_in_range: test(1k) loss in [-12.4092, -0.3365], 期望 [-12.4663, -0.2669]
+  [check] PASS  vocab_from_train_only: 987 entities / 19,640 items == unique train ids
+  [check] PASS  determinism_selftest: same seed -> bitwise identical parameters
+  [check] PASS  feat_aligned_with_item_ids: 19,640 训练谱面; 64 个探针 id 全部命中; row norm in [1.0000, 1.0000]
+  [bias] MSD 开关对它无效（它没有任何谱面特征）；跑的就是 step2/predict 同一个基线，只是谱面子集被裁到有 MSD 的那些
+  [bias] epoch  20  test RMSE = 1.52157  (9.6s)
+  [bias] epoch  40  test RMSE = 1.52550  (18.3s)
+  [bias] epoch  60  test RMSE = 1.52711  (27.2s)
+bias     test rmse=1.52711 cov=0.996
+  [fc] epoch  20  test RMSE = 1.47496  (14.5s)
+  [fc] epoch  40  test RMSE = 1.48409  (28.2s)
+  [fc] epoch  60  test RMSE = 1.48736  (41.3s)
+fc       test rmse=1.48735 cov=0.996  |alpha|=1.2205
+  [check] PASS  coverage_reported: 2 个结果块带 coverage + n_scored
+  [check] PASS  no_test_leak: 训练用行 = 674,890；其中落在留出对上的 = 0
+  [check] PASS  npz_matches_summary: bias:ok fc:ok
+
+wrote npz per model + step2_1k_summary_loss.json (73.9s total)
+{
+  "bias": {
+    "n_scored": 418876,
+    "coverage": 0.996373,
+    "rmse": 1.527107,
+    "mae": 1.179669,
+    "spearman": 0.732945,
+    "pp_p50": 0.27226,
+    "pp_p90": 3.27607,
+    "pp_mean": 1.161135,
+    "pp_gt1_frac": 0.294562,
+    "pp_gt5_frac": 0.047219
+  },
+  "fc": {
+    "n_scored": 418876,
+    "coverage": 0.996373,
+    "rmse": 1.487355,
+    "mae": 1.114056,
+    "spearman": 0.750366,
+    "pp_p50": 0.254499,
+    "pp_p90": 3.135262,
+    "pp_mean": 1.156614,
+    "pp_gt1_frac": 0.283659,
+    "pp_gt5_frac": 0.044634
+  }
+}
+  [完成] 76.8s  experiments_20261017_155338_mma_pca7_pattstruct/results/step2_1k_summary_loss.json (19.2 KB), experiments_20261017_155338_mma_pca7_pattstruct/results/step2_1k_*.npz (-)
+
+==============================================================================
+实验汇总
+==============================================================================
+实验目录  experiments_20261017_155338_mma_pca7_pattstruct
+步骤
+  step1    clean          ok                 10.7s  experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.json, experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.parquet, experiments_20261017_155338_mma_pca7_pattstruct/artifacts/step1_1k.csv
+  step2    map_analyser   ok                 76.8s  experiments_20261017_155338_mma_pca7_pattstruct/results/step2_1k_summary_loss.json, experiments_20261017_155338_mma_pca7_pattstruct/results/step2_1k_bias_F0patt+struct_pca7_main_loss.npz, experiments_20261017_155338_mma_pca7_pattstruct/results/step2_1k_fc_F0patt+struct_pca7_main_loss.npz
+
+模型指标（全部算在 split=test 的行上；split=train 的行只用于拟合）
+  变体                           模型                 RMSE  Spearman   n_scored
+  bias+fc_patt+struct_pca7_mai bias             1.5271    0.7329    418,876
+  bias+fc_patt+struct_pca7_mai fc               1.4874    0.7504    418,876
+
+划分方式  pair-random  train_frac=0.7  seed=20260928  单位=pair（866,616，train 607,116 / test 259,500）
+行数      step0 1,399,615 → test 420,401 / train 候选 979,214 → 删 ACC 15,710 → 删热身 288,614 → train 674,890（占全部 48.2%）  校验全部通过
+[完成] manifest: experiments_20261017_155338_mma_pca7_pattstruct/manifest.json
+=== exit=0 15:55:05
+=== sweep3 done 15:55:05

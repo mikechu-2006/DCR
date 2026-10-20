@@ -1,15 +1,19 @@
-"""Step 1 — train/test 划分 + play 级清洗（新版）。
+"""Step 1 — 玩家门槛 + train/test 划分 + play 级清洗（新版）。
 
-从 step0 的 play 表出发，两步：
+从 step0 的 play 表出发，三步：
 
-  (0) **划分**：按 --split-method 把样本单位分成 train / test 两组，train 占 --train-frac。
+  (0) **玩家门槛**（先于划分，作用于**全表**）：每个 player_id 数它在 step0 里的记录数，
+      少于 --min-plays-per-player（默认 200）的玩家**整人剔除** —— 其所有行标 "dropped"，
+      不参与划分，也不进 train/test。记录数这么少的玩家大概率不是 4K 玩家（只是偶尔碰
+      4K 的 osu!std / 7K 玩家），样本量也不足以稳定估计玩家潜向量。
+  (1) **划分**（只在规则 0 幸存的行上）：按 --split-method 把样本单位分成 train / test
+      两组，train 占 --train-frac。
         pair-random    （默认）对所有 (player_id, beatmap_id) 有序对均匀随机；同一对的行
                        要么全在 train、要么全在 test。
         beatmap-random 随机挑出 (1 - train_frac) 比例的 beatmap_id，这些谱面的**所有**行
                        都进 test（谱面级外推，更严格）。
-        种子 --split-seed 默认 20260928，与 step2 的 --split-seed 一致：因此 pair-random
-        的划分与旧流程（step2 自己划分）逐行相同。
-  (1) **清洗**：只作用于划入 train 的行，两条行级删除
+        种子 --split-seed 默认 20260928，与 step2 的旧 --split-seed 一致。
+  (2) **清洗**：只作用于划入 train 的行，两条行级删除
         规则 1 ACC 门槛：删除 ACC <= --acc-floor（即 loss >= log(1 - acc_floor)）的游玩。
         规则 2 热身截断：每个 player_id 按时间排序，删除最早的 floor(drop_frac * n) 条，
                         n = 该玩家 train 行经过规则 1 之后剩下的行数。
@@ -18,15 +22,19 @@
 
     "train"    划入 train，且通过了清洗
     "test"     划入 test（**原样保留**：清洗是 train 侧的处理，用它去筛 test 就是
-               「以处理结果为条件」，见 docs/archive/cleaning_plan.md 3.2）
-    "dropped"  划入 train，但被规则 1 或规则 2 删除
+               「以处理结果为条件」，见 legacy/docs/archive/cleaning_plan.md 3.2）
+    "dropped"  规则 0 整人剔除的行（从未参与划分），或划入 train 后被规则 1 / 2 删除的行
 
 两种方法都不重叠：test 侧的行绝不会出现在 train 里。
 
+**规则 0 在划分之前**，所以它数的是玩家在 step0 全表里的记录数，与 split / ACC 参数无关；
+代价是划分的随机单位（有序对或谱面）不再包含被剔除玩家的那些对，因此本版的 test 集
+与旧版（先划分）**不再逐行一致**，前后对比必须用同一版的 step1 产物。
+
 刻意不做的事（与旧 step1 的区别）：
     * 不做 cell 聚合（不产 loss_med / n_scores / rate）；
-    * 不做 (player, beatmap) 的 attempts 或 n_scores 门槛；
-    * **不重算 playcount_cur** —— 保留 step0 原值，所以删行后会出现空洞
+    * 不做 (player, beatmap) 的 attempts 或 n_scores 门槛（玩家级门槛见规则 0）；
+    * **不重算 playcount_cur** —— 保留 step0 原值，所以下游只看 train 行时会出现空洞
       （如 5,6,7…），仍表示「这是该 cell 的第 k 条记录」，删过哪些行可追溯；
     * **不再把删掉的行从表里去掉**：输出 = 输入的全部行（顺序与数值都不变），
       只多一列 split，train/test/dropped 三类的行数之和 = step0 行数。
@@ -37,6 +45,7 @@
 
 用例
     python scripts/step1_clean.py --tag 1k
+    python scripts/step1_clean.py --tag 1k --min-plays-per-player 0      # 关闭玩家门槛
     python scripts/step1_clean.py --tag 1k --train-frac 0.7 --split-method pair-random
     python scripts/step1_clean.py --tag 1k --split-method beatmap-random --train-frac 0.5
     python scripts/step1_clean.py --tag 1k --in data/processed/step0_1k.parquet \
@@ -60,7 +69,7 @@ LABELS = ("train", "test", "dropped")
 
 # step0 的排序键是 (user_id, beatmap_id, ts, sid)。sid 不在 play 表里，所以同一秒
 # 并列时用 (beatmap_id, playcount_cur) 作确定性 tie-break —— 这是唯一的近似点，
-# 见 docs/step1_cleaning.md 5。
+# 见 legacy/docs/step1_cleaning.md 5。
 SORT_KEY = ["player_id", "timestamp", "beatmap_id", "playcount_cur"]
 
 
@@ -138,10 +147,13 @@ def main() -> None:
                          "beatmap-random: 随机挑出 (1-train_frac) 比例的 beatmap_id，"
                          "这些谱面的所有行都进 test")
     ap.add_argument("--split-seed", type=int, default=20260928,
-                    help="划分随机种子；默认与 step2 的 --split-seed 相同，"
-                         "因此 pair-random 与旧流程逐行一致")
+                    help="划分随机种子；默认与 step2 的旧 --split-seed 相同。规则 0 会先"
+                         "缩小划分单位集合，因此与旧流程不再逐行一致")
     ap.add_argument("--acc-floor", type=float, default=0.90, help="删除 ACC <= 此值的游玩（仅 train 行）")
     ap.add_argument("--drop-frac", type=float, default=0.30, help="每个玩家删除最早的这一比例（仅 train 行）")
+    ap.add_argument("--min-plays-per-player", type=int, default=200,
+                    help="玩家在整张 step0 表里的记录数 < 此值时整人剔除（所有行标 dropped，"
+                         "不参与划分、不进 train/test）；0 关闭；默认 200")
     ap.add_argument("--no-parquet", action="store_true")
     ap.add_argument("--no-csv", action="store_true",
                     help="不写 CSV（--out 只作为命名基准，parquet/json 照常）")
@@ -150,6 +162,8 @@ def main() -> None:
     t0 = time.time()
     if not 0.0 < args.train_frac < 1.0:
         raise SystemExit(f"--train-frac 必须在 (0, 1) 内，得到 {args.train_frac}")
+    if args.min_plays_per_player < 0:
+        raise SystemExit(f"--min-plays-per-player 不能为负，得到 {args.min_plays_per_player}")
     src = resolve_input(args.tag, args.inp)
     out_csv = Path(args.out) if args.out else OUT / f"step1_{args.tag}.csv"
     if out_csv.suffix == ".parquet":       # --out 是命名基准，避免 CSV/parquet 撞同一路径
@@ -163,23 +177,42 @@ def main() -> None:
     log_floor = math.log(1.0 - args.acc_floor)
     print(f"[step1] input rows={n_in:,} players={df.player_id.nunique():,} "
           f"beatmaps={df.beatmap_id.nunique():,}", flush=True)
+
+    # ---- 规则 0: 玩家 play 数门槛（全表；先于划分）------------------------
+    # 先标 dropped，再做 train/test split：被剔除的玩家不进入划分单位，也不进 train/test。
+    plays_per_player = df.groupby("player_id", sort=False).size()
+    low_play_players = plays_per_player.index[
+        plays_per_player.to_numpy() < args.min_plays_per_player]
+    is_low_play = df["player_id"].isin(low_play_players).to_numpy()
+    kept = ~is_low_play
+    n_low_play = int(is_low_play.sum())
+    print(f"[step1] rule 0 (all rows): players with < {args.min_plays_per_player} plays: "
+          f"{len(low_play_players):,} / {plays_per_player.size:,} -> "
+          f"dropped {n_low_play:,} rows", flush=True)
+    if not kept.any():
+        raise SystemExit("rule 0 dropped every row; lower --min-plays-per-player")
+
     print(f"[step1] split: method={args.split_method} train_frac={args.train_frac:g} "
           f"seed={args.split_seed}", flush=True)
 
-    # ---- 规则 0: train/test 划分 ------------------------------------------
-    is_test, split_info = split_rows(df, args.split_method, args.train_frac, args.split_seed)
+    # ---- 划分: train/test（只跑规则 0 幸存的行）---------------------------
+    is_test_kept, split_info = split_rows(df[kept], args.split_method,
+                                          args.train_frac, args.split_seed)
+    is_test = np.zeros(n_in, dtype=bool)
+    is_test[kept] = is_test_kept
     n_te = int(is_test.sum())
     print(f"[step1] split: {split_info['n_units']:,} {split_info['unit']} -> "
           f"train {split_info['n_train_units']:,} ({split_info['actual_train_frac']:.4%}) / "
           f"test {split_info['n_test_units']:,} ({split_info['actual_test_frac']:.4%}) | "
           f"rows: test {n_te:,}", flush=True)
 
-    # 先全部标成 dropped（= 划进 train，等着看清洗结果），再把 test 覆盖掉。
+    # 先全部标成 dropped：规则 0 整人剔除的行从此保持 dropped（不参加划分），
+    # 其余行再被 test / train 覆盖。
     split = np.full(n_in, "dropped", dtype=object)
     split[is_test] = "test"
 
-    # ---- 规则 1: ACC floor（仅 train 行）----------------------------------
-    d_train = df[~is_test]               # 索引仍是原行号
+    # ---- 规则 1: ACC floor（仅 train 行；规则 0 的行已不在里面）----------
+    d_train = df[kept & ~is_test]        # 索引仍是原行号
     keep_acc = d_train["loss"].to_numpy(dtype=np.float64) < log_floor
     n_acc_drop = int((~keep_acc).sum())
     d1 = d_train[keep_acc]
@@ -223,25 +256,35 @@ def main() -> None:
     pc = out.groupby(["player_id", "beatmap_id"], sort=False)["playcount_cur"]
     pc_monotonic = bool((pc.diff().fillna(1) > 0).all())
 
-    # 划分不重叠：train 侧（含 dropped）与 test 侧的样本单位必须没有交集
+    # 划分不重叠：train 侧（含 dropped，但**不含**规则 0 整人剔除的行）与 test 侧的
+    # 划分单位必须没有交集 —— 规则 0 的行从不参加划分，不能算进任何一侧。
+    train_side = kept & ~te_mask
     if args.split_method == "pair-random":
         kk = int(df["beatmap_id"].max()) + 1
         keys_all = pair_keys(df["player_id"].to_numpy(), df["beatmap_id"].to_numpy(), kk)
-        train_units = np.unique(keys_all[~te_mask])
+        train_units = np.unique(keys_all[train_side])
         test_units = np.unique(keys_all[te_mask])
         unit_name = "有序对"
     else:
         bids = df["beatmap_id"].to_numpy()
-        train_units = np.unique(bids[~te_mask])
+        train_units = np.unique(bids[train_side])
         test_units = np.unique(bids[te_mask])
         unit_name = "谱面"
     shared = np.intersect1d(train_units, test_units, assume_unique=True)
+
+    # 规则 0 的判据：出现在 train / test 里的每个玩家，全表记录数都必须 >= 门槛
+    labeled_players = df.loc[split != "dropped", "player_id"].unique()
+    min_plays_ok = bool(
+        len(labeled_players) == 0
+        or plays_per_player.reindex(labeled_players).min() >= args.min_plays_per_player
+    )
 
     checks: dict[str, bool] = {
         "rows_preserved": len(out) == n_in,
         "split_labels_valid": bool(set(np.unique(split).tolist()) <= set(LABELS))
                               and n_tr + n_te + n_dr == n_in,
         "split_units_disjoint": shared.size == 0,
+        "min_plays_per_player_enforced": min_plays_ok,
         "actual_train_frac_within_1pct": abs(
             (train_units.size / max(train_units.size + test_units.size, 1)) - args.train_frac) <= 0.01,
         "min_acc_strictly_above_floor_on_train": bool(len(acc_out) == 0 or acc_out.min() > args.acc_floor),
@@ -296,10 +339,15 @@ def main() -> None:
             "col": SPLIT_COL,
             "labels": list(LABELS),
             "rows": {"train": n_tr, "test": n_te, "dropped": n_dr},
+            "players_below_min_plays": int(len(low_play_players)),
+            "rows_in_players_below_min_plays": n_low_play,
+            "rows_after_player_floor": int(kept.sum()),
         },
         "rules": {
-            "order": "split_then_acc_floor_then_time_cut",
-            "cleaning_side": "train only",
+            "order": "player_floor_then_split_then_acc_floor_then_time_cut",
+            "cleaning_side": "player floor on all rows; row rules on train only",
+            "min_plays_per_player": args.min_plays_per_player,
+            "min_plays_basis": "all step0 rows of the player (before split)",
             "acc_floor": args.acc_floor,
             "log_loss_threshold": log_floor,
             "drop_frac": args.drop_frac,
@@ -309,6 +357,8 @@ def main() -> None:
         },
         "funnel": {
             "step0_rows": n_in,
+            "dropped_low_play_rows": n_low_play,
+            "rows_after_player_floor": int(kept.sum()),
             "test_rows": n_te,
             "train_candidates": int(len(d_train)),
             "dropped_acc": n_acc_drop,
@@ -320,6 +370,7 @@ def main() -> None:
         },
         "players": {
             "in": int(df.player_id.nunique()),
+            "dropped_low_play": int(len(low_play_players)),
             "train_out": int(out.loc[tr_mask, "player_id"].nunique()),
             "test_out": int(out.loc[te_mask, "player_id"].nunique()),
             "cut_zero_players": int((cut == 0).sum()),

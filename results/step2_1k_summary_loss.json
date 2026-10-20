@@ -1,0 +1,795 @@
+{
+  "runs": {
+    "bias+msd_add+msd_msdzscore7_main": {
+      "variant": "bias+msd_add+msd_msdzscore7_main",
+      "args": {
+        "tag": "1k",
+        "target": "loss",
+        "models": "bias,msd_add,msd",
+        "dim": 7,
+        "epochs": 60,
+        "lr": 0.02,
+        "wd": 0.0001,
+        "batch": 8192,
+        "features": "F0",
+        "entity": "player",
+        "seed": 0,
+        "out_prefix": "step2",
+        "proc_dir": "data/processed",
+        "out_dir": "results",
+        "train_path": "data/processed/step1_1k.parquet",
+        "split_col": "split",
+        "eval_every": 60,
+        "p_drift": "none",
+        "d_constraint": "none",
+        "d_init_std": null,
+        "d_logit_wd": null,
+        "c_logit_wd": null,
+        "c_init_std": null,
+        "drop_bias": "none",
+        "device": "auto",
+        "threads": 0,
+        "save_preds": true,
+        "msd_path": null,
+        "msd_skills": "stream,jumpstream,handstream,stamina,jackspeed,chordjack,technical",
+        "msd_reduce": "zscore",
+        "msd_main": true,
+        "msd_bm": "free",
+        "allow_unversioned_msd": false
+      },
+      "mechanism": {
+        "msd_main": true,
+        "msd_bm": "free",
+        "drop_bias": "none",
+        "by_model": {
+          "bias": {
+            "msd_main": true,
+            "msd_bm": "free",
+            "drop_bias": "none",
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "bm": 0.0001
+            },
+            "no_decay": []
+          },
+          "msd_add": {
+            "msd_main": true,
+            "msd_bm": "free",
+            "drop_bias": "none",
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "bm": 0.0001,
+              "alpha": 0.0001
+            },
+            "no_decay": []
+          },
+          "msd": {
+            "msd_main": true,
+            "msd_bm": "free",
+            "drop_bias": "none",
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "bm": 0.0001,
+              "P": 0.0001,
+              "alpha": 0.0001
+            },
+            "no_decay": []
+          }
+        }
+      },
+      "engine": {
+        "name": "torch",
+        "version": "2.13.0+cpu",
+        "device": "cpu",
+        "threads": 6,
+        "deterministic_algorithms": true
+      },
+      "split": {
+        "from": "step1",
+        "col": "split",
+        "spec": {
+          "method": "pair-random",
+          "unit": "pair",
+          "n_units": 866616,
+          "n_train_units": 607116,
+          "n_test_units": 259500,
+          "actual_train_frac": 0.7005594173197818,
+          "actual_test_frac": 0.2994405826802182,
+          "seed": 20260928,
+          "train_frac": 0.7,
+          "test_frac": 0.30000000000000004,
+          "col": "split",
+          "labels": [
+            "train",
+            "test",
+            "dropped"
+          ],
+          "rows": {
+            "train": 674890,
+            "test": 420401,
+            "dropped": 304324
+          }
+        },
+        "unit": "pair",
+        "n_units": 866616,
+        "n_test_units": 259500,
+        "observed_test_frac": 0.2994405826802182,
+        "rows": {
+          "train": 674890,
+          "test": 420401,
+          "dropped": 304324
+        }
+      },
+      "sizes": {
+        "train_plays": 674890,
+        "test_plays": 420401,
+        "n_entities": 987,
+        "n_items": 19640,
+        "train_rows_in_vocab": 674890,
+        "test_rows_covered": 418876
+      },
+      "msd": {
+        "path": "data/processed/minacalc_msd_1k.parquet",
+        "skills": [
+          "stream",
+          "jumpstream",
+          "handstream",
+          "stamina",
+          "jackspeed",
+          "chordjack",
+          "technical"
+        ],
+        "n_rows": 21949,
+        "n_rows_raw": 21949,
+        "calc_version": 505,
+        "has_hold_ratio": true,
+        "reduce": "zscore",
+        "mean": [
+          13.4608154296875,
+          14.33164119720459,
+          10.895185470581055,
+          15.17730712890625,
+          8.648221969604492,
+          10.658400535583496,
+          15.336344718933105
+        ],
+        "scale": [
+          5.669417858123779,
+          5.944945812225342,
+          6.088139057159424,
+          6.600478172302246,
+          4.557273864746094,
+          5.413273811340332,
+          6.204894065856934
+        ],
+        "fitted_on": "train_charts",
+        "dim": 7,
+        "raw_row_norm_mean": 2.229356050491333,
+        "raw_row_norm_min": 0.15441706776618958,
+        "raw_row_norm_max": 9.100950241088867,
+        "filtered_rows": {
+          "rows_dropped": 0,
+          "rows_total": 1399615
+        },
+        "dim_used": 7,
+        "alpha": {
+          "bias": null,
+          "msd_add": [
+            0.7710899710655212,
+            -0.5900499820709229,
+            0.3030099868774414,
+            0.29339998960494995,
+            0.8306499719619751,
+            0.03348999843001366,
+            -0.542680025100708
+          ],
+          "msd": [
+            0.7035899758338928,
+            -0.493149995803833,
+            0.3115200102329254,
+            0.33313000202178955,
+            0.8194400072097778,
+            0.049320001155138016,
+            -0.3345800042152405
+          ]
+        }
+      },
+      "results": {
+        "bias": {
+          "n_scored": 418876,
+          "coverage": 0.996373,
+          "rmse": 1.527107,
+          "mae": 1.179669,
+          "spearman": 0.732945,
+          "pp_p50": 0.27226,
+          "pp_p90": 3.27607,
+          "pp_mean": 1.161135,
+          "pp_gt1_frac": 0.294562,
+          "pp_gt5_frac": 0.047219
+        },
+        "msd_add": {
+          "n_scored": 418876,
+          "coverage": 0.996373,
+          "rmse": 1.566715,
+          "mae": 1.161782,
+          "spearman": 0.72255,
+          "pp_p50": 0.259528,
+          "pp_p90": 3.151667,
+          "pp_mean": 1.132348,
+          "pp_gt1_frac": 0.287543,
+          "pp_gt5_frac": 0.044956
+        },
+        "msd": {
+          "n_scored": 418876,
+          "coverage": 0.996373,
+          "rmse": 1.547691,
+          "mae": 1.137328,
+          "spearman": 0.729904,
+          "pp_p50": 0.256223,
+          "pp_p90": 3.10972,
+          "pp_mean": 1.123959,
+          "pp_gt1_frac": 0.283442,
+          "pp_gt5_frac": 0.044428
+        }
+      },
+      "degeneracy": {
+        "bias": {},
+        "msd_add": {},
+        "msd": {}
+      },
+      "preds_path": "results/step2_1k_preds_minacalc_bias+msd_add+msd_msdzscore7_main_loss.npz",
+      "checks": [
+        {
+          "name": "pair_never_crosses_split",
+          "ok": true,
+          "detail": "0 个划分单位同时出现在两侧"
+        },
+        {
+          "name": "train_and_test_disjoint",
+          "ok": true,
+          "detail": "train 落在留出对上的行 = 0; test 落在留出对上的行 = 420,401/420,401"
+        },
+        {
+          "name": "test_pair_frac",
+          "ok": true,
+          "detail": "观测 test 单位占比 29.9441% vs step1 报告 29.94%（容差 2%）"
+        },
+        {
+          "name": "loss_in_range",
+          "ok": true,
+          "detail": "test(1k) loss in [-12.4092, -0.3365], 期望 [-12.4663, -0.2669]"
+        },
+        {
+          "name": "vocab_from_train_only",
+          "ok": true,
+          "detail": "987 entities / 19,640 items == unique train ids"
+        },
+        {
+          "name": "determinism_selftest",
+          "ok": true,
+          "detail": "same seed -> bitwise identical parameters"
+        },
+        {
+          "name": "msd_aligned_with_item_ids",
+          "ok": true,
+          "detail": "19,640 训练谱面; 64 个探针 id 全部命中; row norm in [1.0000, 1.0000]"
+        },
+        {
+          "name": "coverage_reported",
+          "ok": true,
+          "detail": "3 个结果块带 coverage + n_scored"
+        },
+        {
+          "name": "no_test_leak",
+          "ok": true,
+          "detail": "训练用行 = 674,890；其中落在留出对上的 = 0"
+        },
+        {
+          "name": "npz_matches_summary",
+          "ok": true,
+          "detail": "bias:ok msd_add:ok msd:ok"
+        }
+      ],
+      "seconds": 243.9
+    },
+    "msd+msd_add_msdzscore7_main_bmmsd": {
+      "variant": "msd+msd_add_msdzscore7_main_bmmsd",
+      "args": {
+        "tag": "1k",
+        "target": "loss",
+        "models": "msd,msd_add",
+        "dim": 7,
+        "epochs": 60,
+        "lr": 0.02,
+        "wd": 0.0001,
+        "batch": 8192,
+        "features": "F0",
+        "entity": "player",
+        "seed": 0,
+        "out_prefix": "step2",
+        "proc_dir": "data/processed",
+        "out_dir": "results",
+        "train_path": "data/processed/step1_1k.parquet",
+        "split_col": "split",
+        "eval_every": 60,
+        "p_drift": "none",
+        "d_constraint": "none",
+        "d_init_std": null,
+        "d_logit_wd": null,
+        "c_logit_wd": null,
+        "c_init_std": null,
+        "drop_bias": "none",
+        "device": "auto",
+        "threads": 0,
+        "save_preds": false,
+        "msd_path": null,
+        "msd_skills": "stream,jumpstream,handstream,stamina,jackspeed,chordjack,technical",
+        "msd_reduce": "zscore",
+        "msd_main": true,
+        "msd_bm": "msd",
+        "allow_unversioned_msd": false
+      },
+      "mechanism": {
+        "msd_main": true,
+        "msd_bm": "msd",
+        "drop_bias": "m",
+        "by_model": {
+          "msd": {
+            "msd_main": true,
+            "msd_bm": "msd",
+            "drop_bias": "m",
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "P": 0.0001,
+              "alpha": 0.0001
+            },
+            "no_decay": []
+          },
+          "msd_add": {
+            "msd_main": true,
+            "msd_bm": "msd",
+            "drop_bias": "m",
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "alpha": 0.0001
+            },
+            "no_decay": []
+          }
+        }
+      },
+      "engine": {
+        "name": "torch",
+        "version": "2.13.0+cpu",
+        "device": "cpu",
+        "threads": 6,
+        "deterministic_algorithms": true
+      },
+      "split": {
+        "from": "step1",
+        "col": "split",
+        "spec": {
+          "method": "pair-random",
+          "unit": "pair",
+          "n_units": 866616,
+          "n_train_units": 607116,
+          "n_test_units": 259500,
+          "actual_train_frac": 0.7005594173197818,
+          "actual_test_frac": 0.2994405826802182,
+          "seed": 20260928,
+          "train_frac": 0.7,
+          "test_frac": 0.30000000000000004,
+          "col": "split",
+          "labels": [
+            "train",
+            "test",
+            "dropped"
+          ],
+          "rows": {
+            "train": 674890,
+            "test": 420401,
+            "dropped": 304324
+          }
+        },
+        "unit": "pair",
+        "n_units": 866616,
+        "n_test_units": 259500,
+        "observed_test_frac": 0.2994405826802182,
+        "rows": {
+          "train": 674890,
+          "test": 420401,
+          "dropped": 304324
+        }
+      },
+      "sizes": {
+        "train_plays": 674890,
+        "test_plays": 420401,
+        "n_entities": 987,
+        "n_items": 19640,
+        "train_rows_in_vocab": 674890,
+        "test_rows_covered": 418876
+      },
+      "msd": {
+        "reduce": "zscore",
+        "mean": [
+          13.4608154296875,
+          14.33164119720459,
+          10.895185470581055,
+          15.17730712890625,
+          8.648221969604492,
+          10.658400535583496,
+          15.336344718933105
+        ],
+        "scale": [
+          5.669417858123779,
+          5.944945812225342,
+          6.088139057159424,
+          6.600478172302246,
+          4.557273864746094,
+          5.413273811340332,
+          6.204894065856934
+        ],
+        "fitted_on": "train_charts",
+        "dim": 7,
+        "raw_row_norm_mean": 2.229356050491333,
+        "raw_row_norm_min": 0.15441706776618958,
+        "raw_row_norm_max": 9.100950241088867,
+        "filtered_rows": {
+          "rows_dropped": 0,
+          "rows_total": 1399615
+        },
+        "dim_used": 7,
+        "alpha": {
+          "msd": [
+            0.3325999975204468,
+            -0.16046999394893646,
+            0.15365000069141388,
+            0.37452998757362366,
+            0.6913300156593323,
+            0.04921000078320503,
+            0.46696001291275024
+          ],
+          "msd_add": [
+            0.5137100219726562,
+            -0.34185001254081726,
+            0.17549000680446625,
+            0.33107998967170715,
+            0.6866599917411804,
+            -0.034779999405145645,
+            0.09841000288724899
+          ]
+        }
+      },
+      "results": {
+        "msd": {
+          "n_scored": 418876,
+          "coverage": 0.996373,
+          "rmse": 1.713704,
+          "mae": 1.289756,
+          "spearman": 0.651872,
+          "pp_p50": 0.295806,
+          "pp_p90": 3.310486,
+          "pp_mean": 1.19178,
+          "pp_gt1_frac": 0.298177,
+          "pp_gt5_frac": 0.048623
+        },
+        "msd_add": {
+          "n_scored": 418876,
+          "coverage": 0.996373,
+          "rmse": 1.759728,
+          "mae": 1.340449,
+          "spearman": 0.635537,
+          "pp_p50": 0.303252,
+          "pp_p90": 3.412053,
+          "pp_mean": 1.213672,
+          "pp_gt1_frac": 0.304286,
+          "pp_gt5_frac": 0.050151
+        }
+      },
+      "degeneracy": {
+        "msd": {},
+        "msd_add": {}
+      },
+      "preds_path": null,
+      "checks": [
+        {
+          "name": "pair_never_crosses_split",
+          "ok": true,
+          "detail": "0 个划分单位同时出现在两侧"
+        },
+        {
+          "name": "train_and_test_disjoint",
+          "ok": true,
+          "detail": "train 落在留出对上的行 = 0; test 落在留出对上的行 = 420,401/420,401"
+        },
+        {
+          "name": "test_pair_frac",
+          "ok": true,
+          "detail": "观测 test 单位占比 29.9441% vs step1 报告 29.94%（容差 2%）"
+        },
+        {
+          "name": "loss_in_range",
+          "ok": true,
+          "detail": "test(1k) loss in [-12.4092, -0.3365], 期望 [-12.4663, -0.2669]"
+        },
+        {
+          "name": "vocab_from_train_only",
+          "ok": true,
+          "detail": "987 entities / 19,640 items == unique train ids"
+        },
+        {
+          "name": "determinism_selftest",
+          "ok": true,
+          "detail": "same seed -> bitwise identical parameters"
+        },
+        {
+          "name": "msd_aligned_with_item_ids",
+          "ok": true,
+          "detail": "19,640 训练谱面; 64 个探针 id 全部命中; row norm in [1.0000, 1.0000]"
+        },
+        {
+          "name": "coverage_reported",
+          "ok": true,
+          "detail": "2 个结果块带 coverage + n_scored"
+        },
+        {
+          "name": "no_test_leak",
+          "ok": true,
+          "detail": "训练用行 = 674,890；其中落在留出对上的 = 0"
+        },
+        {
+          "name": "npz_matches_summary",
+          "ok": true,
+          "detail": "msd:ok msd_add:ok"
+        }
+      ],
+      "seconds": 102.2
+    },
+    "msd_msdpca2_main": {
+      "variant": "msd_msdpca2_main",
+      "args": {
+        "tag": "1k",
+        "target": "loss",
+        "models": "msd",
+        "dim": 2,
+        "epochs": 60,
+        "lr": 0.02,
+        "wd": 0.0001,
+        "batch": 8192,
+        "features": "F0",
+        "entity": "player",
+        "seed": 0,
+        "out_prefix": "step2",
+        "proc_dir": "data/processed",
+        "out_dir": "results",
+        "train_path": "data/processed/step1_1k.parquet",
+        "split_col": "split",
+        "eval_every": 60,
+        "p_drift": "none",
+        "d_constraint": "none",
+        "d_init_std": null,
+        "d_logit_wd": null,
+        "c_logit_wd": null,
+        "c_init_std": null,
+        "drop_bias": "none",
+        "device": "auto",
+        "threads": 0,
+        "save_preds": false,
+        "msd_path": null,
+        "msd_skills": "stream,jumpstream,handstream,stamina,jackspeed,chordjack,technical",
+        "msd_reduce": "pca",
+        "msd_main": true,
+        "msd_bm": "free",
+        "allow_unversioned_msd": false
+      },
+      "mechanism": {
+        "msd_main": true,
+        "msd_bm": "free",
+        "drop_bias": "none",
+        "by_model": {
+          "msd": {
+            "msd_main": true,
+            "msd_bm": "free",
+            "drop_bias": "none",
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "bm": 0.0001,
+              "P": 0.0001,
+              "alpha": 0.0001
+            },
+            "no_decay": []
+          }
+        }
+      },
+      "engine": {
+        "name": "torch",
+        "version": "2.13.0+cpu",
+        "device": "cpu",
+        "threads": 6,
+        "deterministic_algorithms": true
+      },
+      "split": {
+        "from": "step1",
+        "col": "split",
+        "spec": {
+          "method": "pair-random",
+          "unit": "pair",
+          "n_units": 866616,
+          "n_train_units": 607116,
+          "n_test_units": 259500,
+          "actual_train_frac": 0.7005594173197818,
+          "actual_test_frac": 0.2994405826802182,
+          "seed": 20260928,
+          "train_frac": 0.7,
+          "test_frac": 0.30000000000000004,
+          "col": "split",
+          "labels": [
+            "train",
+            "test",
+            "dropped"
+          ],
+          "rows": {
+            "train": 674890,
+            "test": 420401,
+            "dropped": 304324
+          }
+        },
+        "unit": "pair",
+        "n_units": 866616,
+        "n_test_units": 259500,
+        "observed_test_frac": 0.2994405826802182,
+        "rows": {
+          "train": 674890,
+          "test": 420401,
+          "dropped": 304324
+        }
+      },
+      "sizes": {
+        "train_plays": 674890,
+        "test_plays": 420401,
+        "n_entities": 987,
+        "n_items": 19640,
+        "train_rows_in_vocab": 674890,
+        "test_rows_covered": 418876
+      },
+      "msd": {
+        "path": "data/processed/minacalc_msd_1k.parquet",
+        "skills": [
+          "stream",
+          "jumpstream",
+          "handstream",
+          "stamina",
+          "jackspeed",
+          "chordjack",
+          "technical"
+        ],
+        "n_rows": 21949,
+        "n_rows_raw": 21949,
+        "calc_version": 505,
+        "has_hold_ratio": true,
+        "reduce": "pca",
+        "pca_mean": [
+          13.4608154296875,
+          14.33164119720459,
+          10.895185470581055,
+          15.17730712890625,
+          8.648221969604492,
+          10.658400535583496,
+          15.336344718933105
+        ],
+        "pca_components": [
+          [
+            0.36322900652885437,
+            0.38938701152801514,
+            0.3878589868545532,
+            0.43985098600387573,
+            0.29198500514030457,
+            0.3447920083999634,
+            0.41036900877952576
+          ],
+          [
+            0.6126300096511841,
+            -0.009421000257134438,
+            -0.44122201204299927,
+            0.1427289992570877,
+            -0.3084610104560852,
+            -0.45283401012420654,
+            0.33066698908805847
+          ]
+        ],
+        "fitted_on": "train_charts",
+        "dim": 2,
+        "raw_row_norm_mean": 1.184616208076477,
+        "raw_row_norm_min": 0.007727800402790308,
+        "raw_row_norm_max": 6.185754776000977,
+        "filtered_rows": {
+          "rows_dropped": 0,
+          "rows_total": 1399615
+        },
+        "dim_used": 2,
+        "alpha": {
+          "msd": [
+            1.3514599800109863,
+            -0.07224000245332718
+          ]
+        }
+      },
+      "results": {
+        "msd": {
+          "n_scored": 418876,
+          "coverage": 0.996373,
+          "rmse": 1.565087,
+          "mae": 1.155004,
+          "spearman": 0.724774,
+          "pp_p50": 0.256517,
+          "pp_p90": 3.145279,
+          "pp_mean": 1.130906,
+          "pp_gt1_frac": 0.285008,
+          "pp_gt5_frac": 0.045247
+        }
+      },
+      "degeneracy": {
+        "msd": {}
+      },
+      "preds_path": null,
+      "checks": [
+        {
+          "name": "pair_never_crosses_split",
+          "ok": true,
+          "detail": "0 个划分单位同时出现在两侧"
+        },
+        {
+          "name": "train_and_test_disjoint",
+          "ok": true,
+          "detail": "train 落在留出对上的行 = 0; test 落在留出对上的行 = 420,401/420,401"
+        },
+        {
+          "name": "test_pair_frac",
+          "ok": true,
+          "detail": "观测 test 单位占比 29.9441% vs step1 报告 29.94%（容差 2%）"
+        },
+        {
+          "name": "loss_in_range",
+          "ok": true,
+          "detail": "test(1k) loss in [-12.4092, -0.3365], 期望 [-12.4663, -0.2669]"
+        },
+        {
+          "name": "vocab_from_train_only",
+          "ok": true,
+          "detail": "987 entities / 19,640 items == unique train ids"
+        },
+        {
+          "name": "determinism_selftest",
+          "ok": true,
+          "detail": "same seed -> bitwise identical parameters"
+        },
+        {
+          "name": "msd_aligned_with_item_ids",
+          "ok": true,
+          "detail": "19,640 训练谱面; 64 个探针 id 全部命中; row norm in [1.0000, 1.0000]"
+        },
+        {
+          "name": "coverage_reported",
+          "ok": true,
+          "detail": "1 个结果块带 coverage + n_scored"
+        },
+        {
+          "name": "no_test_leak",
+          "ok": true,
+          "detail": "训练用行 = 674,890；其中落在留出对上的 = 0"
+        },
+        {
+          "name": "npz_matches_summary",
+          "ok": true,
+          "detail": "msd:ok"
+        }
+      ],
+      "seconds": 80.1
+    }
+  }
+}

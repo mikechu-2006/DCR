@@ -3,7 +3,7 @@
 #  Remote one-shot: CM3P embeddings for the REMAINING whitelist charts.
 #
 #  Run from the DSR repo root on the GPU box:
-#      bash scripts/remote_cm3p_run.sh 2>&1 | tee logs/cm3p_remote_$(date +%F).log
+#      mkdir -p logs && bash scripts/remote_cm3p_run.sh 2>&1 | tee logs/cm3p_remote_$(date +%F).log
 #
 #  It is resumable and idempotent at every stage:
 #    * an already-correct .osu is never re-downloaded (md5-checked);

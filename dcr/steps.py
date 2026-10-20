@@ -175,24 +175,6 @@ def _plan_step0_whitelist(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
     return argv, {"whitelist": out, "report": report}
 
 
-# ---------------------------------------------------------------- step0 / fetch_tags
-def _plan_step0_fetch_tags(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
-    reserved = frozenset({"tag", "out_dir", "meta", "work_dir"})
-    _check_reserved(ctx, reserved)
-    out_dir = ctx.exp.artifacts
-    meta = ctx.inputs.get("meta")
-    # 页面缓存放在 cache_dir 下：换实验目录重跑时能断点续爬（--refresh 可强制重抓）
-    default_work = resolve_path(
-        Path(str(ctx.cfg.get("cache_dir", "data/processed"))) / f"step0f_{ctx.tag}")
-    work = resolve_path(ctx.p("work_dir", default_work))
-    argv = ["--tag", ctx.tag, "--out-dir", str(out_dir), "--work-dir", str(work)]
-    if meta is not None:
-        argv += ["--meta", str(meta)]
-    argv += flags(ctx.params, skip=reserved, where=f"steps.{ctx.name}.params")
-    return argv, {"tags": out_dir / f"chart_user_tags_{ctx.tag}.parquet",
-                  "vocab": out_dir / f"chart_user_tag_vocab_{ctx.tag}.csv"}
-
-
 # --------------------------------------------------------------- step0 / validate_mix
 def _plan_step0_validate_mix(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
     reserved = frozenset({"computed", "json"})
@@ -234,6 +216,36 @@ def _plan_step1_clean(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
     return argv, outputs
 
 
+# --------------------------------------------------------------- step1 / pairbest
+def _plan_step1_pairbest(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
+    """默认清洗版本（口径 A）：每个 (玩家, 谱面) 只留最高成绩、单次对剔除、
+    >99.8% ACC 对剔除、1 年空窗玩家拆分，然后在保留下来的对上划分。输出文件名带
+    _pairbest 后缀，避免覆盖 legacy step1/clean 的产物（两套总体不可混用）。"""
+    reserved = frozenset({"tag", "in", "inp", "out", "no_csv", "no_parquet"})
+    _check_reserved(ctx, reserved)
+    src = ctx.inputs.get("plays")
+    if src is None:
+        raise DcrError(f"steps.{ctx.name} 需要输入 plays（step0 的 play 表）")
+    formats = str(ctx.p("formats", "both")).lower()
+    if formats not in ("both", "csv", "parquet"):
+        raise DcrError(f"steps.{ctx.name}.params.formats 只能是 both/csv/parquet，得到 {formats!r}")
+    base = ctx.exp.artifacts / f"step1_{ctx.tag}_pairbest"
+    argv = ["--tag", ctx.tag, "--in", str(src), "--out", str(base.with_suffix(".csv"))]
+    if formats == "csv":
+        argv.append("--no-parquet")
+    if formats == "parquet":
+        argv.append("--no-csv")
+    outputs: dict[str, Any] = {"report": base.with_suffix(".json")}
+    if formats in ("both", "parquet"):
+        outputs["plays"] = base.with_suffix(".parquet")
+    else:
+        outputs["plays"] = base.with_suffix(".csv")
+    if formats == "both":
+        outputs["plays_csv"] = base.with_suffix(".csv")
+    argv += flags(ctx.params, skip=reserved | {"formats"}, where=f"steps.{ctx.name}.params")
+    return argv, outputs
+
+
 # ------------------------------------------------------------------ step2 / predict
 def _plan_step2_predict(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
     reserved = frozenset({"tag", "train_path", "proc_dir", "out_dir", "content_path"})
@@ -253,6 +265,39 @@ def _plan_step2_predict(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
         argv += ["--content-path", str(content)]
     argv += flags(ctx.params, skip=reserved | {"out_prefix", "target"},
                    where=f"steps.{ctx.name}.params")
+    outputs = {
+        "summary": ctx.exp.results / f"{prefix}_{ctx.tag}_summary_{target}.json",
+        "npz": ctx.exp.results / f"{prefix}_{ctx.tag}_*.npz",
+    }
+    return argv, outputs
+
+
+# ------------------------------------------------------------ step2 / cm3p_mlp
+def _plan_step2_cm3p_mlp(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
+    """冻结 CM3P 内容向量 + 内容锚定 MLP 头（scripts/step2_cm3p_mlp.py）。
+
+    与 step2/predict 的区别：内容向量是**必需**输入（这个模型就是内容锚定的），
+    没有 --models 这个词（只有一个模型），架构参数是 --hid/--depth/--dim（=交互空间宽度）。
+    """
+    reserved = frozenset({"tag", "train_path", "proc_dir", "out_dir", "content_path"})
+    _check_reserved(ctx, reserved)
+    train = ctx.inputs.get("train")
+    if train is None:
+        raise DcrError(f"steps.{ctx.name} 需要输入 train（step1 的输出表，带 split 列）")
+    content = ctx.inputs.get("content")
+    if content is None:
+        raise DcrError(f"steps.{ctx.name} 需要输入 content（CM3P 内容表）；"
+                       f"把它放进 cache_dir（chart_content_cm3p.parquet）或写 steps.{ctx.name}.inputs")
+    prefix = str(ctx.p("out_prefix", "step2"))
+    target = str(ctx.p("target", "loss"))
+    argv = ["--tag", ctx.tag,
+            "--train-path", str(train),
+            "--proc-dir", str(ctx.exp.artifacts),
+            "--out-dir", str(ctx.exp.results),
+            "--out-prefix", prefix,
+            "--content-path", str(content)]
+    argv += flags(ctx.params, skip=reserved | {"out_prefix", "target"},
+                  where=f"steps.{ctx.name}.params")
     outputs = {
         "summary": ctx.exp.results / f"{prefix}_{ctx.tag}_summary_{target}.json",
         "npz": ctx.exp.results / f"{prefix}_{ctx.tag}_*.npz",
@@ -306,14 +351,6 @@ register(StepDef(
 ))
 
 register(StepDef(
-    name="step0", version="fetch_tags", script="scripts/step0f_fetch_tags.py",
-    title="谱面标签：爬 osu! 谱面页的玩家投票 tag",
-    plan=_plan_step0_fetch_tags,
-    inputs={"meta": ("step0", "meta")},
-    optional=frozenset({"meta"}),
-))
-
-register(StepDef(
     name="step0", version="validate_mix", script="scripts/step0e_validate_mix.py",
     title="校验不同来源的内容向量能否混用",
     plan=_plan_step0_validate_mix,
@@ -323,10 +360,19 @@ register(StepDef(
 
 register(StepDef(
     name="step1", version="clean", script="scripts/step1_clean.py",
-    title="划分 + 清洗：train/test 分离，然后 ACC 门槛 + 每玩家热身截断",
+    title="[legacy play 级] 玩家门槛 + 划分 + 清洗：先整人剔除 < 200 条记录的玩家，再 train/test 分离，然后 ACC 门槛 + 每玩家热身截断",
     plan=_plan_step1_clean,
     inputs={"plays": ("step0", "plays")},
     cache={"plays": ("step1_{tag}.parquet", "step1_{tag}.csv")},
+    report=frozenset({"report"}),
+))
+
+register(StepDef(
+    name="step1", version="pairbest", script="scripts/step1_pairbest.py",
+    title="[默认] pair-best 清洗（口径 A）：玩家<20 条剔除 + 1 年空窗拆分 + 每对只留最高成绩 + 单次对剔除 + ACC 窗口 (0.90, 0.998] + 划分",
+    plan=_plan_step1_pairbest,
+    inputs={"plays": ("step0", "plays")},
+    cache={"plays": ("step1_{tag}_pairbest.parquet", "step1_{tag}_pairbest.csv")},
     report=frozenset({"report"}),
 ))
 
@@ -336,12 +382,23 @@ register(StepDef(
     plan=_plan_step2_predict,
     inputs={"train": ("step1", "plays"), "content": ("step0", "content")},
     optional=frozenset({"content"}),
-    cache={"train": ("step1_{tag}.parquet", "step1_{tag}.csv"),
+    cache={"train": ("step1_{tag}_pairbest.parquet", "step1_{tag}_pairbest.csv"),
            "test": ("step0_{tag}.parquet", "step0_{tag}.csv"),
            "content": ("chart_content_cm3p.parquet",)},
     report=frozenset({"summary"}),
 ))
 
+register(StepDef(
+    name="step2", version="cm3p_mlp", script="scripts/step2_cm3p_mlp.py",
+    title="训练 + 推理：冻结 CM3P 内容向量上的内容锚定 MLP（非线性对照）",
+    plan=_plan_step2_cm3p_mlp,
+    inputs={"train": ("step1", "plays"), "content": ("step0", "content")},
+    optional=frozenset(),
+    cache={"train": ("step1_{tag}_pairbest.parquet", "step1_{tag}_pairbest.csv"),
+           "test": ("step0_{tag}.parquet", "step0_{tag}.csv"),
+           "content": ("chart_content_cm3p.parquet",)},
+    report=frozenset({"summary"}),
+))
 
 def available_versions(step: str) -> list[str]:
     return sorted(v for (n, v) in REGISTRY if n == step)

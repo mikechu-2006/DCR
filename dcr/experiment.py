@@ -1,8 +1,8 @@
-"""实验目录：experiments_{时间戳}[_{name}]/ 的布局、日志与 manifest。
+"""实验目录：experiments/<时间戳>[_{name}]/ 的布局、日志与 manifest。
 
 布局::
 
-    experiments_20261012_153012_std_1k/
+    experiments/20261012_153012_std_1k/
       config.yaml      本次实验的完整解析配置（含默认值，可直接重跑）
       manifest.json    每步：命令行、参数、输入输出指纹、耗时、状态、指标
       run.sh           等价命令序列（手工重放用）
@@ -31,10 +31,10 @@ _SAFE = re.compile(r"[^0-9A-Za-z_.-]+")
 
 
 def new_experiment_dir(root: Path, name: str = "", when: datetime | None = None) -> Path:
-    """experiments_{时间戳}[_{name}]；同一秒重复运行自动加后缀。"""
+    """<时间戳>[_{name}]（放在实验根目录下，默认 experiments/）；同一秒重复运行自动加后缀。"""
     stamp = (when or datetime.now()).strftime(TS_FMT)
     suffix = _SAFE.sub("_", name or "").strip("_")
-    base = root / (f"experiments_{stamp}" + (f"_{suffix}" if suffix else ""))
+    base = root / (stamp + (f"_{suffix}" if suffix else ""))
     candidate, i = base, 2
     while candidate.exists():
         candidate = root / f"{base.name}_{i}"
@@ -150,6 +150,9 @@ class Experiment:
 
     def relative(self, path: Path | str) -> str:
         p = Path(path)
+        if p == self.dir:
+            # 实验目录自身：仓库内显示相对路径，仓库外（--exp-root /tmp/...）显示绝对路径
+            return display(p)
         for root in (REPO_ROOT, self.dir):
             try:
                 return p.relative_to(root).as_posix()
@@ -235,10 +238,13 @@ class Experiment:
     def write_run_sh(self, env: Mapping | None = None) -> None:
         """由 manifest 里的步骤命令生成 run.sh（--resume 续跑后依然完整）。"""
         from .run import format_cmd
+        # 实验目录默认在 <repo>/experiments/ 下，所以回仓库根的相对深度不固定；
+        # 用相对路径写进 run.sh，整个仓库搬走也能直接重放。
+        rel = Path(os.path.relpath(REPO_ROOT, self.dir)).as_posix()
         lines = ["#!/usr/bin/env bash",
                  "# 由 main.py 生成：本实验执行过的命令（可手工重放，产物就地覆盖）",
                  "set -euo pipefail",
-                 'cd "$(dirname "$0")/.."',
+                 f'cd "$(dirname "$0")/{rel}"',
                  ""]
         for key, value in (env or {}).items():
             lines.append(f"export {key}={value!r}")

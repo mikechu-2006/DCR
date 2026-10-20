@@ -53,11 +53,14 @@ run() {
 
 FAIL=0
 
-# ---------- ① 代码 27 M / 507 文件 ----------
+# ---------- ① 代码（不含 data/、experiments/、legacy/ 与缓存）----------
 # 唯一带 --delete 的批次：--exclude data/ 保护远端 data（远端 osu_cache 里有本地没有的 .osu）
 run rsync "${OPTS[@]}" --rsync-path="$MKDIRS && rsync" --delete \
-  --exclude='data/' --exclude='.git/' --exclude='__pycache__/' --exclude='*.pyc' \
+  --exclude='data/' --exclude='.git/' --exclude='experiments/' --exclude='legacy/' \
+  --exclude='__pycache__/' --exclude='*.pyc' \
   --exclude='slurm_*.out' --exclude='slurm_*.err' \
+  --exclude='.minacalc_cache/' \
+  --exclude='data/processed/charts_1k.npz' \
   ./ "$REMOTE:$R/" || FAIL=1
 
 # ---------- ② 数据 10.1 G ----------

@@ -1,0 +1,27 @@
+{
+  "rows": 418876,
+  "clusters": 258164,
+  "cluster_unit": "pair",
+  "n_boot": 1000,
+  "a": {
+    "file": "step2_1k_preds_loss.npz",
+    "key": "pred_mirt_1",
+    "rmse": 1.458506,
+    "variant": "mirt+mirt_1"
+  },
+  "b": {
+    "file": "step2_1k_preds_loss.npz",
+    "key": "pred_mirt",
+    "rmse": 1.460396,
+    "variant": "mirt+mirt_1"
+  },
+  "delta_rmse": -0.00189,
+  "delta_pct_of_b": -0.1294,
+  "ci95": [
+    -0.002886,
+    -0.000821
+  ],
+  "t_stat": -4.381,
+  "verdict": "A better (95% CI excludes 0)",
+  "caveat": "deff ~ 5.4 (docs/step2_capacity_dim_sweep.md 6.3): the row-level CI is too narrow, so --cluster row is reported only for contrast"
+}

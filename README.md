@@ -1,8 +1,10 @@
 # DenseConstantRegressor
 
-从 osu!mania 4K 游玩记录中学习**谱面难度潜向量**。
+仅通过谱面信息计算难度，并在玩家行为数据集上验证。数据集经过激进的清理处理，
+包括但不限于删除所有单独的（玩家，谱面）对游玩记录。
 
-Learning **beatmap difficulty vectors** from osu!mania 4K play records.
+现有方法论包括 MinaCalc 以及其衍生、CM3P 谱面向量化，均已在玩家行为数据集上验证。
+同时提供 bias、mf_dot 等 oracle 方法以方便比较。
 
 [中文](#中文) · [English](#english)
 
@@ -12,24 +14,36 @@ Learning **beatmap difficulty vectors** from osu!mania 4K play records.
 
 ### 简介
 
-把每条游玩记录看成 `(玩家, 谱面) → loss`，先学这个低秩回归，再把学到的**谱面向量**当作难度特征，
-用于回归官方 star。数据来自 osu! 官方 [data.ppy.sh](https://data.ppy.sh/) dump 的 osu!mania 4K 成绩。
+默认观测单位是**一个 (玩家段, 谱面) 对**（step1/pairbest，口径 A）：
 
-三步管线，**一个入口、一个 YAML、一个实验目录**；每个 step 可以有多个版本：
+~~~text
+step0/preprocess  ->  play 表（5 列）+ beatmap_meta（17 列）
+step1/pairbest    ->  玩家 >= 20 条、1 年空窗拆玩家、每对只留最高成绩、
+                      单次对剔除、最高 ACC ∈ (0.90, 0.998]、标签 log(1-ACC)、
+                      pair-random 70/30
+step2/*           ->  bias / mf_dot / mirt，或 CM3P 内容向量模型
+~~~
 
-| 步骤 | 默认版本 | 产物 |
+旧的 play 级清洗 `step1/clean` 仍保留（显式 `version: clean`），它的 test 是未清洗的
+play，不能和 pairbest 的 test 混用。
+
+### 方法论
+
+| 方法 | 入口 | 说明 |
 |---|---|---|
-| **0 预处理** | `step0/preprocess` → `scripts/step0_preprocess.py` | play 表（5 列）+ 谱面元数据（17 列） |
-| **1 划分+清洗** | `step1/clean` → `scripts/step1_clean.py` | play 表 + `split` 列（train/test/dropped） |
-| **2 预测** | `step2/predict` → `scripts/step2_predict.py` | 玩家/谱面潜向量 + 指标 |
-| **3 定数回归** | *未实现* | — |
+| **bias / mf_dot / mirt** | `step2/predict` | oracle 基线：玩家/谱面偏置、玩家×谱面点积、IRT 式链接 |
+| **CM3P 线性** | `step2/predict` + 内容表 | 冻结 512 维 CM3P 向量，PCA 后与玩家向量点积 |
+| **CM3P 内容锚定 MLP** | `step2/cm3p_mlp` | 内容塔把谱面映射到交互空间，再与玩家向量点积 |
+| **MinaCalc** | [`minacalc/`](minacalc/README.md) | 逐区间可微打分 + C++ 区间导出（独立包，不注册为 step） |
+
+口径与主结果见 [docs/data.md](docs/data.md) 与 [docs/models.md](docs/models.md)。
 
 ### 快速开始
 
-```bash
-pip install -r requirements.txt
+~~~bash
+pip install -r requirements.txt        # CM3P 推理另见 requirements-cm3p.txt
 
-# 下载数据（约 14 GB，不入库）
+# 数据（约 14 GB，不入库）
 cd data/raw
 curl -LO https://data.ppy.sh/2026_09_01_performance_mania_top_1000.tar.bz2
 curl -LO https://data.ppy.sh/2026_09_01_performance_mania_top_10000.tar.bz2
@@ -37,26 +51,42 @@ tar -xjf 2026_09_01_performance_mania_top_1000.tar.bz2  -C extracted/
 tar -xjf 2026_09_01_performance_mania_top_10000.tar.bz2 -C extracted_10k/
 cd ../..
 
-# 跑实验：一个 YAML = 一次实验 = 一个 experiments_{时间戳}/ 目录
-python main.py -c configs/exp_full_1k.yaml    # 从 dump 全流程（step0 → step1 → step2）
-python main.py -c configs/exp_std_1k.yaml     # 复用 data/processed 的缓存，只跑 step2
-python main.py -c configs/exp_cm3p_1k.yaml    # step2 + CM3P 内容向量
+python main.py -c configs/exp_pairbest_1k.yaml    # 默认 A + bias/mf_dot
+python main.py -c configs/exp_pairbest_10k.yaml   # 默认 A，10k
+python main.py -c configs/exp_cm3p_1k.yaml        # CM3P 内容向量（线性）
+python main.py -c configs/exp_cm3p_mlp_1k.yaml    # CM3P 内容锚定 MLP
+python main.py -c configs/exp_full_1k.yaml        # raw dump 全流程（legacy clean）
 
-# 参数扫描：不改脚本、不用记长参数
-python main.py -c configs/exp_std_1k.yaml --set name=dim32 --set steps.step2.params.dim=32
+python main.py -c configs/exp_pairbest_1k.yaml --dry-run
+python main.py -c configs/exp_pairbest_1k.yaml --set steps.step2.params.dim=32 --set name=dim32
+~~~
 
-# 先看要跑什么（不建目录、不执行）
-python main.py -c configs/exp_full_1k.yaml --dry-run
-```
+一次实验 = 一个 YAML = 一个实验目录；默认新建在 `experiments/<时间戳>[_{name}]/`，
+含配置快照、日志、`artifacts/`、`results/`、`manifest.json` 与可重放的 `run.sh`。
+编排细节见 [docs/procedure.md](docs/procedure.md)。
 
-每次运行都会新建 `experiments_{时间戳}[_{name}]/`：`config.yaml`（参数快照）、`logs/`、
-`artifacts/`（中间文件）、`results/`（结果）、`manifest.json`（每步的命令行/耗时/输入输出
-指纹/指标）、`run.sh`（可重放的等价命令）。完整说明见
-[docs/procedure.md](docs/procedure.md)。
+### 目录
+
+~~~text
+main.py               唯一入口：读 configs/*.yaml，按 step 顺序调用 scripts/
+dcr/                  编排包：配置、实验目录、step 注册表、流水线
+configs/              实验配置，一个 YAML = 一次实验
+scripts/              管线 step + CM3P 运维脚本
+preprocess/           step0/step1 的最小可运行参考
+minacalc/             MinaCalc 逐区间可微打分（独立包）
+docs/                 procedure.md / data.md / models.md
+manifests/            白名单清单、CM3P 远程清单、256 图混用探针（入库）
+vendor/               HPC 环境无法联网时用的 slider wheel
+data/                 数据骨架；实际数据约 14 GB，不入库
+experiments/          每次运行的配置、日志、中间产物与结果（整体不入库）
+legacy/               退役脚本、归档文档、历史日志与旧结果（含 MANIFEST.tsv）
+results/              直接跑 scripts/ 时的默认产物目录
+~~~
 
 ### 结果速览
 
-测试集为 30% 的 `(玩家, 谱面)` 有序对，指标为 loss 的 RMSE / Spearman：
+测试集按 `split=test` 取，指标为 loss 上的 RMSE / Spearman。下表是 **legacy play 级
+clean** 总体（test 是未清洗的 play）：
 
 | 模型 | 1k RMSE | 1k Spearman | 10k RMSE | 10k Spearman |
 |---|---|---|---|---|
@@ -64,163 +94,68 @@ python main.py -c configs/exp_full_1k.yaml --dry-run
 | mf_dot | 1.4548 | 0.7632 | 1.3327 | 0.7079 |
 | **mirt** | **1.4582** | **0.7633** | **1.3331** | **0.7096** |
 
-<p align="center">
-  <img src="docs/figs/order_10k_1_percentile.png" width="48%" alt="学习曲线 / learning curve">
-  <img src="docs/figs/forgetting_10k_1_dt_dose.png" width="48%" alt="遗忘曲线 / forgetting curve">
-</p>
-
-### 目录结构
-
-```
-main.py       唯一入口：读 configs/*.yaml，按 step 调用 scripts/ 下的程序
-dcr/          编排包：配置解析 / 实验目录 / step 注册表 / 流水线 / 子进程执行
-configs/      实验配置 —— 一个 YAML = 一次实验
-scripts/      35 个当前脚本（step 的实现在这里）+ legacy/ 60 个退役脚本（旧 v2 管线）
-docs/         技术文档（procedure.md 是流程与编排说明）+ archive/ 归档 + figs/ 图
-logs/         26 份历史运行日志（新日志写在各自实验目录里）
-manifests/    全量白名单 id 清单 + CM3P 远程任务清单 + 256×512 探针夹具（约 2 MB，入库）
-experiments_*/ 每次实验的参数快照、日志、中间文件与结果（不入库）
-data/         仅目录骨架 —— 约 14 GB 实际数据不入库
-```
+默认 A 的观测单位与标签支撑不同，RMSE 不能与上表直接比：mf_dot dim=8 在
+1k 为 RMSE 0.7015 / Spearman 0.6749 / pp_p50 0.4327，10k 为
+0.6844 / 0.6966 / 0.5607。CM3P 的数字见 [docs/models.md](docs/models.md)。
 
 ### 文档
 
 | 文档 | 内容 |
 |---|---|
-| [docs/procedure.md](docs/procedure.md) | **流程与编排**：main.py / YAML 字段 / 实验目录 / step 版本 / 扩展方式 |
-| [docs/step0_preprocessing.md](docs/step0_preprocessing.md) | 预处理：dump 结构、mod 策略、标签口径 |
-| [docs/step1_cleaning.md](docs/step1_cleaning.md) | 清洗：两条行级删除 |
-| [docs/step2_prediction.md](docs/step2_prediction.md) | 预测：模型族、消融、9 条校验 |
-| [docs/archive/play_order_analysis.md](docs/archive/play_order_analysis.md) | 学习曲线（归档） |
-| [docs/archive/learning_rate_heterogeneity.md](docs/archive/learning_rate_heterogeneity.md) | 学习率异质性（归档） |
-| [docs/archive/forgetting_curve.md](docs/archive/forgetting_curve.md) | 遗忘曲线（归档） |
-| [docs/archive/practice_vs_time.md](docs/archive/practice_vs_time.md) | 练习 vs 日历时间（归档） |
-| [docs/archive/cleaning_plan.md](docs/archive/cleaning_plan.md) | 清洗方案与修订记录（归档） |
-| [docs/archive/beatmap_embedding_plan.md](docs/archive/beatmap_embedding_plan.md) | 谱面嵌入规划（归档） |
-| [docs/cm3p_step2_integration_plan.md](docs/cm3p_step2_integration_plan.md) | **CM3P 接入 step2（v2）**：冻结内容向量 + 纯点积，管线与 transformer 解耦 |
-| [docs/cm3p_step2_results.md](docs/cm3p_step2_results.md) | **CM3P 接入实测**：内容 vs 1-hot、`d` 扫描、真实时间漂移消融 |
-| [docs/step2_capacity_dim_sweep.md](docs/step2_capacity_dim_sweep.md) | **维度扫描与容量诊断**：自由低秩 K 的真实上限、稀疏谱面筛选对照、内容锚定 FM 对照、可辨识性 |
-| [docs/cm3p_remote_runbook.md](docs/cm3p_remote_runbook.md) | **远程执行手册**：把全量白名单谱面缓存成 `.osu`（只有正文）→ 推理 CM3P 向量 → 混用探针 → 合并 → 更新白名单表 |
-| [docs/cm3p_hpc_slurm.md](docs/cm3p_hpc_slurm.md) | **HPC / Slurm 手册**：文件夹上传 + Slurm 队列下的执行方式（`scripts/slurm/*.slurm`） |
+| [docs/procedure.md](docs/procedure.md) | **管线与编排**：YAML、实验目录、step 版本、输入解析、扩展 |
+| [docs/data.md](docs/data.md) | **数据**：step0 的保留规则与两张表、step1 pairbest / clean、规模与消融 |
+| [docs/models.md](docs/models.md) | **模型**：oracle 公式与结果、CM3P 线性/MLP、MinaCalc 入口 |
+| [preprocess/README.md](preprocess/README.md) | step0/step1 精简参考与可运行代码 |
+| [minacalc/README.md](minacalc/README.md) | MinaCalc 包与 C++ 导出 |
+| [legacy/README.md](legacy/README.md) | 归档内容索引；逐文件去向见 [legacy/MANIFEST.tsv](legacy/MANIFEST.tsv) |
 
 ### 说明
 
-* **数据不入库**：原始 dump 与中间产物约 14 GB，只保留 `data/` 目录骨架（`.gitkeep`）。
-* **`external/bobert` 不入库**：那是 [token03/bobert](https://github.com/token03/bobert) 的独立克隆，
-  需要时自行 `git clone` 到该路径。
-* 依赖见 [requirements.txt](requirements.txt)，开发环境 Python 3.13；CM3P 推理（`step0c --source osu-dir`）是另一套 GPU 侧环境，见 [requirements-cm3p.txt](requirements-cm3p.txt)（含 `hydra-core`）。
+* **数据不入库**：原始 dump 与中间产物合计约 14 GB，只保留 `data/` 骨架。
+* **实验目录不入库**：`experiments/` 整体被忽略；参数与结论请落到 `configs/` 与 `docs/`。
+* **`external/` 不入库**：`minacalc-standalone`、`cm3p`、`bobert` 都是独立克隆。
+* Python 3.13；依赖见 [requirements.txt](requirements.txt)，CM3P GPU 侧见
+  [requirements-cm3p.txt](requirements-cm3p.txt)。
 
 ### 许可
 
-本仓库未附许可证文件。
+MIT
 
 ---
 
 ## English
 
-### Overview
-
-Treat each play as `(player, beatmap) → loss`, fit that low-rank regression first, then use the
-learned **beatmap vectors** as difficulty features to regress the official star rating.
-Data comes from the official [data.ppy.sh](https://data.ppy.sh/) dumps of osu!mania 4K scores.
-
-Three steps, **one entry point, one YAML, one experiment directory**; every step may have
-several versions:
+Compute difficulty from **beatmap information only**, validated on a player-behaviour
+dataset that is aggressively cleaned: every play row belonging to a single
+(player, beatmap) pair is removed, so the default observation unit is one
+**(player-epoch, beatmap) pair** (step1/pairbest, protocol A).
 
 | Step | Default version | Artifact |
 |---|---|---|
-| **0 Preprocess** | `step0/preprocess` → `scripts/step0_preprocess.py` | play table (5 cols) + beatmap metadata (17 cols) |
-| **1 Split + clean** | `step1/clean` → `scripts/step1_clean.py` | play table + a `split` column (train/test/dropped) |
-| **2 Predict** | `step2/predict` → `scripts/step2_predict.py` | player/beatmap latent vectors + metrics |
-| **3 Constant regression** | *not implemented* | — |
+| **0 Preprocess** | `step0/preprocess` | play table (5 cols) + beatmap metadata (17 cols) |
+| **1 Pair-best clean (A)** | `step1/pairbest` | one row per pair; see [docs/data.md](docs/data.md) |
+| **1' Play-level clean** | `step1/clean` | play table + `split` column; requires `version: clean` |
+| **2 Models** | `step2/predict`, `step2/cm3p_mlp` | oracles and CM3P content-vector models |
 
-### Quick start
+**Methods.** Oracle baselines (`bias`, `mf_dot`, `mirt`), CM3P content vectors
+(linear dot product and content-anchored MLP), and MinaCalc (the standalone
+[`minacalc/`](minacalc/README.md) package). See [docs/models.md](docs/models.md).
 
-```bash
+**Quick start.**
+
+~~~bash
 pip install -r requirements.txt
+# download the 1k/10k dumps into data/raw/ (commands above)
 
-# Download the data (~14 GB, not tracked)
-cd data/raw
-curl -LO https://data.ppy.sh/2026_09_01_performance_mania_top_1000.tar.bz2
-curl -LO https://data.ppy.sh/2026_09_01_performance_mania_top_10000.tar.bz2
-tar -xjf 2026_09_01_performance_mania_top_1000.tar.bz2  -C extracted/
-tar -xjf 2026_09_01_performance_mania_top_10000.tar.bz2 -C extracted_10k/
-cd ../..
+python main.py -c configs/exp_pairbest_1k.yaml     # default protocol A
+python main.py -c configs/exp_cm3p_1k.yaml         # CM3P content vectors
+python main.py -c configs/exp_cm3p_mlp_1k.yaml     # content-anchored MLP
+~~~
 
-# Run an experiment: one YAML = one run = one experiments_{timestamp}/ directory
-python main.py -c configs/exp_full_1k.yaml    # dump -> step0 -> step1 -> step2
-python main.py -c configs/exp_std_1k.yaml     # reuse data/processed, run step2 only
-python main.py -c configs/exp_cm3p_1k.yaml    # step2 with CM3P content vectors
+Each run creates `experiments/<timestamp>[_{name}]/` with `config.yaml`, `logs/`,
+`artifacts/`, `results/`, `manifest.json` and a replayable `run.sh`.
+See [docs/procedure.md](docs/procedure.md).
 
-# Parameter sweeps without editing scripts or retyping long flags
-python main.py -c configs/exp_std_1k.yaml --set name=dim32 --set steps.step2.params.dim=32
-
-# Show what would run (creates nothing)
-python main.py -c configs/exp_full_1k.yaml --dry-run
-```
-
-Each run creates `experiments_{timestamp}[_{name}]/` holding `config.yaml` (resolved
-parameters), `logs/`, `artifacts/` (intermediates), `results/`, `manifest.json` (per-step
-command line, timings, input/output fingerprints, metrics) and `run.sh` (replayable
-commands). See [docs/procedure.md](docs/procedure.md).
-
-### Results at a glance
-
-The test set is 30% of the `(player, beatmap)` ordered pairs; metrics are RMSE / Spearman on loss:
-
-| Model | 1k RMSE | 1k Spearman | 10k RMSE | 10k Spearman |
-|---|---|---|---|---|
-| bias | 1.5236 | 0.7330 | 1.3727 | 0.6874 |
-| mf_dot | 1.4548 | 0.7632 | 1.3327 | 0.7079 |
-| **mirt** | **1.4582** | **0.7633** | **1.3331** | **0.7096** |
-
-<p align="center">
-  <img src="docs/figs/order_10k_1_percentile.png" width="48%" alt="Learning curve">
-  <img src="docs/figs/forgetting_10k_1_dt_dose.png" width="48%" alt="Forgetting curve">
-</p>
-
-### Repository layout
-
-```
-main.py       the single entry point: reads configs/*.yaml, calls scripts/ step by step
-dcr/          orchestration package: config, experiment dir, step registry, pipeline, runner
-configs/      experiment configs — one YAML = one experiment
-scripts/      35 current scripts (the step implementations) + legacy/ 60 retired ones
-docs/         technical documents (procedure.md covers the pipeline) + archive/ + figs/
-logs/         26 historical run logs (new logs live inside each experiment directory)
-manifests/    the full whitelist manifest + CM3P remote-run lists + a 256x512 probe fixture (~2 MB, tracked)
-experiments_*/ per-run config snapshot, logs, intermediates and results (untracked)
-data/         directory skeleton only — the ~14 GB of actual data is not tracked
-```
-
-### Documentation
-
-| Document | Contents |
-|---|---|
-| [docs/procedure.md](docs/procedure.md) | **Pipeline and orchestration**: main.py, YAML fields, experiment directory, step versions, extending |
-| [docs/step0_preprocessing.md](docs/step0_preprocessing.md) | Preprocessing: dump layout, mod policy, label semantics |
-| [docs/step1_cleaning.md](docs/step1_cleaning.md) | Cleaning: the two row-level deletions |
-| [docs/step2_prediction.md](docs/step2_prediction.md) | Prediction: model family, ablations, the 9 checks |
-| [docs/archive/play_order_analysis.md](docs/archive/play_order_analysis.md) | Learning curve (archived) |
-| [docs/archive/learning_rate_heterogeneity.md](docs/archive/learning_rate_heterogeneity.md) | Learning-rate heterogeneity (archived) |
-| [docs/archive/forgetting_curve.md](docs/archive/forgetting_curve.md) | Forgetting curve (archived) |
-| [docs/archive/practice_vs_time.md](docs/archive/practice_vs_time.md) | Practice vs calendar time (archived) |
-| [docs/archive/cleaning_plan.md](docs/archive/cleaning_plan.md) | Cleaning design and revision record (archived) |
-| [docs/archive/beatmap_embedding_plan.md](docs/archive/beatmap_embedding_plan.md) | Beatmap embedding plan (archived) |
-| [docs/cm3p_step2_integration_plan.md](docs/cm3p_step2_integration_plan.md) | **Wiring CM3P into step2 (v2)**: frozen content vector + plain dot product, decoupled from the transformer run |
-| [docs/cm3p_step2_results.md](docs/cm3p_step2_results.md) | **CM3P wiring, measured**: content vs 1-hot, dimension sweep, real-time drift ablation |
-| [docs/cm3p_remote_runbook.md](docs/cm3p_remote_runbook.md) | **Remote runbook**: cache every whitelist chart as `.osu` text, run CM3P, mix probe, merge, rebuild the whitelist table |
-| [docs/cm3p_hpc_slurm.md](docs/cm3p_hpc_slurm.md) | **HPC / Slurm runbook**: folder upload + `sbatch` submission (`scripts/slurm/*.slurm`) |
-| [docs/step2_capacity_dim_sweep.md](docs/step2_capacity_dim_sweep.md) | **Dimension sweep and capacity diagnosis**: the real ceiling of free low-rank K, sparse-chart filter control, content-anchored FM control, identifiability |
-
-### Notes
-
-* **No data is tracked**: the raw dumps and intermediate artifacts total ~14 GB; only the `data/`
-  skeleton is kept (`.gitkeep`).
-* **`external/bobert` is not tracked**: it is a standalone clone of
-  [token03/bobert](https://github.com/token03/bobert) — `git clone` it there yourself if needed.
-* Dependencies are in [requirements.txt](requirements.txt); developed on Python 3.13. The CM3P embed path (`step0c --source osu-dir`) is a separate GPU-side environment — see [requirements-cm3p.txt](requirements-cm3p.txt) (it carries `hydra-core`).
-
-### License
-
-This repository ships no license file.
+Retired scripts, archived docs and historical logs live in
+[legacy/](legacy/README.md). No data is tracked; `experiments/` and `external/` are
+ignored. License: MIT.

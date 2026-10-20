@@ -2,7 +2,7 @@
 
 一次实验 = 一个 YAML 文件。字段（全部可省略，缺省用下面的 DEFAULTS）::
 
-    name: std_1k             # 实验名，附加到 experiments_{时间戳}_ 之后
+    name: std_1k             # 实验名，附加到 experiments/<时间戳>_ 之后
     tag: 1k                  # 数据集标签，决定 step0_{tag} / step1_{tag} 等文件名
     python: python           # 解释器，默认与 main.py 相同
     cache_dir: data/processed  # 上游产物缓存目录（不跑上游时从这里取）
@@ -15,7 +15,7 @@
       hash_max_mb: 512       # 超过这个大小的产物不哈希
     steps:                   # 只写要跑的 step；没写的 step 不跑
       step0: {version: preprocess, params: {dump_dir: ...}}
-      step1: {version: clean, params: {acc_floor: 0.9}}
+      step1: {version: pairbest, params: {min_plays_per_player: 20, acc_floor: 0.9, max_best_acc: 0.998}}
       step2: {version: predict, params: {models: [bias, mf_dot, mirt]}}
     extra_steps:             # 任意脚本也能挂进同一套编排
       - name: order_curve
@@ -52,8 +52,10 @@ DEFAULTS: dict[str, Any] = {
     "extra_steps": [],
 }
 
-#: 只写 params 不写 version 时使用的版本
-STEP_DEFAULT_VERSION = {"step0": "preprocess", "step1": "clean", "step2": "predict"}
+#: 只写 params 不写 version 时使用的版本。
+#: step1 默认 pairbest（口径 A：玩家 >=20、1 年空窗、每对最高成绩、单次对、
+#: ACC ∈ (0.90, 0.998]）；clean 是旧的 play 级口径，需显式写 version: clean。
+STEP_DEFAULT_VERSION = {"step0": "preprocess", "step1": "pairbest", "step2": "predict"}
 
 #: 主流程的固定顺序；extra_steps 排在它们后面
 BUILTIN_ORDER = ("step0", "step1", "step2")

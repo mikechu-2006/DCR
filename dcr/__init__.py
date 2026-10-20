@@ -5,7 +5,7 @@
     python main.py -c configs/<exp>.yaml
 
 一个 YAML 描述每个 step 的版本与参数；运行产生的参数快照、日志、中间文件与
-结果全部落在 experiments_{时间戳}[_{name}]/ 里，manifest.json 记录每一步的
+结果全部落在 experiments/<时间戳>[_{name}]/ 里，manifest.json 记录每一步的
 完整命令行、耗时、产物指纹与指标。
 
 step 的实现仍然在 scripts/ 下（一个 step 可以有多个版本），本包只负责按依赖

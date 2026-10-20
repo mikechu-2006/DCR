@@ -9,14 +9,14 @@ from pathlib import Path
 from . import __version__, steps as step_registry
 from .config import dump_yaml, load_config, resolve_config
 from .errors import DcrError
-from .paths import REPO_ROOT, resolve_path
+from .paths import DEFAULT_EXPERIMENT_ROOT, resolve_path
 from .pipeline import Options, run
 
 
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
         prog="main.py",
-        description="DCR 实验入口：一个 YAML = 一次实验 = 一个 experiments_{时间戳}/ 目录。",
+        description="DCR 实验入口：一个 YAML = 一次实验 = experiments/<时间戳>/ 目录。",
         epilog="示例:  python main.py -c configs/exp_std_1k.yaml\n"
                "       python main.py -c configs/exp_std_1k.yaml --set steps.step2.params.epochs=5 --dry-run\n"
                "       python main.py --list-steps",
@@ -29,8 +29,9 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("-t", "--tag", default=None, help="覆盖 tag（等价 --set tag=...）")
     ap.add_argument("-n", "--name", default=None, help="覆盖实验名（目录后缀）")
     ap.add_argument("--exp-dir", type=Path, default=None,
-                    help="指定实验目录（默认 experiments_{时间戳}[_{name}]）")
-    ap.add_argument("--exp-root", type=Path, default=None, help="实验目录的父目录（默认仓库根）")
+                    help="指定实验目录（默认 experiments/<时间戳>[_{name}]；相对路径按仓库根解析）")
+    ap.add_argument("--exp-root", type=Path, default=None,
+                    help="实验目录的父目录（默认 experiments/；相对路径按仓库根解析）")
     ap.add_argument("--only", default="", help="只跑这些 step（逗号分隔）")
     ap.add_argument("--skip", default="", help="跳过这些 step（逗号分隔）")
     ap.add_argument("--resume", action="store_true",
@@ -76,8 +77,8 @@ def main(argv: list[str] | None = None) -> int:
             dry_run=args.dry_run,
             only=tuple(x.strip() for x in args.only.split(",") if x.strip()),
             skip=tuple(x.strip() for x in args.skip.split(",") if x.strip()),
-            exp_dir=args.exp_dir,
-            root=Path(args.exp_root).resolve() if args.exp_root else REPO_ROOT,
+            exp_dir=resolve_path(args.exp_dir) if args.exp_dir else None,
+            root=resolve_path(args.exp_root) if args.exp_root else DEFAULT_EXPERIMENT_ROOT,
             resume=args.resume,
             force=args.force,
             hash=False if args.no_hash else None,

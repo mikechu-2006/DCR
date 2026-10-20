@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Step 0c - chart content table (pipeline A):  beatmap_id -> CM3P embedding.
 
-Design: docs/cm3p_step2_integration_plan.md section 5.  The transformer inference and
+Design: legacy/docs/cm3p_step2_integration_plan.md section 5.  The transformer inference and
 step2 are TWO INDEPENDENT PIPELINES that only talk through one parquet file:
 
     pipeline A (this script)   .osu corpus / HF precomputed  ->  chart_content_cm3p.parquet
@@ -34,12 +34,23 @@ Idempotent merge
   If the output already exists it is loaded first, and only whitelist ids that are still
   missing are fetched/computed (--refresh forces a full recompute).  On a collision the
   NEW row wins, so re-running with a better source upgrades rows in place.
+
+Chart id vs the id inside the .osu
+  Upstream keys every dataset row by the `BeatmapID:` line *inside* the body, and a chart
+  that was deleted and re-uploaded is served with the NEW id there (or with 0), so the row
+  no longer matches the id the file was fetched for and would be dropped without a word.
+  from_osu_dir stages an id-normalised copy for exactly those files (the cache is never
+  modified, and checksum_ok is still computed on the original file).  If a run reports
+  fewer charts than it staged, look for the "[osu] N/M .osu name a different BeatmapID"
+  line -- the tail summary of scripts/slurm/cm3p_embed.slurm calls it "no .osu in the cache",
+  which is only one of the two causes.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import os
+import re
 import sys
 import tempfile
 import time
@@ -233,6 +244,30 @@ def _locate_osu(dirs, ids: set[int]) -> dict[int, Path]:
     return found
 
 
+# Upstream keys every dataset row by the `BeatmapID:` line *inside* the .osu body
+# (utils/beatmap_files_dataset.py: data['Id'] = _kv(meta, 'BeatmapID'), then
+# item['beatmap_id'] = beatmap_metadata.name).  A chart that was deleted and re-uploaded is
+# served with the NEW id in that line -- or with 0 when it was never submitted -- so the row
+# no longer matches the id the file was fetched for, and step0c would silently drop it (the
+# run reports one chart fewer than it staged, and the tail summary blames the cache).
+# These two helpers let the staging step serve an id-normalised copy for exactly those files.
+_OSU_ID_RE = re.compile(rb"^(\s*BeatmapID\s*:\s*)(-?\d+)", re.M)
+
+
+def osu_beatmap_id(path: Path) -> int | None:
+    """The BeatmapID the .osu body carries, or None when the line is absent."""
+    try:
+        m = _OSU_ID_RE.search(path.read_bytes())
+    except OSError:
+        return None
+    return int(m.group(2)) if m else None
+
+
+def relabel_beatmap_id(body: bytes, bid: int) -> bytes:
+    """The body with its first `BeatmapID:` line rewritten to bid (nothing else changes)."""
+    return _OSU_ID_RE.sub(lambda m: m.group(1) + str(bid).encode(), body, count=1)
+
+
 def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
                  device: str) -> pd.DataFrame:
     """Run the CM3P beatmap tower on local .osu/.osz files (upstream dataset + model)."""
@@ -255,7 +290,7 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
                     "pip install 'hydra-core>=1.3,<1.4'")
         raise SystemExit(
             "the osu-dir path needs the CM3P inference env (torch, transformers==4.55.0, "
-            "hydra-core, slider) -- see requirements-cm3p.txt and docs/cm3p_hpc_slurm.md "
+            "hydra-core, slider) -- see requirements-cm3p.txt and legacy/docs/cm3p_hpc_slurm.md "
             f"section 1; import failed with: {exc}{hint}")
 
     if device == "auto":
@@ -292,11 +327,25 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
         print(f"[osu] WARNING: {len(missing):,} wanted charts have no .osu under "
               f"{[str(d) for d in dirs]} (e.g. {missing[:5]})", flush=True)
     farm = tempfile.TemporaryDirectory(prefix="cm3p_subset_")
+    n_relabelled = 0
     for bid, src in found.items():
+        dst = Path(farm.name) / f"{bid}.osu"
         try:
-            os.symlink(os.path.abspath(src), Path(farm.name) / f"{bid}.osu")
+            inner = osu_beatmap_id(src)
+            if inner is not None and inner != bid:
+                # Deleted/re-uploaded chart: the body names a different beatmap (or 0).
+                # Serve a copy with the id line normalised -- the encoded tokens never read
+                # it (include_metadata=False), and the checksum below stays on the original.
+                dst.write_bytes(relabel_beatmap_id(src.read_bytes(), bid))
+                n_relabelled += 1
+            else:
+                os.symlink(os.path.abspath(src), dst)
         except OSError as exc:                                    # pragma: no cover
             print(f"[osu] WARNING: cannot stage {src}: {exc}", flush=True)
+    if n_relabelled:
+        print(f"[osu] {n_relabelled:,}/{len(found):,} .osu name a different BeatmapID inside; "
+              f"staged id-normalised copies so their rows keep the id they were fetched for",
+              flush=True)
     n_files = len(list(Path(farm.name).glob("*.osu")))
     print(f"[osu] corpus: {n_files:,} .osu staged for {len(keep):,} wanted charts", flush=True)
     print("[osu] parsing them now -- upstream reads every file once before batch 1, which "
@@ -327,15 +376,11 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
     loader = DataLoader(ds, batch_size=batch, num_workers=0, drop_last=False)
 
     # map beatmap_id -> the .osu we are about to encode, so checksum_ok can be verified
-    # against the 2026-09-01 dump snapshot instead of being asserted blindly
-    meta = ds.metadata.reset_index()
-    files: dict[int, Path] = {}
-    for r in meta.itertuples():
-        try:
-            bid = int(r.Id)
-        except (TypeError, ValueError):
-            continue
-        files[bid] = Path(str(getattr(r, "Path", "."))) / str(r.BeatmapSetFolder) / str(r.BeatmapFile)
+    # against the 2026-09-01 dump snapshot instead of being asserted blindly.  Keyed by the
+    # id each file was FETCHED for (the farm name), never by the id inside the body: the two
+    # disagree for the files re-staged above, and only the fetched id ties the file to a
+    # whitelist row and to a snapshot checksum.
+    files: dict[int, Path] = dict(found)
 
     def md5_of(p: Path) -> str:
         h = hashlib.md5()
@@ -344,7 +389,7 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
                 h.update(chunk)
         return h.hexdigest()
 
-    print(f"[osu] metadata rows: {len(meta):,} -> encoding with batch={batch}", flush=True)
+    print(f"[osu] metadata rows: {len(ds.metadata):,} -> encoding with batch={batch}", flush=True)
     acc: dict[int, list] = {}
     dtype = torch.bfloat16 if device == "cuda" else torch.float32
     t0 = time.time()
@@ -473,7 +518,7 @@ def main() -> None:
     elif args.source == "hf-precomputed":
         src = Path(args.hf_path)
         if not src.exists():
-            raise SystemExit(f"{src} not found -- see docs/cm3p_step2_integration_plan.md M1")
+            raise SystemExit(f"{src} not found -- see legacy/docs/cm3p_step2_integration_plan.md M1")
         new = from_hf_precomputed(src, missing, CM3P_REPO, args.batch)
     else:
         if not args.osu_dir:

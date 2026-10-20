@@ -1,0 +1,38 @@
+# MinaCalc MSD 的 gap/IRT 模型（L2）。设计见 docs/step2_minacalc.md §6。
+#
+# 与 exp_minacalc_1k.yaml（L1）的区别只有 step2.version 与参数：谱面向量的用法从
+# "主效应 alpha·D + 点积 <P,C>" 换成 "theta 与 D 在同一把尺子上做差，再过 logit 链接"：
+#
+#     x = a + bu + bm + sum_k w_k (theta_k - D_k),   loss = -softplus(x)
+#
+# 前置资产（已产出可跳过）：data/processed/minacalc_msd_1k.parquet
+#   python main.py -c configs/exp_minacalc_L2_1k.yaml
+name: minacalc_L2_1k
+tag: 1k
+steps:
+  step1:
+    version: clean
+    params:
+      train_frac: 0.70
+      split_method: pair-random
+      split_seed: 20260928
+      acc_floor: 0.90
+      drop_frac: 0.30
+      min_plays_per_player: 200  # 全表记录数 < 200 的玩家整人剔除（先于划分）
+  step2:
+    version: minacalc_L2
+    params:
+      # bias    = 同一谱面子集上的 step2/predict 基线（可直接比）
+      # gap     = L2 本体：共享 w 的 gap + logit 链接
+      # gapfree = 消融：alpha_k / beta_k 各一套权重（没有"同一把尺子"的约束）
+      models: [bias, gap, gapfree]
+      link: logit          # ACC=sigmoid(x), loss=-softplus(x)；identity = 直接线性预测 loss
+      gap_mode: linear     # linear / hinge / both（hinge 只惩罚 relu(D-theta) 那一侧）
+      gap_shared: on       # 只作用于 gap；gapfree 固定为 off
+      gap_bm: free         # msd = 去掉 bm[m]，谱面截距完全由 -sum w_k*D_k 生成
+      theta_init: chartmean
+      theta_prior: 0.01
+      msd_reduce: zscore
+      msd_skills: stream,jumpstream,handstream,stamina,jackspeed,chordjack,technical
+      epochs: 60
+      p_drift: none

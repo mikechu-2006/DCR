@@ -20,10 +20,10 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from . import steps as step_registry
-from .config import BUILTIN_ORDER, cache_dir_of, dump_yaml
+from .config import BUILTIN_ORDER, STEP_DEFAULT_VERSION, cache_dir_of, dump_yaml
 from .errors import DcrError
 from .experiment import Experiment, new_experiment_dir
-from .paths import REPO_ROOT, display, rel_link, resolve_path
+from .paths import DEFAULT_EXPERIMENT_ROOT, REPO_ROOT, display, rel_link, resolve_path
 from .run import format_cmd, run_command
 from .steps import PlanCtx, StepDef, flags
 
@@ -120,18 +120,32 @@ def _order_extras(extras: list[StepItem]) -> list[StepItem]:
 
 
 # --------------------------------------------------------------------- 输入解析
+def _effective_version(cfg: Mapping | None, step: str) -> str:
+    """配置里写的版本；没写时用全局默认（step1 现在是 pairbest）。"""
+    spec = ((cfg or {}).get("steps") or {}).get(step) or {}
+    return str(spec.get("version") or STEP_DEFAULT_VERSION.get(step, ""))
+
+
 def _cache_candidates(step: str, output: str, tag: str,
                       cfg: Mapping | None = None) -> tuple[str, ...]:
-    """cache_dir 里的习惯文件名；共享 .osu 缓存是绝对路径，原样返回。"""
+    """cache_dir 里的习惯文件名；共享 .osu 缓存是绝对路径，原样返回。
+
+    step1 的产物名取决于版本：默认 pairbest 用 step1_{tag}_pairbest.*，
+    旧的 play 级 clean 仍用 step1_{tag}.*；这里跟着配置里的 version 走，
+    否则 step2-only 的配置会静默读到另一套总体。
+    """
     if (step, output) == ("step0", "osu_cache"):
         # 600 MB 的 .osu 语料不放 cache_dir（它跨实验复用），见 cfg.osu_cache_dir
         return (str(resolve_path((cfg or {}).get("osu_cache_dir") or "data/osu_cache")),)
+    if (step, output) == ("step1", "plays"):
+        if _effective_version(cfg, "step1") == "pairbest":
+            return (f"step1_{tag}_pairbest.parquet", f"step1_{tag}_pairbest.csv")
+        return (f"step1_{tag}.parquet", f"step1_{tag}.csv")
     table = {
         ("step0", "plays"): ("step0_{tag}.parquet", "step0_{tag}.csv"),
         ("step0", "meta"): ("beatmap_meta_{tag}.csv",),
         ("step0", "content"): ("chart_content_cm3p.parquet",),
         ("step0", "whitelist"): ("whitelist_{tag}.csv",),
-        ("step1", "plays"): ("step1_{tag}.parquet", "step1_{tag}.csv"),
     }
     return tuple(name.format(tag=tag) for name in table.get((step, output), ()))
 
@@ -246,7 +260,8 @@ def run(cfg: Mapping, config_path: Path | None, opts: Options) -> int:
             "  可直接用现成配置：configs/exp_std_1k.yaml（只跑 step2，复用缓存）"
             "、configs/exp_full_1k.yaml（从 dump 全流程）")
 
-    exp_dir = Path(opts.exp_dir).resolve() if opts.exp_dir else new_experiment_dir(opts.root or REPO_ROOT, str(cfg.get("name", "")))
+    exp_dir = Path(opts.exp_dir).resolve() if opts.exp_dir else new_experiment_dir(
+        opts.root or DEFAULT_EXPERIMENT_ROOT, str(cfg.get("name", "")))
     existed = exp_dir.exists()
     exp = Experiment(exp_dir, cfg, config_path, echo=opts.echo, resume=opts.resume)
     do_hash = cfg.get("io", {}).get("hash", True) if opts.hash is None else opts.hash
@@ -426,7 +441,8 @@ def _build_summary(entries: Iterable[Mapping]) -> dict:
         elif name == "step1" and "report" in report:
             rep = report["report"]
             summary[name] = {"funnel": rep.get("funnel"), "checks": rep.get("checks"),
-                             "loss": rep.get("loss"), "split": rep.get("split")}
+                             "loss": rep.get("loss"), "split": rep.get("split"),
+                             "rules": rep.get("rules")}
         else:
             summary[name] = report
     return summary
@@ -465,9 +481,27 @@ def _print_summary(exp: Experiment, entries: list[dict], summary: Mapping, dry_r
                     f"seed={split.get('seed')}  单位={split.get('unit')}"
                     f"（{split.get('n_units', 0):,}，train {split.get('n_train_units', 0):,} / "
                     f"test {split.get('n_test_units', 0):,}）")
-        exp.log(f"行数      step0 {f.get('step0_rows', 0):,} → test {f.get('test_rows', 0):,} / "
-                f"train 候选 {f.get('train_candidates', 0):,}"
-                f" → 删 ACC {f.get('dropped_acc', 0):,}"
-                f" → 删热身 {f.get('dropped_earliest', 0):,}"
-                f" → train {f.get('train_rows', 0):,}（占全部 {f.get('retained_frac', 0):.1%}）"
-                + (f"  校验 {len(bad)} 项未通过: {bad}" if bad else "  校验全部通过"))
+        rules = step1.get("rules") or {}
+        if f.get("pairs_after_epoch_split") is not None:
+            # step1/pairbest：入口是 play，出口是一对一行；不要套用 clean 的漏斗行。
+            exp.log(f"漏斗      step0 {f.get('step0_rows', 0):,} 行 / "
+                    f"{f.get('step0_pairs', 0):,} 对"
+                    f" → 玩家<{rules.get('min_plays_per_player', 0)} 条 -"
+                    f"{f.get('dropped_low_play_rows', 0):,}"
+                    f" → 空窗拆出 +{f.get('extra_segments', 0):,} 个玩家段"
+                    f" → 单次对 -{f.get('pairs_below_min_plays', 0):,}"
+                    f" → ACC<={rules.get('acc_floor', 0):g} -{f.get('dropped_low_acc_pairs', 0):,}"
+                    f" → ACC>{rules.get('max_best_acc', 0):g} -{f.get('dropped_high_acc_pairs', 0):,}"
+                    f" → 保留 {f.get('kept_pairs', 0):,} 对 "
+                    f"(step0 行的 {f.get('retained_frac', 0):.2%})"
+                    f" → train {f.get('train_rows', 0):,} / test {f.get('test_rows', 0):,}"
+                    + (f"  校验 {len(bad)} 项未通过: {bad}" if bad else "  校验全部通过"))
+        else:
+            exp.log(f"行数      step0 {f.get('step0_rows', 0):,}"
+                    f" → 删玩家(<{rules.get('min_plays_per_player', 0)}) "
+                    f"{f.get('dropped_low_play_rows', 0):,}"
+                    f" → test {f.get('test_rows', 0):,} / train 候选 {f.get('train_candidates', 0):,}"
+                    f" → 删 ACC {f.get('dropped_acc', 0):,}"
+                    f" → 删热身 {f.get('dropped_earliest', 0):,}"
+                    f" → train {f.get('train_rows', 0):,}（占全部 {f.get('retained_frac', 0):.1%}）"
+                    + (f"  校验 {len(bad)} 项未通过: {bad}" if bad else "  校验全部通过"))

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Step 2 - prediction task:  (player_id, beatmap_id) -> loss.   [torch engine]
 
-Design (docs/step2_prediction.md):
+Design (legacy/docs/step2_prediction.md):
 
   * observation unit is the **play**; the label is step0's "loss".  No cell table, no
     per-cell medians, no aggregation of any kind.
@@ -11,21 +11,22 @@ Design (docs/step2_prediction.md):
   * **train on the "train" rows** (step1-cleaned).  **"test" rows are only evaluated,
     never trained on**; "dropped" rows are ignored.  step1's two rules are a *training-side*
     treatment, so letting them also touch the test rows would condition on the treatment
-    (docs/archive/cleaning_plan.md section 3.2).
+    (legacy/docs/archive/cleaning_plan.md section 3.2).
   * **every metric is computed on the test rows** -- one result block per model, keyed by
     the model name.
 
 Engine: **PyTorch**.  Forward, backward and the optimiser are autograd + torch.optim.Adam
 (the reference numpy implementation -- explicit gradients + hand written Adam -- is kept at
-scripts/legacy/step2_predict_numpy.py).  Seeding still uses numpy.random.default_rng(seed),
+legacy/scripts/step2_predict_numpy.py).  Seeding still uses numpy.random.default_rng(seed),
 drawing the same values in the same order as that reference, so a torch run is directly
-comparable with the documented numbers.  The nine assertions of docs/step2_prediction.md
+comparable with the documented numbers.  The nine assertions of legacy/docs/step2_prediction.md
 section 10 run on every invocation (the npz/summary files are only written when they pass).
 
     L_hat = b0 + bu[u] + bm[m] + interaction
       bias    : interaction = 0
       mf_dot  : interaction = <P[u], C[m]>
-      mirt    : interaction = <P[u] - C[m], D[m]>
+      mirt    : interaction = <D[m] - P[u], C[m]>
+      mirt_1  : same as mirt, but C = softplus(Z) > 0 (the sign-constrained variant)
 
     --features F1 adds  w1 * ln(playcount_cur)     (step1's own column, used as-is)
     --features F2 / --entity player-year additionally use
@@ -53,12 +54,25 @@ section 10 run on every invocation (the npz/summary files are only written when 
       *effective* D (plus D_raw = Z).  Adam's wd is a constant pull to Z=0, which for a
       softmax is the uniform-D symmetry sink, so a constrained run defaults to
       --d-logit-wd 0 and a spread Z init (--d-init-std).
+
+    mirt_1 pins mirt's sign gauge.  P is player ability, D is chart difficulty and the label
+    is a loss (smaller = better): the interaction must FALL as P rises and RISE as D rises,
+    i.e. both coefficients need C >= 0.  Free mirt is invariant under (P, D, C) -> (-P, -D,
+    -C) per latent dimension, so its C has an arbitrary sign.  mirt_1 removes that freedom
+    by reparameterising C = softplus(Z) (exact, no clipping/projection): Z are the parameters,
+    C is the effective per-chart table, the npz stores C plus C_raw = Z.  Z=0 maps to the
+    constant C = softplus(0) = 0.693, so Adam's wd would erase cross-chart differences in C:
+    the constrained C defaults to --c-logit-wd 0.  Adam's wd cannot regularise C itself
+    (the parameter is Z), so mirt_1 adds the same L2 to the EFFECTIVE C (coefficient --wd):
+    without it the exact scale gauge P,D -> lP,lD, C -> C/l lets P shrink and C grow for
+    free, which overfits badly.
 """
 from __future__ import annotations
 
 import argparse
 import gc
 import json
+import math
 import time
 from pathlib import Path
 
@@ -170,7 +184,9 @@ def spearman(pred: np.ndarray, y: np.ndarray) -> float:
 
 def report(pred: np.ndarray, y: np.ndarray, n_total: int) -> dict:
     e = pred - y
-    # loss -> ACC percentage points:  |exp(loss_pred) - exp(loss_true)| * 100
+    # loss -> ACC percentage points:  |exp(loss_pred) - exp(loss_true)| * 100.
+    # A label shift s changes loss to log(s + exp(loss_step0)), so exp(label) is
+    # ACC + s; the shift cancels in the difference and pp is still |dACC| * 100.
     dpp = np.abs(np.exp(pred.astype(np.float64)) - np.exp(y.astype(np.float64))) * 100.0
     return {
         "n_scored": int(len(y)),
@@ -195,24 +211,47 @@ class EmbeddingModel(nn.Module):
     order, V/w1 start at zero, and only the parameters a model actually uses are handed to
     the optimiser (bias never touches P/C/D).
 
-    Kinds with a D vector: "mirt" (linear interaction <P-C, D>) and "mirt_exp"
-    (exponent/"ACC-space" interaction  ln( sum_i D_mi * exp(-(P_ui - C_mi)) ) ).  mirt_exp
-    needs D > 0 so that the sum -- and therefore its log -- stays positive; free D is not
-    usable there (the scale of D is absorbed by b0, so no normalisation is needed).
+    Kinds with a D vector: "mirt" (linear interaction <D-P, C>), "mirt_1" (the same
+    interaction with the sign constraint C = softplus(Z) > 0) and "mirt_exp"
+    (exponent/"ACC-space" interaction  ln( sum_i exp( (D_mi - P_ui) * c_mi ) ), c_m = softmax(C_m)).
+    The logsumexp form is positive for any real D, so mirt_exp does NOT force D > 0 any more:
+    D is free by default (pass --d-constraint nonneg to restore the softplus).
+
+    mirt_1 exists because free mirt's C has an arbitrary sign: the whole model is invariant
+    under (P, D, C) -> (-P, -D, -C) per dimension.  The label is a loss and P is ability, so
+    the coefficient C on -P must be >= 0 (higher ability -> lower loss, higher difficulty D
+    -> higher loss).  The constraint is exact (softplus reparameterisation), not a penalty.
     """
 
     def __init__(self, kind, n_ent, n_item, dim, features, seed=0, device=torch.device("cpu"),
                  p_drift="none", d_constraint="none", d_init_std=None, drop_bias="none",
-                 content="none", chart_feats=None):
+                 content="none", chart_feats=None, c_init_std=None, c_constraint="auto"):
         super().__init__()
         if content != "none" and chart_feats is None:
             raise ValueError("content != 'none' needs chart_feats (n_item, dim)")
         if content != "none" and kind == "bias":
             raise ValueError("content has no effect on the bias model")
+        if content != "none" and kind == "mirt_exp":
+            raise ValueError(
+                "mirt_exp 用 softmax(C) 当占比，但 --chart-content cm3p 时 C 是冻结的内容向量"
+                "（单位范数）：softmax 之后接近均匀、而且不可训练，占比没有意义。"
+                "请用 --chart-content none，或把占比改成独立的 per-chart 参数。")
+        if content != "none" and kind == "mirt_1":
+            raise ValueError(
+                "mirt_1 约束的是自由 C 表（C = softplus(Z)）；--chart-content 时 C 是冻结的"
+                "内容向量（可正可负），没有可优化的 logits。请用 --chart-content none。")
+        if c_constraint == "auto":
+            # mirt_1 的定义就是"mirt + C>=0"；其他 model 不启用（它们没有 -P 的方向问题）
+            c_constraint = "nonneg" if kind == "mirt_1" else "none"
+        if c_constraint not in ("none", "nonneg"):
+            raise ValueError(f"unknown c_constraint {c_constraint!r}")
+        if c_constraint != "none" and kind != "mirt_1":
+            raise ValueError("c_constraint != 'none' is only implemented for mirt_1")
         self.kind, self.dim, self.features, self.content = kind, dim, features, content
-        if kind == "mirt_exp" and d_constraint == "none":
-            d_constraint = "nonneg"        # ln(sum D e^-S) needs D > 0; scale lives in b0
+        # 2026-10: mirt_exp 的交互已换成 logsumexp(...) 形式，exp 恒正、不再需要 D > 0，
+        # 所以这里不再自动提升为 nonneg —— D 默认自由。要恢复旧行为请显式 --d-constraint nonneg。
         self.d_constraint = d_constraint
+        self.c_constraint = c_constraint
         self.p_drift, self.d_init_std = p_drift, d_init_std
         self.n_ent, self.n_item = n_ent, n_item
         rng = np.random.default_rng(seed)
@@ -229,13 +268,22 @@ class EmbeddingModel(nn.Module):
             self.p["bm"] = nn.Parameter(torch.zeros(n_item, dtype=torch.float32, device=device))
         self.p["P"] = nn.Parameter(draw((n_ent, dim)))
         if content == "none":
-            self.p["C"] = nn.Parameter(draw((n_item, dim)))
+            # 若 C 走 softmax（mirt_exp），std=0.05 会让 softmax 几乎均匀，而均匀点正是
+            # 对称汇（Jacobian 只有 ~1/dim），C 会原地不动 —— 所以默认给 0.5 的展开初始化。
+            c_std = c_init_std if c_init_std is not None else (0.5 if kind == "mirt_exp" else 0.05)
+            C0 = draw((n_item, dim), c_std)
+            if self.c_constraint == "nonneg":
+                # C = softplus(Z)：Z 从 softplus_inv(0.05)（+ 小噪声）出发，生效 C 约 0.05，
+                # 与自由 mirt 的 C init 同尺度；C 恒正，梯度经 sigmoid(Z) 回传。
+                with torch.no_grad():
+                    C0.add_(float(np.log(np.expm1(0.05))))
+            self.p["C"] = nn.Parameter(C0)
         else:
             # Frozen chart content.  A buffer: it never reaches Adam and never gets a
             # weight-decay pull, so the GL(K) gauge that made a *prior* on C meaningless
             # (diag_step2_gauge.py) has nothing to act on -- C is a constant here.
             self.register_buffer("C_feat", chart_feats.to(device=device, dtype=torch.float32))
-        if kind in ("mirt", "mirt_exp"):
+        if kind in ("mirt", "mirt_1", "mirt_exp"):
             # simplex starts from a *spread* softmax (all charts identical at Z=0 would be a
             # symmetry sink: the softmax Jacobian is only ~1/dim there, so D never differentiates)
             std = d_init_std if d_init_std is not None else (0.5 if d_constraint == "simplex" else 0.05)
@@ -259,7 +307,7 @@ class EmbeddingModel(nn.Module):
             self.active += ["P"]
             if content == "none":
                 self.active += ["C"]        # with content there is no free chart table
-        if kind in ("mirt", "mirt_exp"):
+        if kind in ("mirt", "mirt_1", "mirt_exp"):
             self.active += ["D"]
         if p_drift in ("logpc", "time") and kind != "bias":
             self.active += ["Pc"]
@@ -267,6 +315,46 @@ class EmbeddingModel(nn.Module):
             self.active += ["V"]
         if features in ("F1", "F2"):
             self.active += ["w1"]
+
+        # 哪些参数不能吃 weight decay。Adam 的 wd 是"每步把参数往 0 拉 wd*param"的恒定力：
+        # 对普通参数是正常正则，但对下面这些参数，0 恰好是退化点，这股利会把这个方向按死。
+        #   C 的 logits -> 0: softmax 变成均匀占比（该点 Jacobian 只有 ~1/dim）；
+        #   C 的 logits -> 0（softplus，mirt_1）: C 变成常数 softplus(0)=0.693，跨图差异被抹平；
+        #   D          -> 0: 每张谱面难度都变成 e^0 = 1，难度信息被抹平。
+        # 默认 wd=0，可用 --d-logit-wd / --c-logit-wd 覆盖。mirt 的线性 D 不在此列。
+        self.c_is_logit = (kind == "mirt_exp" and content == "none")   # 公式里 C 过 softmax
+        # mirt_exp 的交互只通过 (D - P) 依赖两者，所以 D->D+a, P->P+a 是精确的平坦方向：
+        # 梯度与它正交，但 Adam 的逐参数归一化会让更新带出分量，两者的水平就无约束漂移。
+        self.gauge_center_p = (kind == "mirt_exp")
+        self.no_decay = set()
+        if kind == "mirt_exp":
+            if content == "none":
+                self.no_decay.add("C")     # softmax logits：wd 拉向 0 = 占比均匀（对称汇）
+            # D 与 P 是同一个差 (D-P) 的两半。给它们**不对称**的 wd 会让优化器把公共水平
+            # 整个倒进没 wd 的那一半：实测 wd 只加在 P 上时，D 的均值漂到 -18.5、P 的
+            # sd 只剩 0.055（差不变，但两个参数各自完全不可解释）。所以两者同处理 ——
+            # 都不吃 wd（能力/难度的尺度不该被 L2 拉平），公共原点交给 gauge_fix()。
+            self.no_decay.update(("D", "P"))
+        elif d_constraint != "none":
+            self.no_decay.add("D")
+        if self.c_constraint != "none":
+            # C = softplus(Z)：wd 拉向 Z=0，即所有谱面同一个 C=0.693 —— 常数无信息
+            self.no_decay.add("C")
+
+    @torch.no_grad()
+    def gauge_fix(self):
+        """钉死 D 与 P 的公共原点（mirt_exp 专用）。
+
+        交互是 sc*(D - P)，只有差有意义 —— D->D+a, P->P+a 逐位不改变输出。这是纯规范
+        自由度，但 Adam 是逐参数归一化的、更新并不正交于它，于是 D 和 P 的水平会无约束
+        地漂开（实测 D sd 3.75 / P sd 0.19）。这里取 IRT 的常规约定：P 在每个潜维上对
+        实体中心化，位移量同时从 D 减掉。模型输出逐位不变，只是让两者落在同一把尺子上。
+        """
+        if not getattr(self, "gauge_center_p", False) or "P" not in self.p or "D" not in self.p:
+            return
+        shift = self.p["P"].mean(dim=0, keepdim=True)
+        self.p["P"].sub_(shift)
+        self.p["D"].sub_(shift)
 
     def D_matrix(self, m):
         """Effective D for item ids m: the raw parameter, or its constrained transform."""
@@ -276,6 +364,31 @@ class EmbeddingModel(nn.Module):
         if self.d_constraint == "nonneg":
             return F.softplus(Z)                    # D > 0
         return Z
+
+    def C_matrix(self, m):
+        """Effective C for item ids m: the raw table, or softplus(Z) >= 0 for mirt_1."""
+        if self.content != "none":
+            return self.C_feat[m]                   # frozen, never constrained
+        Z = self.p["C"][m]
+        if self.c_constraint == "nonneg":
+            return F.softplus(Z)                    # C > 0 (exact reparameterisation)
+        return Z
+
+    def c_penalty(self):
+        """0.5 * ||C_eff||^2 for mirt_1 (None when C is unconstrained).
+
+        Adam's weight_decay acts on the *parameter*, but mirt_1's parameter is Z with
+        C = softplus(Z).  Putting wd on Z would pull C to the constant softplus(0)=0.693
+        (not to 0) and would leave the exact scale gauge (P,D,C) -> (lP,lD,C/l)
+        unregularised: with P,D penalised and C not, the optimiser shrinks P and grows C
+        while the loss is unchanged (observed: C sd 0.59 vs mirt's 0.12, and much worse
+        test RMSE).  So the L2 is applied to the effective C, exactly like free mirt's
+        wd on its C parameter.
+        """
+        if self.c_constraint == "none":
+            return None
+        C = F.softplus(self.p["C"])
+        return 0.5 * (C * C).sum()
 
     def forward(self, u, m, x1=None, tau=None, t=None):
         p = self.p
@@ -296,15 +409,17 @@ class EmbeddingModel(nn.Module):
             out = out + p["w1"][0] * x1
         if self.kind == "bias":
             return out
-        C = self.C_feat[m] if self.content != "none" else p["C"][m]
+        C = self.C_matrix(m)
         if self.kind == "mf_dot":
             return out + (P * C).sum(1)
         D = self.D_matrix(m)
         if self.kind == "mirt_exp":
-            # l = b0 + ln( sum_i D_mi * exp(-(P_ui - C_mi)) );  computed as a stable logsumexp.
-            # D > 0 (softplus) keeps the sum positive; exp() is the "restore to ACC space".
-            return out + torch.logsumexp(torch.log(D) - (P - C), dim=1)
-        return out + ((P - C) * D).sum(1)
+            return out + torch.logsumexp((D-P)*torch.softmax(C,dim=1), dim=1)
+        if self.kind == "mirt":
+            return out + ((D - P) * C).sum(1)
+        if self.kind == "mirt_1":
+            return out + ((D - P) * C).sum(1)
+        return out + ((D - P) * C).sum(1)
 
     @torch.no_grad()
     def predict(self, u, m, x1=None, tau=None, t=None) -> np.ndarray:
@@ -316,11 +431,25 @@ class EmbeddingModel(nn.Module):
             return self.p[name].detach().to("cpu").numpy()
         return fallback
 
-    def chart_matrix(self) -> np.ndarray:
-        """The effective per-chart matrix C the model actually used (n_item, dim)."""
+    def export_C(self) -> np.ndarray:
+        """Effective C (after the transform the formula applies) for the whole chart vocabulary.
+
+        C 当 softmax 的 logits 时（mirt_exp），原始值只有"行内差异"有意义 —— softmax 对
+        每行加常数不变，所以原始 C 的绝对数值不是任何东西。这里导出的是生效值 softmax(C)
+        （即占比），原始 logits 另存为 C_raw，与 D / D_raw 的既有约定一致。
+        mirt_1 同理：导出 softplus(Z)（满足 C>=0），原始 Z 存为 C_raw。
+        """
         if self.content != "none":
             return self.C_feat.detach().to("cpu").numpy()
-        return self.np_array("C")
+        Z = self.p["C"].detach()
+        if self.c_is_logit:
+            Z = torch.softmax(Z, dim=1)
+        elif self.c_constraint == "nonneg":
+            Z = F.softplus(Z)
+        return Z.to("cpu").numpy()
+
+    def chart_matrix(self) -> np.ndarray:       # 兼容旧调用点
+        return self.export_C()
 
     def export_D(self) -> np.ndarray:
         """Effective D (after the constraint transform) for the whole chart vocabulary."""
@@ -334,7 +463,7 @@ class EmbeddingModel(nn.Module):
 
 # ------------------------------------------------------------------------ checklist
 class Checklist:
-    """docs/step2_prediction.md section 10 -- run on every invocation."""
+    """legacy/docs/step2_prediction.md section 10 -- run on every invocation."""
 
     def __init__(self):
         self.items = []
@@ -382,6 +511,9 @@ def parse_args(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="1k")
     ap.add_argument("--target", default="loss")
+    ap.add_argument("--label-shift", type=float, default=0.0,
+                    help="step1 的 label shift s（仅用于 loss_in_range 自检与产物命名，"
+                         "不改变训练）；标签为 log(s + exp(step0_loss)) = log(1+s-ACC)")
     ap.add_argument("--models", default="bias,mf_dot,mirt")
     ap.add_argument("--dim", type=int, default=16)
     ap.add_argument("--epochs", type=int, default=60)
@@ -422,9 +554,19 @@ def parse_args(argv=None):
                     help="mirt's D: none (free) / nonneg (softplus, D>0) / "
                          "simplex (softmax, D>=0 and sum_i D_i = 1)")
     ap.add_argument("--d-logit-wd", type=float, default=None,
-                    help="weight decay for the raw D logits.  Default: 0 when a D constraint is "
-                         "active (Adam's wd is a constant pull to Z=0, i.e. uniform D -- a symmetry "
-                         "sink that kills the interaction), else --wd")
+                    help="weight decay for D.  Default 0 whenever D's zero point is degenerate: "
+                         "a constrained D (softmax/softplus logits) or mirt_exp's free D (the "
+                         "difficulty scale -- wd drags every chart's difficulty to e^0 = 1).  "
+                         "mirt's linear D keeps --wd")
+    ap.add_argument("--c-logit-wd", type=float, default=None,
+                    help="weight decay for C's raw logits when C is transformed: softmax(C) shares "
+                         "(mirt_exp) or softplus(C)>=0 (mirt_1).  Default 0: Adam's wd is a "
+                         "constant pull to Z=0, i.e. uniform shares / a constant C, which is "
+                         "exactly the symmetry sink that stops C learning")
+    ap.add_argument("--c-init-std", type=float, default=None,
+                    help="std of C's init (softmax logits for mirt_exp, raw softplus logits for "
+                         "mirt_1).  Default: 0.5 for mirt_exp (shares start spread out) vs 0.05 "
+                         "for a plain C table / mirt_1")
     ap.add_argument("--drop-bias", default="none", choices=["none", "u", "m", "both"],
                     help="drop the main-effect intercepts: u = no b_u (per player), m = no b_m "
                          "(per chart), both = keep only the global b0")
@@ -436,6 +578,12 @@ def parse_args(argv=None):
     ap.add_argument("--threads", type=int, default=0,
                     help="torch.set_num_threads(); 0 = leave the default.  Reproducibility "
                          "across machines needs the same thread count (parallel reductions)")
+    ap.add_argument("--save-preds", action="store_true",
+                    help="also write {out_dir}/{prefix}_{tag}_preds_{target}.npz with the test "
+                         "ids, the labels and every model's predictions, so paired bootstrap CIs "
+                         "(scripts/compare_preds.py) need no re-run.  Off by default: it turns an "
+                         "otherwise deterministic artifact set into one that depends on which "
+                         "models were in --models")
     return ap.parse_args(argv)
 
 
@@ -495,6 +643,69 @@ def pick_device(name: str) -> torch.device:
     return torch.device(name)
 
 
+def degeneracy_report(model) -> dict:
+    """训练后体检：no_decay 参数有没有塌到退化点（0 是对称点 / 尺度退化点）。
+
+    只报告不中断 —— 塌了打印 [warn] 并写进 summary 的 "degeneracy" 字段。
+    """
+    rep = {}
+    if "D" in model.active:
+        D = model.p["D"].detach()
+        rep["D_sd_across_charts"] = round(float(D.std(0).mean() if D.dim() > 1 else D.std()), 6)
+    if model.c_is_logit:
+        with torch.no_grad():
+            c = torch.softmax(model.p["C"].detach(), dim=1)
+            d = c.shape[1]
+            rep["C_norm_entropy"] = round(
+                float((-(c * torch.log(c.clamp_min(1e-12))).sum(1)).mean() / np.log(d)), 6)
+            rep["C_effective_components"] = round(
+                float(np.exp(rep["C_norm_entropy"] * np.log(d))), 4)
+    if model.content == "none" and "C" in model.p:
+        # 生效 C（mirt_1 已是 softplus 之后的值）：符号是 mirt / mirt_1 对比的核心
+        C = model.export_C()
+        rep["C_neg_count"] = int((C < 0).sum())
+        rep["C_numel"] = int(C.size)
+        rep["C_neg_frac"] = round(float((C < 0).mean()), 6)
+        rep["charts_with_neg_C"] = int((C < 0).any(axis=1).sum())
+        rep["charts_total"] = int(C.shape[0])
+        rep["C_min"] = round(float(C.min()), 6)
+        rep["C_max"] = round(float(C.max()), 6)
+    return rep
+
+
+def warn_degenerate(kind, rep):
+    bad = []
+    if rep.get("D_sd_across_charts", 1.0) < 0.1:
+        bad.append(f"D 跨谱面 sd={rep['D_sd_across_charts']:.4f}（难度趋同 = 全部退回 e^D=1）")
+    if rep.get("C_norm_entropy", 0.0) > 0.95:
+        bad.append(f"C 归一化熵={rep['C_norm_entropy']:.4f}（占比接近均匀 = C 基本没学）")
+    if bad:
+        print(f"  [warn] {kind}: 参数退化 —— " + "; ".join(bad)
+              + "  → 检查该参数的 wd 是否为 0、初始化宽度是否够大", flush=True)
+
+
+def build_optimizer(model, args):
+    """Adam + 分组 weight decay；model.no_decay 里的参数默认 wd=0（见 EmbeddingModel.no_decay）。
+
+    所有参数 wd 相同时走单组路径，与旧行为逐位一致；否则按 wd 的值分组。
+    """
+    wd_of = {}
+    for k in model.active:
+        if k in model.no_decay:
+            ov = {"D": args.d_logit_wd, "C": args.c_logit_wd}.get(k)
+            wd_of[k] = 0.0 if ov is None else float(ov)
+        else:
+            wd_of[k] = float(args.wd)
+    if len(set(wd_of.values())) == 1:
+        return torch.optim.Adam([model.p[k] for k in model.active],
+                                lr=args.lr, weight_decay=args.wd), wd_of
+    by_wd = {}
+    for k in model.active:
+        by_wd.setdefault(wd_of[k], []).append(model.p[k])
+    return torch.optim.Adam([{"params": ps, "weight_decay": w} for w, ps in by_wd.items()],
+                            lr=args.lr), wd_of
+
+
 def main():
     args = parse_args()
     t_start = time.time()
@@ -507,13 +718,19 @@ def main():
     print(f"engine: torch {torch.__version__} on {device}, threads={torch.get_num_threads()}, "
           f"deterministic_algorithms={torch.are_deterministic_algorithms_enabled()}", flush=True)
     models_wanted = [s for s in args.models.split(",") if s]
-    if args.p_drift != "none" or args.d_constraint != "none" or "mirt_exp" in models_wanted:
+    if (args.p_drift != "none" or args.d_constraint != "none"
+            or "mirt_exp" in models_wanted or "mirt_1" in models_wanted):
         print(f"mechanism: p_drift={args.p_drift} (P_eff = P + Pc*ln(playcount_cur))  "
               f"d_constraint={args.d_constraint}  d_logit_wd={args.d_logit_wd}", flush=True)
-    if "mirt_exp" in models_wanted:
-        print("note: mirt_exp = b0 + ln(sum_i D_mi*exp(-(P_ui-C_mi))); D is forced positive "
-              "(softplus) because a free D can make the sum negative, and its log undefined",
+    if "mirt_1" in models_wanted:
+        print("note: mirt_1 = mirt with C = softplus(Z) >= 0 (exact reparameterisation).  The "
+              "interaction is <D-P, C>; with C >= 0 higher ability P lowers the loss and higher "
+              "difficulty D raises it.  C's wd defaults to 0 (--c-logit-wd), C_raw = Z is saved.",
               flush=True)
+    if "mirt_exp" in models_wanted:
+        print("note: mirt_exp = b0 + logsumexp_i( P_ui*softmax(C_m)_i + D_mi ).  logsumexp is "
+              "positive for any D, so D is FREE by default (no softplus); the old "
+              "ln(sum_i D_mi*exp(-(P_ui-C_mi))) form is what needed D > 0", flush=True)
 
     need_pc = args.features in ("F1", "F2") or args.p_drift == "logpc"
     need_ts = args.features == "F2" or args.entity == "player-year" or args.p_drift == "time"
@@ -674,8 +891,15 @@ def main():
     # ------------------------------------------------- checklist 4, 6, 8 (data + seeds)
     if args.tag in LOSS_RANGE:
         lo, hi = LOSS_RANGE[args.tag]
+        note = ""
+        if args.label_shift > 0:
+            # Old range [lo, hi] for log(1-ACC); new label log(s + exp(old)).
+            lo = math.log(args.label_shift + math.exp(lo))
+            hi = math.log(args.label_shift + math.exp(hi))
+            note = f" (mapped through label shift {args.label_shift:g})"
         loss_ok = bool(np.isfinite(te_y).all() and te_y.min() >= lo - 1e-3 and te_y.max() <= hi + 1e-3)
-        loss_detail = f"test({args.tag}) loss in [{te_y.min():.4f}, {te_y.max():.4f}], expected [{lo}, {hi}]"
+        loss_detail = (f"test({args.tag}) loss in [{te_y.min():.4f}, {te_y.max():.4f}], "
+                       f"expected [{lo:.4f}, {hi:.4f}]{note}")
     else:
         loss_ok = bool(np.isfinite(te_y).all() and (te_y <= 0).all())
         loss_detail = f"test({args.tag}) loss in [{te_y.min():.4f}, {te_y.max():.4f}] (no per-tag range registered)"
@@ -710,6 +934,7 @@ def main():
     tr_t_t = dev(tr_t) if tr_t is not None else None
     te_e_t, te_i_t = dev(te_e[te_ok]), dev(te_i[te_ok])
     te_y_np = te_y[te_ok]
+    te_y_keep = te_y_np.copy()      # 训练前 te_y 会被释放；--save-preds 还需要这份标签
     te_x_t = dev(te_x[te_ok]) if te_x is not None else None
     te_tau_t = dev(te_tau[te_ok]) if te_tau is not None else None
     te_t_t = dev(te_t[te_ok]) if te_t is not None else None
@@ -718,31 +943,34 @@ def main():
     gc.collect()
 
     # ---------------------------------------------------------------------- training
-    results, fitted, mech_by_model = {}, {}, {}
+    results, fitted, mech_by_model, degeneracy = {}, {}, {}, {}
     for kind in models_wanted:
         model = EmbeddingModel(kind, len(ents), len(items), args.dim, args.features,
                                args.seed, device, args.p_drift, args.d_constraint,
                                args.d_init_std, args.drop_bias,
-                               content=args.chart_content, chart_feats=chart_feats)
+                               content=args.chart_content, chart_feats=chart_feats,
+                               c_init_std=args.c_init_std)
         if args.p_drift != "none" and kind == "bias":
             print("note: --p-drift has no effect on bias (it has no P vector)", flush=True)
-        # per model: a constrained D gets no wd on its logits by default (Adam's wd pulls the
-        # logits to Z=0, i.e. uniform D / D->0 -- a degenerate direction for both links)
-        model_d_wd = args.d_logit_wd if args.d_logit_wd is not None else \
-            (0.0 if model.d_constraint != "none" else args.wd)
-        mech_by_model[kind] = {"d_constraint": model.d_constraint, "d_logit_wd": model_d_wd}
-        if "D" in model.active and (model.d_constraint != "none" or args.d_logit_wd is not None):
-            print(f"  [{kind}] d_constraint={model.d_constraint}  d_logit_wd={model_d_wd:g}",
+        # 参数分组与 wd 策略全部交给 build_optimizer：model.no_decay 里的参数
+        # （softmax/softplus 的 logits、mirt_exp 的难度尺度）默认 wd=0，其余用 --wd。
+        opt, wd_of = build_optimizer(model, args)
+        mech_by_model[kind] = {"d_constraint": model.d_constraint,
+                               "c_constraint": model.c_constraint,
+                               "c_eff_wd": (float(args.wd) if model.c_constraint != "none"
+                                            else 0.0),
+                               "d_logit_wd": wd_of.get("D", args.wd),
+                               "c_logit_wd": wd_of.get("C", args.wd),
+                               "weight_decay": {k: wd_of[k] for k in wd_of},
+                               "no_decay": sorted(model.no_decay)}
+        if model.no_decay:
+            print(f"  [{kind}] no-decay 参数: "
+                  + ", ".join(f"{k}={wd_of[k]:g}" for k in sorted(model.no_decay)), flush=True)
+        # mirt_1: L2 on the EFFECTIVE C (softplus(Z)), because Adam's wd only sees Z.
+        c_eff_wd = float(args.wd) if model.c_constraint != "none" else 0.0
+        if c_eff_wd:
+            print(f"  [{kind}] effective-C L2 = {c_eff_wd:g} (penalty on C, not on Z)",
                   flush=True)
-        if model_d_wd == args.wd:
-            opt = torch.optim.Adam([model.p[k] for k in model.active],
-                                   lr=args.lr, weight_decay=args.wd)
-        else:   # per-group wd: the raw D logits get their own decay (see --d-logit-wd)
-            groups = [{"params": [model.p[k] for k in model.active if k != "D"],
-                       "weight_decay": args.wd}]
-            if "D" in model.active:
-                groups.append({"params": [model.p["D"]], "weight_decay": model_d_wd})
-            opt = torch.optim.Adam(groups, lr=args.lr)
         rng_tr = np.random.default_rng(args.seed)
         t0 = time.time()
         for ep in range(args.epochs):
@@ -754,17 +982,24 @@ def main():
                 tt = tr_t_t[b] if tr_t_t is not None else None
                 opt.zero_grad(set_to_none=True)
                 pred = model.forward(tr_e_t[b], tr_i_t[b], x1, tau, tt)
-                ((pred - tr_y_t[b]) ** 2).mean().backward()
+                loss = ((pred - tr_y_t[b]) ** 2).mean()
+                if c_eff_wd:
+                    loss = loss + c_eff_wd * model.c_penalty()
+                loss.backward()
                 opt.step()
+                model.gauge_fix()       # 钉死 D/P 的公共原点（只对 mirt_exp 生效）
             if args.eval_every and (ep + 1) % args.eval_every == 0:
                 pv = model.predict(te_e_t, te_i_t, te_x_t, te_tau_t, te_t_t)
                 print(f"  [{kind}] epoch {ep+1:3d}  test RMSE = "
                       f"{np.sqrt(((pv - te_y_np) ** 2).mean()):.5f}  ({time.time()-t0:.1f}s)",
                       flush=True)
         # 指标只算在 test 行上（train 行只用于拟合，从不进入这里）
+        model.gauge_fix()
         pv = model.predict(te_e_t, te_i_t, te_x_t, te_tau_t, te_t_t)
         results[kind] = report(pv, te_y_np, len(test))
         fitted[kind] = model
+        degeneracy[kind] = degeneracy_report(model)
+        warn_degenerate(kind, degeneracy[kind])
         print(f"{kind:8s} test rmse={results[kind]['rmse']:.5f} "
               f"cov={results[kind]['coverage']:.3f}", flush=True)
 
@@ -805,6 +1040,8 @@ def main():
         variant += {"u": "_nobu", "m": "_nobm", "both": "_nobubm"}[args.drop_bias]
     if args.dim != 16:
         variant += f"_dim{args.dim}"
+    if args.label_shift:
+        variant += f"_ls{args.label_shift:g}"
     entity_ids = np.array(list(inv_e.values()), dtype=np.int64)
     beatmap_ids = np.array(list(inv_i.values()), dtype=np.int32)
     npz_paths = {}
@@ -813,6 +1050,7 @@ def main():
                       f"{'' if args.chart_content != 'none' else ('_cov' if args.restrict_to_content == 'on' else '')}" \
                       f"{'' if args.chart_content == 'none' else '_cm3p'}" \
                       f"{'' if args.dim == 16 else '_dim' + str(args.dim)}" \
+                      f"{'' if not args.label_shift else '_ls' + format(args.label_shift, 'g')}" \
                       f"{'' if args.p_drift == 'none' else ('_pd' if args.p_drift == 'logpc' else '_pdt')}" \
                       f"{'' if args.d_constraint == 'none' else '_d' + args.d_constraint}" \
                       f"{'' if args.entity == 'player' else '_py'}" \
@@ -822,7 +1060,9 @@ def main():
             extra["Pc"] = model.np_array("Pc")
         if model.d_constraint != "none":
             extra["D_raw"] = model.np_array("D")        # logits, so the constraint is reproducible
-        C_eff = model.chart_matrix()        # frozen content when --chart-content, else the table
+        if model.c_is_logit or model.c_constraint != "none":
+            extra["C_raw"] = model.np_array("C")        # logits；C 里存的是生效值
+        C_eff = model.export_C()        # frozen content when --chart-content, else the table
         np.savez(path,
                  entity_ids=entity_ids,
                  beatmap_ids=beatmap_ids,
@@ -848,7 +1088,8 @@ def main():
                     and z["b0"].shape == (1,) and len(z["bu"]) == len(ents)
                     and len(z["bm"]) == len(items)
                     and (("Pc" not in z.files) or z["Pc"].shape == z["P"].shape)
-                    and (("D_raw" not in z.files) or z["D_raw"].shape == z["C"].shape))
+                    and (("D_raw" not in z.files) or z["D_raw"].shape == z["C"].shape)
+                    and (("C_raw" not in z.files) or z["C_raw"].shape == z["C"].shape))
         ok9 = ok9 and bool(good)
         detail9.append(f"{kind}:{'ok' if good else 'BAD'}")
     chk.check("npz_matches_summary", ok9, " ".join(detail9))
@@ -869,7 +1110,31 @@ def main():
         okc = okc and good
     if detailc:
         chk.check("d_constraint_holds", okc, " ".join(detailc))
+
+    okc2, detailc2 = True, []
+    for kind, path in npz_paths.items():
+        if fitted[kind].c_constraint == "none":
+            continue
+        with np.load(path) as z:
+            C = z["C"]
+            good = bool((C >= 0).all())
+            detailc2.append(f"{kind}: C>=0, min C = {C.min():.3e}, "
+                            f"frac(C==0) = {float((C == 0).mean()):.2e}")
+        okc2 = okc2 and good
+    if detailc2:
+        chk.check("c_constraint_holds", okc2, " ".join(detailc2))
     chk.require()
+
+    # 可选：把测试行的预测落盘，供 scripts/compare_preds.py 做配对检验
+    preds_path = None
+    if args.save_preds:
+        preds_path = out_dir / f"{args.out_prefix}_{args.tag}_preds_{args.target}.npz"
+        np.savez(preds_path, player_id=test.player_id.to_numpy()[te_ok],
+                 beatmap_id=test.beatmap_id.to_numpy()[te_ok],
+                 y=te_y_keep, variant=variant,
+                 **{f"pred_{kind}": fitted[kind].predict(
+                     te_e_t, te_i_t, te_x_t, te_tau_t, te_t_t) for kind in fitted})
+        print(f"wrote {preds_path.name} ({int(te_ok.sum()):,} test rows)")
 
     summary = {
         "variant": variant,
@@ -892,6 +1157,8 @@ def main():
                   "n_entities": len(ents), "n_items": len(items),
                   "train_rows_in_vocab": int(tr_ok.sum()),
                   "test_rows_covered": int(te_ok.sum())},
+        "label": {"shift": args.label_shift,
+                  "definition": "log(shift + exp(step0_loss)) = log(1+shift-ACC)"},
         "content": None if args.chart_content == "none" else {
             "mode": args.chart_content, "path": str(args.content_path),
             "dim": args.dim, "reduce": args.content_reduce,
@@ -903,6 +1170,8 @@ def main():
             "definition": "P_eff = P[u] + Pc[u] * (timestamp - t_ref) / 365.25d",
         },
         "results": results,
+        "degeneracy": degeneracy,
+        "preds_path": None if preds_path is None else str(preds_path),
         "checks": chk.items,
         "seconds": round(time.time() - t_start, 1),
     }

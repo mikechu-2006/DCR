@@ -1,0 +1,39 @@
+# CM3P 内容锚定 MLP：冻结的 512 维 CM3P 向量 → 共享小 MLP → 与玩家向量点积。
+# 设计稿见 docs/cm3p_step2_mlp.md；对手是 exp_cm3p_1k.yaml（线性点积，覆盖子集最优 1.57595）。
+#
+#   python main.py -c configs/exp_cm3p_mlp_1k.yaml
+#   python main.py -c configs/exp_cm3p_mlp_1k.yaml --set steps.step2.params.dim=8 --set name=cm3p_mlp_d8
+#   python main.py -c configs/exp_cm3p_mlp_1k.yaml --only step2_cm3p_mlp   # 复用缓存的 step1/内容表
+#
+# 架构参数的含义（全部在 scripts/step2_cm3p_mlp.py 的 --help 里）：
+#   dim   交互空间宽度 d = g_theta 的输出宽度 = 玩家向量宽度（不是 512；512 是 MLP 的输入）
+#   hid   内容塔隐藏层宽度
+#   depth 内容塔 Linear 层数；2 = 一个隐藏层（1 会退化成线性投影）
+# 规模（1k 覆盖子集 383k 训练 play）：dim16 + hid64 + depth2 ≈ 63k 参数 ≈ 6 plays/param。
+name: cm3p_mlp_1k
+tag: 1k
+steps:
+  step1:
+    version: clean
+    params:
+      train_frac: 0.70
+      split_method: pair-random
+      split_seed: 20260928
+      acc_floor: 0.90
+      drop_frac: 0.30
+      min_plays_per_player: 200  # 全表记录数 < 200 的玩家整人剔除（先于划分）
+  step2:
+    version: cm3p_mlp
+    params:
+      dim: 16
+      hid: 64
+      depth: 2
+      epochs: 60
+      lr: 0.02
+      mlp_wd: 1.0e-4
+      eu_wd: 1.0e-4
+      player_tower: "on"
+      ln: "on"
+      head: dot
+      content_reduce: raw   # 直接用 512 维原始向量，让 MLP 自己学投影
+      save_preds: true      # 落盘测试预测，供 scripts/compare_preds.py 做配对检验

@@ -1,0 +1,35 @@
+# 10k 消融 C（**不是默认**）：把标签从 log(1-ACC) 换成 log(1.001-ACC)。
+# 默认口径 A 见 configs/exp_pairbest_10k.yaml。
+#   python main.py -c configs/exp_pairbest_shift_10k.yaml
+# 其余口径与 exp_pairbest_10k 相同；step1 只写 parquet。
+name: pairbest_shift_10k
+tag: 10k
+io:
+  out_format: parquet
+steps:
+  step1:
+    version: pairbest
+    params:
+      train_frac: 0.70
+      split_method: pair-random
+      split_seed: 20260928
+      min_plays_per_pair: 2
+      max_best_acc: 0.998
+      acc_floor: 0.90
+      gap_days: 365
+      min_plays_per_player: 20
+      label_shift: 0.001
+      formats: parquet
+  step2:
+    version: predict
+    params:
+      models: [bias, mf_dot]
+      dim: 8
+      epochs: 60
+      lr: 0.02
+      wd: 1.0e-4
+      features: F0
+      entity: player
+      seed: 0
+      device: auto
+      label_shift: 0.001

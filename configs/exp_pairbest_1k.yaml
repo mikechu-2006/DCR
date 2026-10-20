@@ -1,0 +1,35 @@
+# 默认口径 A：step1/pairbest（玩家>=20、1 年空窗、每对最高成绩、单次对、
+# 最高 ACC ∈ (0.90, 0.998]）+ step2 基线（bias / mf_dot，dim=8）。
+#   python main.py -c configs/exp_pairbest_1k.yaml
+#
+# step1/pairbest = 玩家 < 20 条剔除 → 按 1 年空窗拆分 → 每个 (玩家, 谱面) 只留最高成绩 →
+# 只打过一次的对剔除 → 最高 ACC 不在 (0.90, 0.998] 的对剔除 → 在剩下的对上做 train/test 划分。
+# 热身截断（clean 的 drop_frac）不需要；step1/clean 的产物不参与本实验。
+name: pairbest_1k
+tag: 1k
+io:
+  out_format: parquet
+steps:
+  step1:
+    version: pairbest
+    params:
+      train_frac: 0.70
+      split_method: pair-random
+      split_seed: 20260928
+      min_plays_per_pair: 2      # 只打过一次的对剔除
+      max_best_acc: 0.998        # 最高 ACC > 99.8% 的对剔除
+      acc_floor: 0.90            # 最高 ACC <= 0.90 的对剔除（保留旧规则一）
+      gap_days: 365              # 连续 1 年没游玩 -> 新玩家
+      min_plays_per_player: 20   # step0 记录数 < 20 的玩家整人剔除
+  step2:
+    version: predict
+    params:
+      models: [bias, mf_dot]
+      dim: 8
+      epochs: 60
+      lr: 0.02
+      wd: 1.0e-4
+      features: F0
+      entity: player
+      seed: 0
+      device: auto
