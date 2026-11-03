@@ -162,6 +162,10 @@ CM3P 线性（clean 口径、覆盖子集）为 1.57595；更细的表与消融�
 paired ΔNLL。P1（同玩家、同 chart 的新 pair）的数字不能当泛化结论。完整表、消融、
 negative controls 与 paired Δ 见 [docs/cm3p_rank.md](docs/cm3p_rank.md)。
 
+P2 口径的 per-chart Pearson(d,b)（同 4,565 张 test 图、同 ceiling `b`）：CM3P + external
+线性 **0.6025**、CM3P MLP 0.5613、CM3P 线性 0.5546、Sunny 0.3713；Pearson 与 NLL 基本
+同序（MLP 与线性在 Pearson 上互换），只作诊断，主指标仍是 NLL / captured（§5.3）。
+
 ### 文档
 
 | 文档 | 内容 |
@@ -246,7 +250,8 @@ See [docs/procedure.md](docs/procedure.md).
 (bias 1.5236 / mf_dot 1.4548 / mirt 1.4582 on 1k), pairbest protocol A
 (mf_dot dim=8: 0.7015 on 1k), rank-NLL captured for MinaCalc `msd_overall` (0.4067)
 and for the strongest analyser signals (0.47), and CM3P per-chart difficulty
-(player-disjoint val NLL 0.5476 with external features; chart-disjoint captured 0.9013).
+(player-disjoint val NLL 0.5476 with external features; chart-disjoint captured 0.9013,
+per-chart Pearson against the BT scale 0.6025 vs 0.3713 for Sunny).
 Every artifact is indexed in [results/README.md](results/README.md).
 
 Retired scripts, archived docs, historical logs and the rank-NLL development scratch

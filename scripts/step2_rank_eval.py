@@ -33,7 +33,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import kendalltau, spearmanr
+from scipy.stats import kendalltau, pearsonr, spearmanr
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -337,10 +337,13 @@ def main() -> int:
         boot = rm.bootstrap_metric(pp, boot_nll, boot_n, ceil.nll_by_cluster,
                                    ceil.n_by_cluster, int(cluster_ids.size),
                                    n_boot=args.bootstrap, seed=args.seed)
-        # rho with the BT scale
+        # correlation with the BT scale
         ok = np.isfinite(ceil.b_full) & np.isfinite(d)
         rho_b = float(spearmanr(d[ok], ceil.b_full[ok]).statistic) if ok.sum() > 2 else float("nan")
         tau_b = float(kendalltau(d[ok], ceil.b_full[ok]).statistic) if ok.sum() > 2 else float("nan")
+        # Pearson is not invariant to a monotone nonlinear rescaling of d, so it
+        # measures the linear agreement with the BT scale, not just the order.
+        pear_b = float(pearsonr(d[ok], ceil.b_full[ok]).statistic) if ok.sum() > 2 else float("nan")
         denom = ceil.rho["lw"] - random_lw
         results[name] = {
             "n_rows": int(len(sub)), "n_players": int(len(players)),
@@ -382,7 +385,7 @@ def main() -> int:
                                      / (ceil.rho["macro"] - random_lw))
                                if np.isfinite(pp["macro"])
                                and abs(ceil.rho["macro"] - random_lw) > 1e-12 else float("nan")),
-            "rho_bhat": rho_b, "tau_bhat": tau_b,
+            "rho_bhat": rho_b, "tau_bhat": tau_b, "pearson_bhat": pear_b,
             "bootstrap": boot,
         }
         # per-player rows

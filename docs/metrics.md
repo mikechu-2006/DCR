@@ -271,7 +271,8 @@ python scripts/step2_cm3p_mlp.py ... --rank-loss add --rank-weight 0.1
 | `link.kind` / `link.beta` | link 与 signal strength |
 | `per_player.lw` / `macro` / `fisher_l3` | 辅助指标 |
 | `norm_rho_lw` / `norm_rho_macro` | 归一化后的辅助指标 |
-| `rho_bhat` / `tau_bhat` | 与 BT 尺度的秩相关 |
+| `rho_bhat` / `tau_bhat` | 与 BT 尺度的秩相关（Spearman / Kendall） |
+| `pearson_bhat` | 与 BT 尺度 `b` 的线性（Pearson）相关；同 b、同 map 集，对 `d` 的单调非线性缩放敏感 |
 | `bootstrap.*` | 按 `player_id_base` cluster bootstrap 的 95% CI |
 | `coverage_rows` / `coverage_maps` | 信号覆盖 |
 

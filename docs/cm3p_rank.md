@@ -16,6 +16,8 @@
 
 > 时间口径：2026-10-31，1k pairbest，单机 CPU（6 线程，无 CUDA）。所有 test 行只用于评测，
 > 不参与任何拟合；超参数在 train 内部按 player cluster 的 20% 验证集选择。
+> 2026-11-03 用同一 runner 重跑 P1/P2 官方评测以补 `pearson_bhat`（旧 JSON 无此字段），
+> 其余字段逐位复现。
 
 ---
 
@@ -31,7 +33,8 @@
 * **P2（5 折 chart-disjoint）**是"新 chart"口径：CM3P-only linear captured **0.6006**
   （NLL 0.6148），CM3P-only MLP **0.5976**（0.6152，**没有增益**），而
   **CM3P+external linear 0.9013**（NLL 0.5756）。MLP 的 P1 增益主要在 seen chart 上，
-  不能泛化到新图；外部信号是能跨图泛化的内容。
+  不能泛化到新图；外部信号是能跨图泛化的内容。同一口径的 per-chart Pearson(d,b)：
+  external linear **0.6025**、CM3P MLP 0.5613、CM3P linear 0.5546、Sunny 0.3713（§5.3）。
 * **in-sample content ceiling**：CM3P-only linear 0.5879（captured_content 0.808），
   CM3P+external linear 0.5618（>1 的 oracle，见 §5.5）；linear 模型离各自 oracle 只差
   0.002–0.004 nats，说明线性族的拟合已接近极限，剩余增益来自非线性（MLP）和外部信号。
@@ -344,18 +347,36 @@ fixed 信号不训练、不看玩家，val NLL 与内容模型在同一个 held-
 
 每折用"两张图都在训练 chart 折"的 train 行拟合；第 k 折的图只用没看过该图的折模型打分。
 
-| signal | test NLL（strict） | captured | lw | 说明 |
-|---|---|---|---|---|
-| CM3P+external linear λ1e-3, CD | **0.57563** | **0.9013** | 0.5458 | 5 折；最好新 chart 模型 |
-| CM3P linear λ1e-3, CD | 0.61484 | 0.6006 | 0.4380 | 5 折；P1 0.58989 → +0.025 |
-| CM3P MLP h64 L2, CD | 0.61522 | 0.5976 | 0.4328 | 5 折，98 epoch；**没有超过 linear** |
-| Sunny / Daniel / MSD | 0.62718 / 0.62595 / 0.63577 | 0.5059 / 0.5154 / 0.4401 | 0.5098 / 0.5041 / 0.4484 | fixed，同 test pair |
-| external blend | 0.62704 | 0.5070 | 0.5071 | fixed 2-signal blend |
+`Pearson(d,b)` / `Spearman(d,b)` 在全部 4,565 张 test 谱面上、对同一个 ceiling `b`
+（`--ceiling-fit all` 的 `b_full`）计算，与 JSON 的 `pearson_bhat` / `rho_bhat` 一致；
+固定信号（Sunny / Daniel / MSD / external blend）不随 P1/P2 改变，值相同。
+
+| signal | test NLL（strict） | captured | lw | Pearson(d,b) | Spearman(d,b) | 说明 |
+|---|---|---|---|---|---|---|
+| CM3P+external linear λ1e-3, CD | **0.57563** | **0.9013** | 0.5458 | **0.6025** | 0.5623 | 5 折；最好新 chart 模型 |
+| CM3P linear λ1e-3, CD | 0.61484 | 0.6006 | 0.4380 | 0.5546 | 0.5192 | 5 折；P1 0.58989 → +0.025 |
+| CM3P MLP h64 L2, CD | 0.61522 | 0.5976 | 0.4328 | 0.5613 | 0.5291 | 5 折，98 epoch；**没有超过 linear** |
+| Sunny / Daniel / MSD | 0.62718 / 0.62595 / 0.63577 | 0.5059 / 0.5154 / 0.4401 | 0.5098 / 0.5041 / 0.4484 | 0.3713 / 0.3739 / 0.3575 | 0.3920 / 0.3925 / 0.3744 | fixed，同 test pair |
+| external blend | 0.62704 | 0.5070 | 0.5071 | 0.3710 | 0.3913 | fixed 2-signal blend（值同 P1） |
 
 **P2 的核心结论**：CM3P-only 的 MLP 在 P1（seen chart）上比 linear 好 0.035 nats，但在
 chart-disjoint 后 **0.6152 vs 0.6148，没有增益**；它的非线性主要拟合了 seen chart 的
 内容细节。能跨图泛化的是**外部内容信号**：CD extra linear 0.5756 / captured 0.9013，
 比 CD linear 低 0.039 nats。
+
+**Pearson(d,b) 怎么读**（per-chart 辅助指标，不是主指标）：
+
+* 四个关心的模型按 Pearson 排：CM3P+external **0.6025** > CM3P MLP **0.5613** >
+  CM3P linear **0.5546** > Sunny **0.3713**。与 NLL/captured 基本同序，唯一互换是
+  MLP 与 linear：MLP 的 Pearson 高 0.007，NLL 却几乎相同（0.61522 vs 0.61484，
+  paired Δ≈0），不足以改变"非线性对新 chart 没有增益"的结论。
+* 训练模型的 Pearson **高于** Spearman（0.6025 > 0.5623、0.5546 > 0.5192），表里的
+  fixed 信号相反（Sunny 0.3713 < 0.3920，Daniel/MSD 同向）。原因是模型在 linear link 下
+  拟合 BT 似然，`d` 与 `b` 近似线性；Sunny/MSD 与 ACC-BT 尺度只是单调相关，scale 和
+  尾部没对齐。所以 Pearson 混合了"序对不对"和"scale 像不像"，不能替代 NLL。
+* `b` 本身有噪声（split-half 可信度 0.736，见 [rank_eval.md](rank_eval.md) §3），Pearson
+  被衰减；除以 √0.736≈0.858 粗略校正后约为 0.702 / 0.654 / 0.647 / 0.433（同上顺序），
+  只作量级参考。
 
 （P2 的官方 captured 用与 P1 相同的 test ceiling 0.56276、strict pair；CD 模型仍看过 test
 玩家的其他 chart 行，所以不是纯"新玩家+新 chart"；新玩家看 §5.2。）
@@ -464,9 +485,11 @@ CD MLP 与 CD linear 的 Δ 为 0（CI 跨 0，P=0.48）：**CM3P-only 的非线
    0.808），P1 strict 0.5899，差 0.002 nats；extra linear 的 oracle 0.5618，模型 0.5608
    在噪声内。线性族已经到顶；MLP 的 val 0.568 / 0.548 低于 linear oracle，增益来自非线性。
 5. **P2（新 chart）**：CM3P-only linear captured 0.6006（NLL 0.6148），MLP CD 0.5976
-   （0.6152，**没有增益**），CM3P+external linear CD **0.9013**（0.5756）。所以 MLP 的
-   P1/P1-val 增益主要在 seen chart 上；**能跨图泛化的是外部内容信号**，不是 CM3P 的
-   非线性容量。这也是本次最重要的泛化结论：**非线性对新玩家有效，但对新 chart 无效**。
+   （0.6152，**没有增益**），CM3P+external linear CD **0.9013**（0.5756）。per-chart
+   Pearson(d,b) 同向：0.5546 / 0.5613 / **0.6025**（Sunny 0.3713），MLP 只在 Pearson 上
+   微高于 linear、NLL 不变（§5.3）。所以 MLP 的 P1/P1-val 增益主要在 seen chart 上；
+   **能跨图泛化的是外部内容信号**，不是 CM3P 的非线性容量。这也是本次最重要的泛化结论：
+   **非线性对新玩家有效，但对新 chart 无效**。
 6. **P1 captured >1 不是模型超过 ceiling**：P1 的 signal 用评测玩家的其他 pair 拟合，
    ceiling 的 `b` 按玩家 cross-fit、完全不含这些玩家；这是 player-in-sample。
    val captured 也 >1，因为 val ceiling（80% 玩家、coverage 0.883）本身欠拟合。
@@ -568,10 +591,19 @@ python scripts/paired_delta_nll.py \
 python scripts/step2_rank_eval.py \
     --in data/processed/step1_1k_pairbest.parquet \
     --signal-table results/cm3p_rank_1k/signals_p1.parquet \
-    --signals cm3p_linear,cm3p_mlp_h64_L2,cm3p_mlp_extra,cm3p_linear_extra_l3,ext_blend,msd_overall,sunny_star \
+    --signals cm3p_linear,cm3p_mlp_h64_L1,cm3p_mlp_h64_L2,cm3p_mlp_h128_L1,cm3p_mlp_ens,cm3p_mlp_extra,cm3p_linear_extra,cm3p_linear_extra_l3,ext_blend,msd_overall,sunny_star,daniel_star,star,notes_per_sec \
     --split test --ceiling-fit all --common-maps --strict-pairs \
     --folds 2 --bootstrap 400 --cache-dir /tmp/rank_cache \
     --out results/cm3p_rank_1k/rank_eval_p1_final.json
+
+# 官方评测：P2（5 折 chart-disjoint；同一 ceiling、同一 pair 集、strict；含 pearson_bhat）
+python scripts/step2_rank_eval.py \
+    --in data/processed/step1_1k_pairbest.parquet \
+    --signal-table results/cm3p_rank_1k/signals_p2.parquet \
+    --signals cm3p_linear_cd_l1e3,cm3p_linear_extra_cd_l1e3,cm3p_mlp_cd,msd_overall,sunny_star,daniel_star \
+    --split test --ceiling-fit all --common-maps --strict-pairs \
+    --folds 2 --bootstrap 400 --cache-dir /tmp/rank_cache \
+    --out results/cm3p_rank_1k/rank_eval_p2_final.json
 ~~~
 
 单元测试：
@@ -593,12 +625,14 @@ python scripts/test_step2_cm3p_mlp.py        # MLP 自检
 | `results/cm3p_rank_1k/signals_p1.parquet` | P1 所有模型列 + 外部 baseline，官方评测输入 |
 | `results/cm3p_rank_1k/signals_p2.parquet` | P2/CD 信号 + baseline |
 | `results/cm3p_rank_1k/signals_pub.parquet` | 发布表子集信号 + baseline |
-| `results/cm3p_rank_1k/rank_eval_p1_final.json` | P1 官方评测（strict / all-pair） |
-| `results/cm3p_rank_1k/rank_eval_p2_final.json` | P2 5 折 chart-disjoint 官方评测 |
+| `results/cm3p_rank_1k/rank_eval_p1_final.json` | P1 官方评测（strict / all-pair，含 `pearson_bhat` / `rho_bhat`） |
+| `results/cm3p_rank_1k/rank_eval_p2_final.json` | P2 5 折 chart-disjoint 官方评测（含 `pearson_bhat` / `rho_bhat`） |
 | `results/cm3p_rank_1k/rank_eval_published.json` | 发布表子集评测 |
 | `results/cm3p_rank_1k/player_disjoint_val.json` / `.csv` | 新玩家 20% val 的 NLL / ceiling |
 | `results/cm3p_rank_1k/paired_delta.json` / `_p2.json` | P1/P2 关键对比的配对 ΔNLL 与 95% CI |
 | `results/cm3p_rank_1k/cm3p_linear_ceiling_l1e3.json` | CM3P linear 的 in-sample content oracle |
 | `results/cm3p_rank_1k/cm3p_linear_extra_ceiling_l1e3.json` | CM3P+external linear 的 in-sample oracle |
 
-本文所有数字都来自上述 JSON；doc 里的表格是 `summary.csv` 的精选。
+本文所有数字都来自上述 JSON（§5.3 的 P2 表来自 `rank_eval_p2_final.json`）。
+`summary.csv` 是训练 driver 的扁平汇总；其中的 P2 行来自更早的 2 折 / λ=1e-2 运行，
+与 §5.3 的 5 折最终模型（λ1e-3）不同，引用以 `rank_eval_p2_final.json` 为准。

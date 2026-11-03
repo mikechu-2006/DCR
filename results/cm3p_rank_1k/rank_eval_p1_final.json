@@ -6,7 +6,7 @@
   "ceiling_fit_rows": 109706,
   "common_maps": true,
   "folds": 2,
-  "generated_at": "2026-10-31 21:27:24",
+  "generated_at": "2026-11-03 19:46:59",
   "in": "data/processed/step1_1k_pairbest.parquet",
   "knots": 8,
   "link": "linear",
@@ -99,6 +99,7 @@
    "nll_strict_per_instance": 0.5898855563848089,
    "norm_rho_lw": 0.8253296109534337,
    "norm_rho_macro": 0.830094699170419,
+   "pearson_bhat": 0.5833795799450813,
    "per_player": {
     "fisher_l3": 0.5249947799526347,
     "lw": 0.5028343677817333,
@@ -172,6 +173,7 @@
    "nll_strict_per_instance": 0.5711317096142444,
    "norm_rho_lw": 0.9242600922455014,
    "norm_rho_macro": 0.9488435228180107,
+   "pearson_bhat": 0.5949641188814272,
    "per_player": {
     "fisher_l3": 0.590418751824156,
     "lw": 0.5635674612765808,
@@ -245,6 +247,7 @@
    "nll_strict_per_instance": 0.5607897966769134,
    "norm_rho_lw": 0.9451424231637817,
    "norm_rho_macro": 0.9666548050630699,
+   "pearson_bhat": 0.6175872294674092,
    "per_player": {
     "fisher_l3": 0.603950027023654,
     "lw": 0.5763870547879685,
@@ -318,6 +321,7 @@
    "nll_strict_per_instance": 0.5490790052495237,
    "norm_rho_lw": 0.9524325089620019,
    "norm_rho_macro": 0.9517709192931674,
+   "pearson_bhat": 0.6504835729058951,
    "per_player": {
     "fisher_l3": 0.6101849068025104,
     "lw": 0.5808624142180077,
@@ -391,6 +395,7 @@
    "nll_strict_per_instance": 0.5317278435034192,
    "norm_rho_lw": 1.0013593007722104,
    "norm_rho_macro": 1.0066804596894736,
+   "pearson_bhat": 0.6897258540657933,
    "per_player": {
     "fisher_l3": 0.6429410823783392,
     "lw": 0.6108984090156048,
@@ -464,6 +469,7 @@
    "nll_strict_per_instance": 0.556443535002598,
    "norm_rho_lw": 0.9335050670047275,
    "norm_rho_macro": 0.933604790388961,
+   "pearson_bhat": 0.6366176746274408,
    "per_player": {
     "fisher_l3": 0.597251819320318,
     "lw": 0.5692429205392519,
@@ -537,6 +543,7 @@
    "nll_strict_per_instance": 0.5571020953750332,
    "norm_rho_lw": 0.930040700203283,
    "norm_rho_macro": 0.9281516368021314,
+   "pearson_bhat": 0.6305545048533414,
    "per_player": {
     "fisher_l3": 0.5957379013044533,
     "lw": 0.5671161572797928,
@@ -610,6 +617,7 @@
    "nll_strict_per_instance": 0.5524831262593127,
    "norm_rho_lw": 0.9381332658605166,
    "norm_rho_macro": 0.9321321392944688,
+   "pearson_bhat": 0.6429575505619505,
    "per_player": {
     "fisher_l3": 0.6003428856640154,
     "lw": 0.5720841564268198,
@@ -683,6 +691,7 @@
    "nll_strict_per_instance": 0.6259517297863039,
    "norm_rho_lw": 0.8273254079065293,
    "norm_rho_macro": 0.8581516773440535,
+   "pearson_bhat": 0.3739208171809655,
    "per_player": {
     "fisher_l3": 0.5317766121326739,
     "lw": 0.5040595808946792,
@@ -756,6 +765,7 @@
    "nll_strict_per_instance": 0.6270352729061766,
    "norm_rho_lw": 0.832219848880472,
    "norm_rho_macro": 0.8609385716624742,
+   "pearson_bhat": 0.37101924714789564,
    "per_player": {
     "fisher_l3": 0.5360912090284796,
     "lw": 0.5070642619332552,
@@ -829,6 +839,7 @@
    "nll_strict_per_instance": 0.6357653868252208,
    "norm_rho_lw": 0.7367152469005419,
    "norm_rho_macro": 0.7581820322031597,
+   "pearson_bhat": 0.35749357017708516,
    "per_player": {
     "fisher_l3": 0.4724771840997191,
     "lw": 0.4484343043561625,
@@ -902,6 +913,7 @@
    "nll_strict_per_instance": 0.6581347782425127,
    "norm_rho_lw": 0.5055368213870309,
    "norm_rho_macro": 0.5068011670179894,
+   "pearson_bhat": 0.31347819358715046,
    "per_player": {
     "fisher_l3": 0.3192568022926217,
     "lw": 0.30651463766361364,
@@ -975,6 +987,7 @@
    "nll_strict_per_instance": 0.6608449609436188,
    "norm_rho_lw": 0.5346960579083262,
    "norm_rho_macro": 0.5418582316733901,
+   "pearson_bhat": 0.33291424943561015,
    "per_player": {
     "fisher_l3": 0.3387549540242135,
     "lw": 0.3244153960017639,
@@ -1048,6 +1061,7 @@
    "nll_strict_per_instance": 0.6271817909582853,
    "norm_rho_lw": 0.8366166292966113,
    "norm_rho_macro": 0.8668827526445605,
+   "pearson_bhat": 0.37131822110774737,
    "per_player": {
     "fisher_l3": 0.5382790664891806,
     "lw": 0.5097634308102503,

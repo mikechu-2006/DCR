@@ -18,7 +18,7 @@
 | `step2_predict.py` | `step2/predict` | bias / mf_dot / mirt（+ CM3P 内容向量） |
 | `step2_cm3p_mlp.py` | `step2/cm3p_mlp` | CM3P 内容锚定 MLP |
 | `test_step2_cm3p_mlp.py` | — | 上述 MLP 的 7 条自检（合成张量，1 秒，不需要 data/） |
-| `step2_rank_eval.py` | — | 难度序的成对 NLL（BT ceiling / captured / 逐玩家 Spearman）；ceiling 默认用全部行拟合、只在 `--split` 行评测；见 docs/metrics.md |
+| `step2_rank_eval.py` | — | 难度序的成对 NLL（BT ceiling / captured / 逐玩家 Spearman / 与 BT 尺度 `b` 的 Pearson、Spearman）；ceiling 默认用全部行拟合、只在 `--split` 行评测；见 docs/metrics.md |
 | `test_rank_metrics.py` | — | rank-NLL / BT / ceiling 拟合-评测拆分 / strict pairs / torch pairwise loss 的 24 条合成自检（不需要 data/） |
 | `test_step2_rank_eval.py` | — | rank runner 的端到端合成测试：`--ceiling-fit all|split`、`--common-maps`、`--strict-pairs`（不需要 data/） |
 | `step2_cm3p_rank.py` | — | CM3P 内容→per-chart 难度，按 rank-NLL counts 训练（M0/M1/M2；P1/P2/content ceiling）；见 docs/cm3p_rank.md |

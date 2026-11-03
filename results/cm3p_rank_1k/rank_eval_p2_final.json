@@ -6,7 +6,7 @@
   "ceiling_fit_rows": 109706,
   "common_maps": true,
   "folds": 2,
-  "generated_at": "2026-10-31 21:36:17",
+  "generated_at": "2026-11-03 19:46:09",
   "in": "data/processed/step1_1k_pairbest.parquet",
   "knots": 8,
   "link": "linear",
@@ -91,6 +91,7 @@
    "nll_strict_per_instance": 0.6148401007956832,
    "norm_rho_lw": 0.7197308123206163,
    "norm_rho_macro": 0.7108071121758743,
+   "pearson_bhat": 0.5546344685688906,
    "per_player": {
     "fisher_l3": 0.45551298442889054,
     "lw": 0.4380076164453411,
@@ -164,6 +165,7 @@
    "nll_strict_per_instance": 0.5756271932835099,
    "norm_rho_lw": 0.8953903415424782,
    "norm_rho_macro": 0.9123868454159382,
+   "pearson_bhat": 0.6025181865521204,
    "per_player": {
     "fisher_l3": 0.5705295207227301,
     "lw": 0.5458444173196498,
@@ -237,6 +239,7 @@
    "nll_strict_per_instance": 0.615223602379534,
    "norm_rho_lw": 0.7112422816215316,
    "norm_rho_macro": 0.7003885007033256,
+   "pearson_bhat": 0.5613014692118719,
    "per_player": {
     "fisher_l3": 0.45011168851205696,
     "lw": 0.43279653567581156,
@@ -310,6 +313,7 @@
    "nll_strict_per_instance": 0.6259517297863039,
    "norm_rho_lw": 0.8273254079065293,
    "norm_rho_macro": 0.8581516773440535,
+   "pearson_bhat": 0.3739208171809655,
    "per_player": {
     "fisher_l3": 0.5317766121326739,
     "lw": 0.5040595808946792,
@@ -383,6 +387,7 @@
    "nll_strict_per_instance": 0.6357653868252208,
    "norm_rho_lw": 0.7367152469005419,
    "norm_rho_macro": 0.7581820322031597,
+   "pearson_bhat": 0.35749357017708516,
    "per_player": {
     "fisher_l3": 0.4724771840997191,
     "lw": 0.4484343043561625,
@@ -456,6 +461,7 @@
    "nll_strict_per_instance": 0.6271817909582853,
    "norm_rho_lw": 0.8366166292966113,
    "norm_rho_macro": 0.8668827526445605,
+   "pearson_bhat": 0.37131822110774737,
    "per_player": {
     "fisher_l3": 0.5382790664891806,
     "lw": 0.5097634308102503,
