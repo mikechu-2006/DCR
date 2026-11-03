@@ -1,0 +1,30 @@
+{
+  "player_id": 31496667,
+  "dataset": "step1_10k_pairbest",
+  "seed": 20261023,
+  "n_train": 60,
+  "n_test": 57,
+  "score_bounds": [0.9, 0.998],
+  "loss_bounds": [-6.214608098422191, -2.3025850929940455],
+  "fit": {
+    "iters": 12,
+    "huber": 0.5,
+    "lam": 0.001,
+    "x": [24.690101623535156, 37.40354919433594, 25.05377197265625,
+          25.524227142333984, 27.179197311401367, 35.64344787597656],
+    "active": [true, true, true, true, true, true],
+    "rmse_train_clipped": 1.0418767929077148
+  },
+  "test": {
+    "rmse_clipped": 1.128012776374817,
+    "rmse_raw": 6.697514057159424,
+    "baseline_x20_clipped": 1.9541033506393433,
+    "n_predictions_outside_score_bounds": 21,
+    "raw_score_min": 0.700324296951294,
+    "raw_score_max": 1.0,
+    "raw_loss_min": -27.63102149963379,
+    "raw_loss_max": -1.205054521560669,
+    "clipped_max_abs_residual": 2.3894639015197754,
+    "raw_max_abs_residual": 22.950790405273438
+  }
+}

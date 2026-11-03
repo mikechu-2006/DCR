@@ -73,6 +73,7 @@ import argparse
 import gc
 import json
 import math
+import sys
 import time
 from pathlib import Path
 
@@ -81,6 +82,9 @@ import pandas as pd
 import torch
 import torch.nn.functional as F
 from torch import nn
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from dcr.rank_metrics import pairwise_rank_loss  # noqa: E402
 
 PROC = Path("data/processed")
 BASE_COLS = ["player_id", "beatmap_id"]
@@ -534,6 +538,16 @@ def parse_args(argv=None):
     ap.add_argument("--split-col", default="split",
                     help="step1 表里的划分标签列（train / test / dropped）")
     ap.add_argument("--eval-every", type=int, default=20)
+    ap.add_argument("--rank-loss", default="none", choices=["none", "add", "only"],
+                    help="pairwise Bradley-Terry loss on the batch: add to MSE, "
+                         "or replace it (only: the output is a score, not a calibrated loss)")
+    ap.add_argument("--rank-weight", type=float, default=0.1,
+                    help="weight of the rank loss when --rank-loss add")
+    ap.add_argument("--rank-beta", type=float, default=1.0,
+                    help="fixed logistic scale of the rank loss")
+    ap.add_argument("--rank-ties", default="skip", choices=["skip", "half"],
+                    help="pairwise rank loss ties: skip (legacy) or give them a 0.5 "
+                         "target, matching the rank-NLL metric's tie convention")
     ap.add_argument("--p-drift", default="none", choices=["none", "logpc", "time"],
                     help="player-side drift: 'logpc' -> P_eff = P[u] + Pc[u]*ln(playcount_cur); "
                          "'time' -> P_eff = P[u] + Pc[u]*t with t in calendar years since the mean "
@@ -550,6 +564,10 @@ def parse_args(argv=None):
     ap.add_argument("--content-reduce", default="pca", choices=["pca", "raw"],
                     help="pca: whiten to --content-dim on TRAIN charts only; raw: use the "
                          "table's own dimension (then --content-dim must equal it)")
+    ap.add_argument("--content-eval-heldout", action="store_true",
+                    help="evaluate test charts that never appear in train (chart-level split): "
+                         "content vectors still cover them, bm starts at 0 and is not trained. "
+                         "Only valid with --chart-content != none; default off = drop them")
     ap.add_argument("--d-constraint", default="none", choices=["none", "nonneg", "simplex"],
                     help="mirt's D: none (free) / nonneg (softplus, D>0) / "
                          "simplex (softmax, D>=0 and sum_i D_i = 1)")
@@ -600,33 +618,43 @@ def load_content_table(path) -> tuple:
     return ids, E
 
 
-def align_content(ids, E, item_ids, dim, reduce_mode):
-    """Frozen content aligned to the training item order, then reduced.
+def align_content(ids, E, item_ids, dim, reduce_mode, fit_item_ids=None):
+    """Frozen content aligned to a target item order, then reduced.
 
-    Alignment is the one step in this pipeline that fails silently: C[i] must belong to
-    item_ids[i], so a missing chart is a hard error here rather than a wrong number later.
-    The PCA basis is fitted on the TRAINING charts only (these rows), never on the table.
+    The target is item_ids; the PCA basis/whitening is fitted on fit_item_ids (train
+    charts, default = target), so held-out test charts can be transformed without
+    influencing the basis.  Alignment must not fail silently: a target chart with no
+    content row is a hard error rather than a wrong number later.
     """
-    pos = pd.Index(ids).get_indexer(item_ids)
-    if (pos < 0).any():
-        raise SystemExit(f"{int((pos < 0).sum())} training charts have no content row; "
+    fit_ids = item_ids if fit_item_ids is None else fit_item_ids
+    index = pd.Index(ids)
+    pos_fit = index.get_indexer(fit_ids)
+    if (pos_fit < 0).any():
+        raise SystemExit(f"{int((pos_fit < 0).sum())} training charts have no content row; "
                          f"the play tables must be filtered to covered charts first")
-    X = np.ascontiguousarray(E[pos], dtype=np.float32)          # (n_item, d_raw)
+    pos = index.get_indexer(item_ids)
+    if (pos < 0).any():
+        raise SystemExit(f"{int((pos < 0).sum())} target charts have no content row; "
+                         f"the play tables must be filtered to covered charts first")
+    X_all = np.ascontiguousarray(E[pos], dtype=np.float32)      # (n_item, d_raw)
     if reduce_mode == "raw":
-        if dim != X.shape[1]:
-            raise SystemExit(f"--content-reduce raw needs --content-dim {X.shape[1]}, got {dim}")
-        Z, info = X, {"reduce": "raw"}
+        if dim != X_all.shape[1]:
+            raise SystemExit(f"--content-reduce raw needs --content-dim {X_all.shape[1]}, got {dim}")
+        Z, info = X_all, {"reduce": "raw"}
     else:
+        X = E[pos_fit]
         mu = X.mean(0)
         Xc = X - mu
         Vt = np.linalg.svd(Xc, full_matrices=False)[2]
         d = min(dim, Vt.shape[0])
         if d != dim:
             print(f"[content] only {d} components available, --content-dim {dim} truncated", flush=True)
-        Z = Xc @ Vt[:d].T
-        Z = Z / (Z.std(0) + 1e-12)                              # whiten
+        Z_fit = Xc @ Vt[:d].T
+        scale = Z_fit.std(0) + 1e-12                            # whitening from train only
+        Z = ((X_all - mu) @ Vt[:d].T) / scale
         info = {"reduce": "pca", "pca_mean": mu, "pca_components": Vt[:d],
-                "pca_scale": Z.std(0), "fitted_on": "train_charts"}
+                "pca_scale": scale, "fitted_on": "train_charts",
+                "n_fit_charts": int(len(fit_ids))}
     nrm = np.linalg.norm(Z, axis=1, keepdims=True)
     Z = (Z / np.maximum(nrm, 1e-12)).astype(np.float32)         # unit norm, like raw CM3P
     ev = float(np.var(Z, axis=0).sum())
@@ -793,7 +821,8 @@ def main():
     cross_units = np.intersect1d(unit_tr, unit_te, assume_unique=True)
     test_pairs = np.unique(row_keys[te_mask])
     tr_pairs = np.unique(row_keys[tr_mask])
-    expected_test_frac = float((split_spec or {}).get("actual_test_frac")
+    expected_test_frac = float((split_spec or {}).get("actual_test_unit_frac")
+                               or (split_spec or {}).get("actual_test_frac")
                                or (n_test_pairs / max(n_pairs, 1)))
     frac_tol = 0.02
     print(f"[split] step1 表的 '{args.split_col}' 列：train {len(train):,} 行 / "
@@ -839,10 +868,20 @@ def main():
 
     train, test = add_entity(train), add_entity(test)
     ent_ids = np.unique(train.entity.to_numpy())
-    item_ids = np.unique(train.beatmap_id.to_numpy())
+    train_item_ids = np.unique(train.beatmap_id.to_numpy())
+    heldout_item_ids = np.empty(0, dtype=np.int64)
+    item_ids = train_item_ids
+    if args.content_eval_heldout:
+        if args.chart_content == "none":
+            raise SystemExit("--content-eval-heldout needs --chart-content != none")
+        heldout_item_ids = np.setdiff1d(np.unique(test.beatmap_id.to_numpy()),
+                                        train_item_ids, assume_unique=True)
+        item_ids = np.union1d(train_item_ids, heldout_item_ids)
     ents = {e: i for i, e in enumerate(ent_ids)}
     items = {m: i for i, m in enumerate(item_ids)}
-    print(f"train vocab: {len(ents):,} entities, {len(items):,} items", flush=True)
+    print(f"train vocab: {len(ents):,} entities, {len(items):,} items "
+          f"({len(train_item_ids):,} train + {len(heldout_item_ids):,} held-out test)",
+          flush=True)
 
     # ----------------------------------------------------------- frozen content matrix
     chart_feats, content_info = None, None
@@ -851,7 +890,13 @@ def main():
               "(--chart-content none): this is the 1-hot baseline on the same subset", flush=True)
     if content_ids is not None and args.chart_content != "none":
         Z, content_info = align_content(content_ids, content_E, item_ids,
-                                        args.content_dim, args.content_reduce)
+                                        args.content_dim, args.content_reduce,
+                                        fit_item_ids=train_item_ids)
+        if heldout_item_ids.size:
+            content_info["heldout_test_charts"] = int(heldout_item_ids.size)
+            content_info["heldout_bm"] = "0 (not trained; content interaction only)"
+            print(f"[content] held-out test charts={heldout_item_ids.size:,}: "
+                  f"content covers them, bm is fixed at 0", flush=True)
         args.dim = int(Z.shape[1])          # P lives in the content space, so --dim follows
         chart_feats = torch.as_tensor(Z, dtype=torch.float32, device=device)
         n_free = len(ents) * args.dim
@@ -904,10 +949,18 @@ def main():
         loss_ok = bool(np.isfinite(te_y).all() and (te_y <= 0).all())
         loss_detail = f"test({args.tag}) loss in [{te_y.min():.4f}, {te_y.max():.4f}] (no per-tag range registered)"
     chk.check("loss_in_range", loss_ok, loss_detail)
-    chk.check("vocab_from_train_only",
-              np.array_equal(ent_ids, np.unique(train.entity.to_numpy()))
-              and np.array_equal(item_ids, np.unique(train.beatmap_id.to_numpy())),
-              f"{ent_ids.size:,} entities / {item_ids.size:,} items == unique train ids")
+    if heldout_item_ids.size:
+        vocab_ok = (np.array_equal(ent_ids, np.unique(train.entity.to_numpy()))
+                    and np.array_equal(item_ids,
+                                       np.union1d(train_item_ids, heldout_item_ids)))
+        vocab_detail = (f"{ent_ids.size:,} entities == train ids; {item_ids.size:,} items "
+                        f"= {train_item_ids.size:,} train + {heldout_item_ids.size:,} held-out "
+                        f"test (content-eval-heldout)")
+    else:
+        vocab_ok = (np.array_equal(ent_ids, np.unique(train.entity.to_numpy()))
+                    and np.array_equal(item_ids, np.unique(train.beatmap_id.to_numpy())))
+        vocab_detail = f"{ent_ids.size:,} entities / {item_ids.size:,} items == unique train ids"
+    chk.check("vocab_from_train_only", vocab_ok, vocab_detail)
     chk.check("determinism_selftest", determinism_selftest(device),
               "same seed -> bitwise identical parameters on a synthetic training path")
     if chart_feats is not None:
@@ -982,7 +1035,15 @@ def main():
                 tt = tr_t_t[b] if tr_t_t is not None else None
                 opt.zero_grad(set_to_none=True)
                 pred = model.forward(tr_e_t[b], tr_i_t[b], x1, tau, tt)
-                loss = ((pred - tr_y_t[b]) ** 2).mean()
+                mse = ((pred - tr_y_t[b]) ** 2).mean()
+                if args.rank_loss == "none":
+                    loss = mse
+                else:
+                    rl = pairwise_rank_loss(pred, tr_e_t[b], tr_y_t[b],
+                                            beta=args.rank_beta,
+                                            ties=args.rank_ties)
+                    loss = rl if args.rank_loss == "only" \
+                        else mse + args.rank_weight * rl
                 if c_eff_wd:
                     loss = loss + c_eff_wd * model.c_penalty()
                 loss.backward()
@@ -1164,6 +1225,9 @@ def main():
             "dim": args.dim, "reduce": args.content_reduce,
             "n_charts_with_vector": int(len(content_ids)),
             "filtered_rows": content_drop,
+            "eval_heldout": bool(args.content_eval_heldout),
+            "heldout_test_charts": int(heldout_item_ids.size),
+            "heldout_bm": "0 (not trained)" if heldout_item_ids.size else None,
         },
         "time_drift": None if args.p_drift != "time" else {
             "t_ref_year_ce": round(t_ref, 4), "unit": "years",

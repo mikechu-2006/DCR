@@ -1,0 +1,1064 @@
+{
+ "meta": {
+  "bootstrap": 400,
+  "ceiling_fit": "all",
+  "ceiling_fit_maps": 6828,
+  "ceiling_fit_rows": 109706,
+  "common_maps": true,
+  "folds": 2,
+  "generated_at": "2026-10-31 21:27:24",
+  "in": "data/processed/step1_1k_pairbest.parquet",
+  "knots": 8,
+  "link": "linear",
+  "metric": "pairwise Bradley-Terry NLL, cross-fitted ceiling",
+  "min_l": 10,
+  "n_maps_total": 6828,
+  "n_players_total": 1039,
+  "n_rows_total": 109706,
+  "seed": 0,
+  "signal_table": "results/cm3p_rank_1k/signals_p1.parquet",
+  "signals": [
+   "cm3p_linear",
+   "cm3p_mlp_h64_L1",
+   "cm3p_mlp_h64_L2",
+   "cm3p_mlp_h128_L1",
+   "cm3p_mlp_ens",
+   "cm3p_mlp_extra",
+   "cm3p_linear_extra",
+   "cm3p_linear_extra_l3",
+   "ext_blend",
+   "msd_overall",
+   "sunny_star",
+   "daniel_star",
+   "star",
+   "notes_per_sec"
+  ],
+  "split": "test",
+  "strict_pairs": true,
+  "tag": ""
+ },
+ "signals": {
+  "cm3p_linear": {
+   "bits_saved": 0.1489750331116092,
+   "bits_saved_all": 0.1453038218369873,
+   "bits_saved_strict": 0.1489750331116092,
+   "bootstrap": {
+    "captured": [
+     0.7392692436385803,
+     0.858209351914908
+    ],
+    "lw": [
+     0.48747748202624924,
+     0.517349262927695
+    ],
+    "macro": [
+     0.46588217193617604,
+     0.49860146612001494
+    ],
+    "nll": [
+     0.5833208823748796,
+     0.596120871351754
+    ]
+   },
+   "captured": 0.7919653666295239,
+   "captured_all": 0.7724488602569282,
+   "captured_strict": 0.7919653666295239,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 0.8493584517480268,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 634405.3990962831,
+   "nll_all": 678105.7310334982,
+   "nll_all_per_instance": 0.5924302461290529,
+   "nll_per_instance": 0.5898855563848089,
+   "nll_strict": 634405.3990962831,
+   "nll_strict_per_instance": 0.5898855563848089,
+   "norm_rho_lw": 0.8253296109534337,
+   "norm_rho_macro": 0.830094699170419,
+   "per_player": {
+    "fisher_l3": 0.5249947799526347,
+    "lw": 0.5028343677817333,
+    "macro": 0.4817903876815623,
+    "median": 0.5161616161616162,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.5467441068073464,
+   "strict_pairs": true,
+   "tau_bhat": 0.39195958964145217
+  },
+  "cm3p_linear_extra": {
+   "bits_saved": 0.17603111484509404,
+   "bits_saved_all": 0.16927457327729278,
+   "bits_saved_strict": 0.17603111484509404,
+   "bootstrap": {
+    "captured": [
+     0.8739686721932397,
+     1.008346743486863
+    ],
+    "lw": [
+     0.5488149290644249,
+     0.5790073992705068
+    ],
+    "macro": [
+     0.535936179320129,
+     0.5679505226976019
+    ],
+    "nll": [
+     0.5630257078861172,
+     0.5787800825291382
+    ]
+   },
+   "captured": 0.9357980561887511,
+   "captured_all": 0.8998796421556927,
+   "captured_strict": 0.9357980561887511,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 1.0377651935721308,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 614236.1620022507,
+   "nll_all": 659087.6233782298,
+   "nll_all_per_instance": 0.575814987352302,
+   "nll_per_instance": 0.5711317096142444,
+   "nll_strict": 614236.1620022507,
+   "nll_strict_per_instance": 0.5711317096142444,
+   "norm_rho_lw": 0.9242600922455014,
+   "norm_rho_macro": 0.9488435228180107,
+   "per_player": {
+    "fisher_l3": 0.590418751824156,
+    "lw": 0.5635674612765808,
+    "macro": 0.5512609851011379,
+    "median": 0.5952133580705009,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.556599097470809,
+   "strict_pairs": true,
+   "tau_bhat": 0.41874035081353383
+  },
+  "cm3p_linear_extra_l3": {
+   "bits_saved": 0.1909513413530869,
+   "bits_saved_all": 0.18405544930203666,
+   "bits_saved_strict": 0.1909513413530869,
+   "bootstrap": {
+    "captured": [
+     0.9536494226278092,
+     1.091212828988933
+    ],
+    "lw": [
+     0.5616282177232232,
+     0.5914070320437375
+    ],
+    "macro": [
+     0.5452271944438913,
+     0.5777411946355017
+    ],
+    "nll": [
+     0.5518253479694402,
+     0.5685064417430407
+    ]
+   },
+   "captured": 1.015115391515306,
+   "captured_all": 0.9784561771330132,
+   "captured_strict": 1.015115391515306,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 1.0380333521391785,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 603113.7242117134,
+   "nll_all": 647360.6530253065,
+   "nll_all_per_instance": 0.5655696648095446,
+   "nll_per_instance": 0.5607897966769134,
+   "nll_strict": 603113.7242117134,
+   "nll_strict_per_instance": 0.5607897966769134,
+   "norm_rho_lw": 0.9451424231637817,
+   "norm_rho_macro": 0.9666548050630699,
+   "per_player": {
+    "fisher_l3": 0.603950027023654,
+    "lw": 0.5763870547879685,
+    "macro": 0.5616809655301233,
+    "median": 0.6043956043956044,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.5781023538478216,
+   "strict_pairs": true,
+   "tau_bhat": 0.43441980185131907
+  },
+  "cm3p_mlp_ens": {
+   "bits_saved": 0.20784644207026703,
+   "bits_saved_all": 0.20102577496614016,
+   "bits_saved_strict": 0.20784644207026703,
+   "bootstrap": {
+    "captured": [
+     1.0440281795572732,
+     1.18909084717925
+    ],
+    "lw": [
+     0.5666845023893532,
+     0.594304445403668
+    ],
+    "macro": [
+     0.5364538287179448,
+     0.568471015219695
+    ],
+    "nll": [
+     0.5405618967957757,
+     0.5572437754546771
+    ]
+   },
+   "captured": 1.1049313449287883,
+   "captured_all": 1.0686720334793933,
+   "captured_strict": 1.1049313449287883,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 1.0306233195209302,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 590519.0959337157,
+   "nll_all": 633896.5995003841,
+   "nll_all_per_instance": 0.5538067314222872,
+   "nll_per_instance": 0.5490790052495237,
+   "nll_strict": 590519.0959337157,
+   "nll_strict_per_instance": 0.5490790052495237,
+   "norm_rho_lw": 0.9524325089620019,
+   "norm_rho_macro": 0.9517709192931674,
+   "per_player": {
+    "fisher_l3": 0.6101849068025104,
+    "lw": 0.5808624142180077,
+    "macro": 0.5529735745463742,
+    "median": 0.5996503496503497,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.6264624307384685,
+   "strict_pairs": true,
+   "tau_bhat": 0.46561378641300466
+  },
+  "cm3p_mlp_extra": {
+   "bits_saved": 0.2328788770750343,
+   "bits_saved_all": 0.22542372780842967,
+   "bits_saved_strict": 0.2328788770750343,
+   "bootstrap": {
+    "captured": [
+     1.1705506989154493,
+     1.329623884549311
+    ],
+    "lw": [
+     0.5962169463103724,
+     0.6243107540536986
+    ],
+    "macro": [
+     0.569767848045283,
+     0.6008801354824056
+    ],
+    "nll": [
+     0.5220432080756083,
+     0.5408790243354864
+    ]
+   },
+   "captured": 1.2380061370741802,
+   "captured_all": 1.1983738584373895,
+   "captured_strict": 1.2380061370741802,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 1.0682685490357402,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 571858.4073083092,
+   "nll_all": 614539.5553593887,
+   "nll_all_per_instance": 0.5368953591982197,
+   "nll_per_instance": 0.5317278435034192,
+   "nll_strict": 571858.4073083092,
+   "nll_strict_per_instance": 0.5317278435034192,
+   "norm_rho_lw": 1.0013593007722104,
+   "norm_rho_macro": 1.0066804596894736,
+   "per_player": {
+    "fisher_l3": 0.6429410823783392,
+    "lw": 0.6108984090156048,
+    "macro": 0.5850968281348579,
+    "median": 0.6348039215686274,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.6689096580672306,
+   "strict_pairs": true,
+   "tau_bhat": 0.5049827798924488
+  },
+  "cm3p_mlp_h128_L1": {
+   "bits_saved": 0.19722167151702752,
+   "bits_saved_all": 0.19087150865596236,
+   "bits_saved_strict": 0.19722167151702752,
+   "bootstrap": {
+    "captured": [
+     0.9894037154061027,
+     1.1302171861047856
+    ],
+    "lw": [
+     0.5541215836762441,
+     0.582557224359277
+    ],
+    "macro": [
+     0.5259116711037517,
+     0.5586687834406691
+    ],
+    "nll": [
+     0.5483676836352637,
+     0.5641377374630957
+    ]
+   },
+   "captured": 1.0484490597377725,
+   "captured_all": 1.014690993346521,
+   "captured_strict": 1.0484490597377725,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 1.014192323873488,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 598439.4414763141,
+   "nll_all": 641952.8730105468,
+   "nll_all_per_instance": 0.5608451324858418,
+   "nll_per_instance": 0.556443535002598,
+   "nll_strict": 598439.4414763141,
+   "nll_strict_per_instance": 0.556443535002598,
+   "norm_rho_lw": 0.9335050670047275,
+   "norm_rho_macro": 0.933604790388961,
+   "per_player": {
+    "fisher_l3": 0.597251819320318,
+    "lw": 0.5692429205392519,
+    "macro": 0.54234600124492,
+    "median": 0.5902750764101139,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.6086942628292605,
+   "strict_pairs": true,
+   "tau_bhat": 0.4482707611519229
+  },
+  "cm3p_mlp_h64_L1": {
+   "bits_saved": 0.19627156973358928,
+   "bits_saved_all": 0.18937417146272362,
+   "bits_saved_strict": 0.19627156973358928,
+   "bootstrap": {
+    "captured": [
+     0.9872206328515577,
+     1.1290481997763087
+    ],
+    "lw": [
+     0.5522907532182061,
+     0.5804623918918597
+    ],
+    "macro": [
+     0.5227114355721297,
+     0.5555196475188278
+    ],
+    "nll": [
+     0.5488817288878417,
+     0.5642459731547811
+    ]
+   },
+   "captured": 1.0433982287928834,
+   "captured_all": 1.006731007203588,
+   "captured_strict": 1.0433982287928834,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 0.9996792431058079,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 599147.7047171777,
+   "nll_all": 643140.842441049,
+   "nll_all_per_instance": 0.5618830075396828,
+   "nll_per_instance": 0.5571020953750332,
+   "nll_strict": 599147.7047171777,
+   "nll_strict_per_instance": 0.5571020953750332,
+   "norm_rho_lw": 0.930040700203283,
+   "norm_rho_macro": 0.9281516368021314,
+   "per_player": {
+    "fisher_l3": 0.5957379013044533,
+    "lw": 0.5671161572797928,
+    "macro": 0.5391557899580949,
+    "median": 0.5878260869565217,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.6061979182693865,
+   "strict_pairs": true,
+   "tau_bhat": 0.4458720656705764
+  },
+  "cm3p_mlp_h64_L2": {
+   "bits_saved": 0.20293533357085847,
+   "bits_saved_all": 0.19612556096374245,
+   "bits_saved_strict": 0.20293533357085847,
+   "bootstrap": {
+    "captured": [
+     1.017744688837124,
+     1.162573316549394
+    ],
+    "lw": [
+     0.5577455067982835,
+     0.5854102461472358
+    ],
+    "macro": [
+     0.5244583716193236,
+     0.5571428949401274
+    ],
+    "nll": [
+     0.5441572755868577,
+     0.5600565718102625
+    ]
+   },
+   "captured": 1.0788234276351731,
+   "captured_all": 1.0426220323623299,
+   "captured_strict": 1.0788234276351731,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 1.0075138278128482,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 594180.1327643556,
+   "nll_all": 637784.3707145461,
+   "nll_all_per_instance": 0.5572033009421895,
+   "nll_per_instance": 0.5524831262593127,
+   "nll_strict": 594180.1327643556,
+   "nll_strict_per_instance": 0.5524831262593127,
+   "norm_rho_lw": 0.9381332658605166,
+   "norm_rho_macro": 0.9321321392944688,
+   "per_player": {
+    "fisher_l3": 0.6003428856640154,
+    "lw": 0.5720841564268198,
+    "macro": 0.5414844689098413,
+    "median": 0.5869973875237389,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.6207128914586453,
+   "strict_pairs": true,
+   "tau_bhat": 0.4588432629344467
+  },
+  "daniel_star": {
+   "bits_saved": 0.09694254360143095,
+   "bits_saved_all": 0.09207516544588745,
+   "bits_saved_strict": 0.09694254360143095,
+   "bootstrap": {
+    "captured": [
+     0.45734321702171343,
+     0.5842427970894737
+    ],
+    "lw": [
+     0.4867017265413586,
+     0.520464330135107
+    ],
+    "macro": [
+     0.48121662331841036,
+     0.5171704943782851
+    ],
+    "nll": [
+     0.6186864601308691,
+     0.6336873535385387
+    ]
+   },
+   "captured": 0.5153557309686074,
+   "captured_all": 0.48948028831915635,
+   "captured_strict": 0.5153557309686074,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 0.7825488048876311,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 673193.5587367358,
+   "nll_all": 720336.7107385852,
+   "nll_all_per_instance": 0.6293255392315379,
+   "nll_per_instance": 0.6259517297863039,
+   "nll_strict": 673193.5587367358,
+   "nll_strict_per_instance": 0.6259517297863039,
+   "norm_rho_lw": 0.8273254079065293,
+   "norm_rho_macro": 0.8581516773440535,
+   "per_player": {
+    "fisher_l3": 0.5317766121326739,
+    "lw": 0.5040595808946792,
+    "macro": 0.4982043190001141,
+    "median": 0.5363636363636364,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.3925371174119608,
+   "strict_pairs": true,
+   "tau_bhat": 0.3017395685427955
+  },
+  "ext_blend": {
+   "bits_saved": 0.09537932131580129,
+   "bits_saved_all": 0.09079736710976616,
+   "bits_saved_strict": 0.09537932131580129,
+   "bootstrap": {
+    "captured": [
+     0.4464327560927029,
+     0.5766689229863347
+    ],
+    "lw": [
+     0.4887251337458712,
+     0.5247984993798331
+    ],
+    "macro": [
+     0.4840077377023329,
+     0.5194849960785273
+    ],
+    "nll": [
+     0.6196456336635063,
+     0.6348919461833084
+    ]
+   },
+   "captured": 0.5070454934428694,
+   "captured_all": 0.48268739150545525,
+   "captured_strict": 0.5070454934428694,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 0.7727299013640722,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 674358.8790229515,
+   "nll_all": 721350.5006641366,
+   "nll_all_per_instance": 0.6302112415455445,
+   "nll_per_instance": 0.6270352729061766,
+   "nll_strict": 674358.8790229515,
+   "nll_strict_per_instance": 0.6270352729061766,
+   "norm_rho_lw": 0.832219848880472,
+   "norm_rho_macro": 0.8609385716624742,
+   "per_player": {
+    "fisher_l3": 0.5360912090284796,
+    "lw": 0.5070642619332552,
+    "macro": 0.4998347116835858,
+    "median": 0.5431145431145431,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.3913020716526875,
+   "strict_pairs": true,
+   "tau_bhat": 0.3034074486492677
+  },
+  "msd_overall": {
+   "bits_saved": 0.08278442925840046,
+   "bits_saved_all": 0.07885617859349425,
+   "bits_saved_strict": 0.08278442925840046,
+   "bootstrap": {
+    "captured": [
+     0.3883743939887284,
+     0.503675594405074
+    ],
+    "lw": [
+     0.4308060212605125,
+     0.46615774518135583
+    ],
+    "macro": [
+     0.421737520104601,
+     0.45859433824124246
+    ],
+    "nll": [
+     0.6294814357202765,
+     0.6433504384480282
+    ]
+   },
+   "captured": 0.4400898559943727,
+   "captured_all": 0.4192069039112922,
+   "captured_strict": 0.4400898559943727,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 0.7101783180811967,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 683747.8720996939,
+   "nll_all": 730824.4968924092,
+   "nll_all_per_instance": 0.6384882426981332,
+   "nll_per_instance": 0.6357653868252208,
+   "nll_strict": 683747.8720996939,
+   "nll_strict_per_instance": 0.6357653868252208,
+   "norm_rho_lw": 0.7367152469005419,
+   "norm_rho_macro": 0.7581820322031597,
+   "per_player": {
+    "fisher_l3": 0.4724771840997191,
+    "lw": 0.4484343043561625,
+    "macro": 0.4397199419895995,
+    "median": 0.47058823529411764,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.37443011845153173,
+   "strict_pairs": true,
+   "tau_bhat": 0.28205281126850235
+  },
+  "notes_per_sec": {
+   "bits_saved": 0.05051221919296933,
+   "bits_saved_all": 0.04959356181579344,
+   "bits_saved_strict": 0.05051221919296933,
+   "bootstrap": {
+    "captured": [
+     0.23815394887446303,
+     0.31100366172075755
+    ],
+    "lw": [
+     0.29002468801731934,
+     0.32203294733743804
+    ],
+    "macro": [
+     0.275933528813665,
+     0.3085851056214244
+    ],
+    "nll": [
+     0.6537320816375328,
+     0.6622301910086008
+    ]
+   },
+   "captured": 0.2685277348618587,
+   "captured_all": 0.2636440653547882,
+   "captured_strict": 0.2685277348618587,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 0.4679508522391204,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 707805.5262260316,
+   "nll_all": 754041.1072493719,
+   "nll_all_per_instance": 0.6587715430134027,
+   "nll_per_instance": 0.6581347782425127,
+   "nll_strict": 707805.5262260316,
+   "nll_strict_per_instance": 0.6581347782425127,
+   "norm_rho_lw": 0.5055368213870309,
+   "norm_rho_macro": 0.5068011670179894,
+   "per_player": {
+    "fisher_l3": 0.3192568022926217,
+    "lw": 0.30651463766361364,
+    "macro": 0.2926567682432234,
+    "median": 0.31043478260869567,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.29107706510442505,
+   "strict_pairs": true,
+   "tau_bhat": 0.21281400344546328
+  },
+  "star": {
+   "bits_saved": 0.046602252050180426,
+   "bits_saved_all": 0.04747792415076402,
+   "bits_saved_strict": 0.046602252050180426,
+   "bootstrap": {
+    "captured": [
+     0.21317889656089026,
+     0.29112306774499225
+    ],
+    "lw": [
+     0.3080028706035478,
+     0.3407145951568439
+    ],
+    "macro": [
+     0.29601905314878874,
+     0.33133343407136984
+    ],
+    "nll": [
+     0.6568988483850005,
+     0.6648852369693605
+    ]
+   },
+   "captured": 0.24774197971167666,
+   "captured_all": 0.2523971354226768,
+   "captured_strict": 0.24774197971167666,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 0.4342003477972451,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 710720.2518359555,
+   "nll_all": 755719.6288832584,
+   "nll_all_per_instance": 0.6602379912960042,
+   "nll_per_instance": 0.6608449609436188,
+   "nll_strict": 710720.2518359555,
+   "nll_strict_per_instance": 0.6608449609436188,
+   "norm_rho_lw": 0.5346960579083262,
+   "norm_rho_macro": 0.5418582316733901,
+   "per_player": {
+    "fisher_l3": 0.3387549540242135,
+    "lw": 0.3244153960017639,
+    "macro": 0.31316589962304203,
+    "median": 0.3347676419965577,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.34357896346796163,
+   "strict_pairs": true,
+   "tau_bhat": 0.2542119188613495
+  },
+  "sunny_star": {
+   "bits_saved": 0.09516794044862331,
+   "bits_saved_all": 0.09090584554676062,
+   "bits_saved_strict": 0.09516794044862331,
+   "bootstrap": {
+    "captured": [
+     0.44528464736187207,
+     0.5769816672546387
+    ],
+    "lw": [
+     0.49182846391768986,
+     0.527207044071896
+    ],
+    "macro": [
+     0.48717714194691947,
+     0.5227767089298152
+    ],
+    "nll": [
+     0.6201182764799992,
+     0.6347985309395082
+    ]
+   },
+   "captured": 0.505921772759769,
+   "captured_all": 0.4832640731368085,
+   "captured_strict": 0.505921772759769,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 0.7630797132230837,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1075472,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": 1075472,
+   "n_ties": 11,
+   "nll": 674516.455085489,
+   "nll_all": 721264.4351689362,
+   "nll_all_per_instance": 0.6301360500227903,
+   "nll_per_instance": 0.6271817909582853,
+   "nll_strict": 674516.455085489,
+   "nll_strict_per_instance": 0.6271817909582853,
+   "norm_rho_lw": 0.8366166292966113,
+   "norm_rho_macro": 0.8668827526445605,
+   "per_player": {
+    "fisher_l3": 0.5382790664891806,
+    "lw": 0.5097634308102503,
+    "macro": 0.5033121844813047,
+    "median": 0.5463980463980463,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.3920312790619305,
+   "strict_pairs": true,
+   "tau_bhat": 0.30417559210260153
+  }
+ }
+}

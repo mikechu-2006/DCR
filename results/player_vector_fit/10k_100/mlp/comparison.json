@@ -1,0 +1,41 @@
+{
+  "n_rows": 5015,
+  "n_players": 100,
+  "pooled": {
+    "mini": {
+      "rmse": 1.6761153936386108,
+      "spearman": 0.3573732936011053
+    },
+    "mlp": {
+      "rmse": 1.6284821033477783,
+      "spearman": 0.11858463307246542
+    }
+  },
+  "per_player_mean": {
+    "rmse_mini": 1.6130280250310898,
+    "rmse_mlp": 1.5616344887018203,
+    "spearman_mini": 0.3867328112359402,
+    "spearman_mlp": 0.08153427505589393
+  },
+  "per_player_median": {
+    "rmse_mini": 1.5851819515228271,
+    "rmse_mlp": 1.5250561833381653,
+    "spearman_mini": 0.4112666000850343,
+    "spearman_mlp": 0.06997959115682856
+  },
+  "mlp_lower_rmse_players": 55,
+  "mini_higher_spearman_players": 79,
+  "bootstrap": {
+    "B": 2000,
+    "delta_rmse_mean": -0.04639144796133041,
+    "delta_rmse_ci": [
+      -0.15583286583423614,
+      0.06667419075965861
+    ],
+    "delta_spearman_mean": -0.23926215398920697,
+    "delta_spearman_ci": [
+      -0.36502343611891935,
+      -0.10011390902287089
+    ]
+  }
+}

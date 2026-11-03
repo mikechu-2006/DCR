@@ -1,0 +1,16 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[   1.9s] N 12476783 U 3758711
+[ 101.4s] BT free per-inst 0.48783 bits 0.2962 nit 400 ok False
+[ 125.0s] star {'beta': 0.4385, 'nll': 0.6608, 'expl_dev': -0.3547, 'rho_bhat': 0.2226, 'tau_bhat': 0.1711}
+[ 148.2s] msd {'beta': 0.7294, 'nll': 0.6402, 'expl_dev': -0.3123, 'rho_bhat': 0.2369, 'tau_bhat': 0.1839}
+[ 168.2s] notes {'beta': 0.1374, 'nll': 0.6867, 'expl_dev': -0.4076, 'rho_bhat': 0.1234, 'tau_bhat': 0.0871}
+[ 189.0s] bpm {'beta': 0.0421, 'nll': 0.6924, 'expl_dev': -0.4194, 'rho_bhat': 0.086, 'tau_bhat': 0.0614}
+[ 211.4s] random {'beta': -0.0418, 'nll': 0.6927, 'expl_dev': -0.42, 'rho_bhat': -0.0382, 'tau_bhat': -0.0253}
+[ 211.7s] perplayer ceiling_bhat 0.6802 0.6249
+[ 211.9s] perplayer star 0.3298 0.3332
+[ 212.1s] perplayer msd 0.4512 0.4443
+[ 212.3s] perplayer notes 0.1054 0.1154
+[ 212.5s] perplayer bpm 0.0441 0.0494
+[ 212.7s] perplayer random -0.0347 -0.0274
+[ 212.7s] ceiling 0.6802391760209268 random -0.034745687035235874
+[ 212.7s] saved

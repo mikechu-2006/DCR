@@ -1,0 +1,60 @@
+# 新版 step1（pairbest 的白名单配额划分）+ CM3P 内容向量（线性点积）。
+#   python main.py -c configs/exp_pairbest_playquota_cm3p_1k.yaml
+#
+# step1/pairbest_playquota 的清洗规则与 step1/pairbest 完全相同（玩家 >=20 条、
+# 1 年空窗拆玩家、每对只留最高成绩、单次对剔除、最高 ACC ∈ (0.90, 0.998]），
+# 唯一区别是 train/test 划分：
+#   读取谱面白名单（whitelist_1k.csv）-> 用 split_seed 打乱 -> 整张谱面依次进 test
+#   -> 直到 test 的 play 数（pairbest 后一行 = 一个 play）达到 1 - train_frac。
+# 因此 test 会略高于 train_frac（整张谱面不可拆），报告里的 split.actual_test_frac
+# 是实际比例；test 与 train 的谱面集合互斥。
+#
+# 对照：configs/exp_cm3p_1k.yaml（legacy step1/clean + 同样的 CM3P 线性）
+#       configs/exp_cm3p_mlp_1k.yaml（CM3P 内容锚定 MLP）
+#
+# 只跑 step1、复用缓存的 CM3P 内容表；内容表默认取 cache_dir 里的
+# chart_content_cm3p.parquet。要现算内容向量，取消文件末尾 step0 的注释。
+name: pairbest_playquota_cm3p_1k
+tag: 1k
+io:
+  out_format: parquet
+steps:
+  step1:
+    version: pairbest_playquota
+    inputs:
+      # 白名单表：step0g 的产物；含 beatmap_id 列即可
+      whitelist: data/processed/whitelist_1k.csv
+    params:
+      train_frac: 0.70
+      split_seed: 20260928
+      min_plays_per_pair: 2
+      max_best_acc: 0.998
+      acc_floor: 0.90
+      gap_days: 365
+      min_plays_per_player: 20
+      formats: parquet
+  step2:
+    version: predict
+    params:
+      models: [mf_dot]
+      chart_content: cm3p
+      content_dim: 64
+      content_reduce: pca
+      content_eval_heldout: true   # test 谱面全都没在 train 出现；用内容向量给它们打分
+      epochs: 60
+      p_drift: none
+      d_constraint: none
+
+# 改成 CM3P 内容锚定 MLP：把上面的 step2 换成
+#   step2:
+#     version: cm3p_mlp
+#     params: {dim: 16, hid: 64, depth: 2, epochs: 60, lr: 0.02,
+#              mlp_wd: 1.0e-4, eu_wd: 1.0e-4, player_tower: "on", ln: "on",
+#              head: dot, content_reduce: raw, content_eval_heldout: true,
+#              save_preds: true}
+#
+# 现算 CM3P 内容向量（需要 data/osu_cache）：
+#   step0:
+#     version: chart_content
+#     params: {source: osu-dir, ids_file: manifests/whitelist_1k.csv,
+#              osu_dir: data/osu_cache, audio: "off"}

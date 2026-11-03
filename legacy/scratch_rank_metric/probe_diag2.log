@@ -1,0 +1,16 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[   0.5s] N 12476783
+[   0.5s] === monotone-ish spline link (8 hat functions at deciles) ===
+[  10.8s] star spline nll per inst 0.64983 vs linear 0.66085 K 8
+[  20.2s] msd spline nll per inst 0.60829 vs linear 0.64017 K 8
+[  20.2s] === split-half reliability ===
+[ 103.8s] half0 nll 0.47928 half1 nll 0.46539
+[ 104.0s] maps>=20 both 4068 split-half rho 0.5823 tau 0.442
+[ 104.7s] cross-fitted ceiling nll 0.5734 bits 0.1728
+[ 104.7s] star captured(crossfit) 0.2697
+[ 104.7s] msd captured(crossfit) 0.4424
+Traceback (most recent call last):
+  File "/home/mikechu/Documents/Projects/DCR/scratch_rank_metric/probe_diag2.py", line 91, in <module>
+    for pi in [p for p in groups if (p%2==0)==h]:
+                                    ^^^^^^^^^^^
+ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()

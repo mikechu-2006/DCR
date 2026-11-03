@@ -1,0 +1,26 @@
+{
+  "checked_at": "2026-10-23",
+  "dataset_used": "data/processed/step1_10k_pairbest.parquet",
+  "dataset_kind": "step1/pairbest (current default), NOT legacy step1/clean",
+  "existing_sha256": "b806054839d1dbc9ada8d029a90aea58e36a180b1786ff506fb72712669b3e67",
+  "rerun_sha256": "b806054839d1dbc9ada8d029a90aea58e36a180b1786ff506fb72712669b3e67",
+  "byte_identical": true,
+  "rerun_command": "python3 scripts/step1_pairbest.py --tag 10k --in data/processed/step0_10k.parquet --out /tmp/step1_latest/step1_10k_pairbest.parquet --no-csv --train-frac 0.70 --split-method pair-random --split-seed 20260928 --min-plays-per-pair 2 --max-best-acc 0.998 --acc-floor 0.90 --gap-days 365 --min-plays-per-player 20",
+  "params": {
+    "train_frac": 0.7,
+    "split_method": "pair-random",
+    "split_seed": 20260928,
+    "min_plays_per_pair": 2,
+    "max_best_acc": 0.998,
+    "acc_floor": 0.9,
+    "gap_days": 365,
+    "min_plays_per_player": 20
+  },
+  "rows": 1513746,
+  "train_rows": 1059890,
+  "test_rows": 453856,
+  "players": 10266,
+  "beatmaps": 16061,
+  "checks": "16/16 ok",
+  "note": "scripts/step1_pairbest.py has a newer mtime because the optional play-quota split was added after the cached parquet; the default pair-random path is unchanged, and rerunning it reproduces the cached file exactly."
+}

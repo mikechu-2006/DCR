@@ -246,6 +246,42 @@ def _plan_step1_pairbest(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
     return argv, outputs
 
 
+# -------------------------------------------------- step1 / pairbest_playquota
+def _plan_step1_pairbest_playquota(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
+    """pairbest 的白名单配额划分版本：清洗规则与 pairbest 完全相同，只把划分换成
+    「打乱白名单 → 整张谱面依次进 test，直到 test 的 play 数达到 1-train_frac」。
+    白名单优先取 inputs.whitelist / step0/whitelist 的 cache 产物；都没有时由脚本
+    退到仓库里 tracked 的 manifests/whitelist_{tag}.csv。"""
+    reserved = frozenset({"tag", "in", "inp", "out", "no_csv", "no_parquet",
+                          "whitelist", "split_method"})
+    _check_reserved(ctx, reserved)
+    src = ctx.inputs.get("plays")
+    if src is None:
+        raise DcrError(f"steps.{ctx.name} 需要输入 plays（step0 的 play 表）")
+    wl = ctx.inputs.get("whitelist")
+    formats = str(ctx.p("formats", "both")).lower()
+    if formats not in ("both", "csv", "parquet"):
+        raise DcrError(f"steps.{ctx.name}.params.formats 只能是 both/csv/parquet，得到 {formats!r}")
+    base = ctx.exp.artifacts / f"step1_{ctx.tag}_pairbest_playquota"
+    argv = ["--tag", ctx.tag, "--in", str(src), "--out", str(base.with_suffix(".csv")),
+            "--split-method", "play-quota"]
+    if wl is not None:
+        argv += ["--whitelist", str(wl)]
+    if formats == "csv":
+        argv.append("--no-parquet")
+    if formats == "parquet":
+        argv.append("--no-csv")
+    outputs: dict[str, Any] = {"report": base.with_suffix(".json")}
+    if formats in ("both", "parquet"):
+        outputs["plays"] = base.with_suffix(".parquet")
+    else:
+        outputs["plays"] = base.with_suffix(".csv")
+    if formats == "both":
+        outputs["plays_csv"] = base.with_suffix(".csv")
+    argv += flags(ctx.params, skip=reserved | {"formats"}, where=f"steps.{ctx.name}.params")
+    return argv, outputs
+
+
 # ------------------------------------------------------------------ step2 / predict
 def _plan_step2_predict(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
     reserved = frozenset({"tag", "train_path", "proc_dir", "out_dir", "content_path"})
@@ -373,6 +409,17 @@ register(StepDef(
     plan=_plan_step1_pairbest,
     inputs={"plays": ("step0", "plays")},
     cache={"plays": ("step1_{tag}_pairbest.parquet", "step1_{tag}_pairbest.csv")},
+    report=frozenset({"report"}),
+))
+
+register(StepDef(
+    name="step1", version="pairbest_playquota", script="scripts/step1_pairbest.py",
+    title="pair-best + 白名单配额划分：清洗同 pairbest，打乱白名单后整张谱面依次进 test，直到 test 的 play 数达到 1-train_frac",
+    plan=_plan_step1_pairbest_playquota,
+    inputs={"plays": ("step0", "plays"), "whitelist": ("step0", "whitelist")},
+    optional=frozenset({"whitelist"}),
+    cache={"plays": ("step1_{tag}_pairbest_playquota.parquet",
+                     "step1_{tag}_pairbest_playquota.csv")},
     report=frozenset({"report"}),
 ))
 

@@ -1,0 +1,19 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[   0.2s] rows 109706 M 6828 P 1039
+[   0.2s] === global row-level spearman(d, loss) — confounded by player skill ===
+[   0.2s]   star    +0.2394
+[   0.3s]   msd     +0.2888
+[   0.3s]   notes   +0.0490
+[   0.3s]   bpm     +0.0224
+[   0.3s]   random  -0.0313
+[   0.3s] === per-player spearman(-d, perf) ===
+[   0.6s]   star    lw=+0.3298 l2w=+0.3413 macro=+0.3332 fisher=+0.3406 n=957
+[   0.8s]   msd     lw=+0.4512 l2w=+0.4597 macro=+0.4443 fisher=+0.4699 n=957
+[   1.0s]   notes   lw=+0.1054 l2w=+0.1136 macro=+0.1154 fisher=+0.1081 n=957
+[   1.2s]   bpm     lw=+0.0441 l2w=+0.0486 macro=+0.0494 fisher=+0.0449 n=957
+[   1.4s]   random  lw=-0.0347 l2w=-0.0350 macro=-0.0274 fisher=-0.0351 n=957
+[   1.7s] pair instances 12476783
+[   3.1s] unique pairs 3758711 singleton frac 0.579 unanimous frac 0.768 count q50/q90/q99/max [1, 7, 33, 396]
+[   3.1s] === pairwise NLL (micro, beta fitted per system) ===
+[  59.4s]   star    beta=  0.332 nll=0.66085 nll_u=0.65545 macro=0.66384 bits=+0.0466
+[ 120.5s]   msd     beta=  0.125 nll=0.64017 nll_u=0.65618 macro=0.64490 bits=+0.0764

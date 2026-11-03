@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "n_fit_players": 812,
+    "n_val_players": 203,
+    "val_pairs": 1047304,
+    "val_comparisons": 1616117,
+    "ceiling_nll": 0.5890895247006158,
+    "ceiling_coverage": 0.8830728220790945,
+    "ceiling_n": 1427149,
+    "val_frac": 0.2,
+    "val_seed": 0,
+    "folds": 2
+  },
+  "signals": [
+    {
+      "signal": "msd_overall",
+      "kind": "fixed",
+      "val_nll": 0.6454297213047979,
+      "captured_val": 0.4585675014595207,
+      "beta": 0.6842224278138056
+    },
+    {
+      "signal": "sunny_star",
+      "kind": "fixed",
+      "val_nll": 0.6366550790258834,
+      "captured_val": 0.5428923135692282,
+      "beta": 0.7368679210055884
+    },
+    {
+      "signal": "daniel_star",
+      "kind": "fixed",
+      "val_nll": 0.637179410862323,
+      "captured_val": 0.5378534547547604,
+      "beta": 0.7536352615951831
+    },
+    {
+      "signal": "star",
+      "kind": "fixed",
+      "val_nll": 0.6628578369961763,
+      "captured_val": 0.29108231694855496,
+      "beta": 0.43097994046881033
+    },
+    {
+      "signal": "notes_per_sec",
+      "kind": "fixed",
+      "val_nll": 0.6637294649160116,
+      "captured_val": 0.2827059229904438,
+      "beta": 0.4285972588884759
+    },
+    {
+      "signal": "cm3p_linear",
+      "kind": "model",
+      "val_nll": 0.6020545048894091,
+      "captured_val": 0.8754058018919813,
+      "beta": null
+    },
+    {
+      "signal": "cm3p_linear_extra",
+      "kind": "model",
+      "val_nll": 0.58695543851215,
+      "captured_val": 1.0205086898300952,
+      "beta": null
+    },
+    {
+      "signal": "cm3p_mlp_h64_L1",
+      "kind": "model",
+      "val_nll": 0.574860155582428,
+      "captured_val": 1.1367450477399168,
+      "beta": null
+    },
+    {
+      "signal": "cm3p_mlp_h64_L2",
+      "kind": "model",
+      "val_nll": 0.5679670572280884,
+      "captured_val": 1.2029881155604916,
+      "beta": null
+    },
+    {
+      "signal": "cm3p_mlp_h128_L1",
+      "kind": "model",
+      "val_nll": 0.5732802748680115,
+      "captured_val": 1.1519277913964938,
+      "beta": null
+    },
+    {
+      "signal": "cm3p_linear_extra_l3",
+      "kind": "model",
+      "val_nll": 0.5766906203505985,
+      "captured_val": 1.119154177053333,
+      "beta": null
+    },
+    {
+      "signal": "cm3p_mlp_extra_val",
+      "kind": "model",
+      "val_nll": 0.5476013422012329,
+      "captured_val": 1.3987037970129634,
+      "beta": null
+    },
+    {
+      "signal": "ext_blend",
+      "kind": "model",
+      "val_nll": 0.6371949633481936,
+      "captured_val": 0.5377039944796643,
+      "beta": null
+    }
+  ]
+}

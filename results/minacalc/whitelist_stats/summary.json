@@ -1,0 +1,38 @@
+{
+  "whitelist": "/home/mikechu/Documents/Projects/DCR/manifests/whitelist_1k.csv",
+  "n_charts": 21949,
+  "n_intervals_total": 6509928,
+  "n_jack_events_total": 27843716,
+  "goal": 0.93,
+  "interval_s": 0.5,
+  "std_ddof": 1,
+  "position_segments": 10,
+  "required_skill": "minacalc.core.required_skill (modified: jack events for jackspeed/technical)",
+  "overall": "6 equal skills, combine=aggregate, no endurance, bisection",
+  "interval_mean": "mean over 0.5 s intervals, hands averaged; jackspeed=jack event mean",
+  "duration_s": {
+    "n": 21949,
+    "mean": 148.296688,
+    "std": 98.946741,
+    "min": 24.5,
+    "p05": 59.5,
+    "p25": 93.0,
+    "median": 125.5,
+    "p75": 184.0,
+    "p95": 289.0,
+    "max": 5091.5
+  },
+  "n_intervals": {
+    "n": 21949,
+    "mean": 296.593376,
+    "std": 197.893482,
+    "min": 49.0,
+    "p05": 119.0,
+    "p25": 186.0,
+    "median": 251.0,
+    "p75": 368.0,
+    "p95": 578.0,
+    "max": 10183.0
+  },
+  "generated_at": "2026-10-21 13:34:52"
+}

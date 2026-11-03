@@ -32,12 +32,22 @@ Starting from step0's play table, the rules are, in execution order:
       the retained step1/clean rule 1, applied to the pair-best row: the lower
       plays are already gone, so the question is whether the retained best is
       still above the floor.
-  (6) **train/test split** on the surviving pairs, using the same splitter as
-      step1/clean (pair-random by default, beatmap-random optional, same seed
-      and train fraction).  Here the split runs *after* the population filters:
-      the observation unit is a pair, so train and test must both be pair-best
+  (6) **train/test split** on the surviving pairs.  The default pair-random /
+      beatmap-random methods are the same splitter as step1/clean (same seed and
+      train fraction).  Here the split runs *after* the population filters: the
+      observation unit is a pair, so train and test must both be pair-best
       tables.  This is a deliberate difference from step1/clean, where row-level
       cleaning is applied to the train side only.
+
+      --split-method play-quota (registered as step1/pairbest_playquota) is
+      the whitelist-quota split: read the beatmap whitelist, random_shuffle it
+      with --split-seed, then add whole charts to the test set in that order
+      until the test rows (plays) reach 1 - train_frac of all surviving rows.
+      Because the unit is the whole chart, the achieved test share is the first
+      prefix of the shuffled list that crosses the target and is therefore
+      slightly >= target.  Charts on the whitelist that have no surviving pair
+      contribute 0 and are skipped; every surviving chart must be on the
+      whitelist unless --allow-unlisted is given.
 
   --label-shift s (default 0.0) changes the target *after* reading step0:
       loss_new = log(s + exp(loss_step0)) = log(1 + s - ACC)
@@ -75,6 +85,8 @@ Examples
 Output
     data/processed/step1_{tag}_pairbest.csv / .parquet
     data/processed/step1_{tag}_pairbest.json   (funnel + checks)
+    (with --split-method play-quota the default stem is
+     step1_{tag}_pairbest_playquota instead)
 
 The script runs its own post-conditions on every invocation; a failure is a
 SystemExit.  See legacy/docs/step1_pairbest.md for the measured funnel and caveats.
@@ -98,9 +110,111 @@ from step1_clean import COLS, OUT, SORT_KEY, load, resolve_input, split_rows  # 
 EXTRA_COLS = ["player_id_base", "player_seg", "n_plays"]
 OUT_COLS = COLS + ["split"] + EXTRA_COLS
 EPS = 1e-12
+MANIFESTS = Path("manifests")
 
 
 # --------------------------------------------------------------------------- io
+def resolve_whitelist(tag: str, explicit: str | None) -> Path:
+    """--whitelist 显式路径，否则 data/processed/whitelist_{tag}.csv，
+    再退到仓库里的 manifests/whitelist_{tag}.csv。"""
+    if explicit:
+        p = Path(explicit)
+        if not p.exists():
+            raise SystemExit(f"--whitelist not found: {p}")
+        return p
+    for cand in (OUT / f"whitelist_{tag}.csv", MANIFESTS / f"whitelist_{tag}.csv"):
+        if cand.exists():
+            return cand
+    raise SystemExit(
+        f"no whitelist found for tag={tag}: looked for "
+        f"{OUT / f'whitelist_{tag}.csv'} and {MANIFESTS / f'whitelist_{tag}.csv'}; "
+        f"pass --whitelist explicitly")
+
+
+def read_whitelist(path: Path) -> np.ndarray:
+    """Read beatmap_id from the whitelist table (CSV; extra columns ignored)."""
+    try:
+        wl = pd.read_csv(path, usecols=["beatmap_id"])
+    except ValueError as exc:
+        raise SystemExit(f"whitelist {path} has no beatmap_id column: {exc}") from exc
+    ids = np.unique(wl["beatmap_id"].to_numpy(np.int64))
+    if ids.size == 0:
+        raise SystemExit(f"whitelist {path} is empty")
+    return ids
+
+
+def split_by_play_quota(df: pd.DataFrame, whitelist: np.ndarray,
+                        train_frac: float, seed: int,
+                        allow_unlisted: bool = False) -> tuple[np.ndarray, dict]:
+    """Chart-level split with a play-count quota (the pairbest_playquota version).
+
+    The whitelist is shuffled with seed and whole charts are assigned to test in
+    that order until the test row count reaches 1 - train_frac of all rows.  A
+    row is one surviving pair = one play, so n_plays (the attempt count before
+    keeping the pair best) is deliberately *not* used as weight.  Charts with no
+    surviving rows are no-ops; unlisted charts are an error unless allow_unlisted
+    is set (then they join the candidate pool).
+    """
+    test_frac = 1.0 - train_frac
+    bid = df["beatmap_id"].to_numpy(np.int64)
+    uniq, counts = np.unique(bid, return_counts=True)
+    total = int(counts.sum())
+    target = int(math.ceil(test_frac * total - 1e-9))
+
+    missing = np.setdiff1d(uniq, whitelist, assume_unique=True)
+    if missing.size and not allow_unlisted:
+        preview = ", ".join(str(int(x)) for x in missing[:5])
+        raise SystemExit(
+            f"{missing.size} surviving chart(s) are not on the whitelist "
+            f"({preview}{'...' if missing.size > 5 else ''}); "
+            f"use --allow-unlisted to put them in the candidate pool")
+
+    cand = whitelist if missing.size == 0 else np.union1d(whitelist, uniq)
+    cand = cand[np.random.default_rng(seed).permutation(cand.size)]
+
+    pos = np.searchsorted(uniq, cand)
+    ok = pos < uniq.size
+    present = np.zeros(cand.size, dtype=bool)
+    present[ok] = uniq[pos[ok]] == cand[ok]
+    cand_counts = np.zeros(cand.size, dtype=np.int64)
+    cand_counts[present] = counts[pos[present]]
+
+    cum = np.cumsum(cand_counts)
+    k = int(np.searchsorted(cum, target, side="left"))
+    if k >= cand.size:
+        raise SystemExit(
+            f"whitelist exhausted before reaching the test quota: "
+            f"{int(cum[-1])} < {target} rows")
+    selected = cand[:k + 1][cand_counts[:k + 1] > 0]
+    is_test = np.isin(bid, selected)
+
+    n_te = int(is_test.sum())
+    n_units_with_plays = int((cand_counts > 0).sum())
+    info = {
+        "method": "play-quota",
+        "unit": "beatmap",
+        "unit_name": "谱面（白名单配额）",
+        "n_units": n_units_with_plays,
+        "n_units_total": int(cand.size),
+        "n_units_with_plays": n_units_with_plays,
+        "n_test_units": int(selected.size),
+        "n_train_units": n_units_with_plays - int(selected.size),
+        "n_whitelist": int(whitelist.size),
+        "n_whitelist_in_data": int(np.isin(uniq, whitelist).sum()),
+        "n_data_charts": int(uniq.size),
+        "n_unlisted": int(missing.size),
+        "target_test_rows": target,
+        "test_rows": n_te,
+        "target_test_frac": test_frac,
+        "actual_train_frac": (total - n_te) / max(total, 1),
+        "actual_test_frac": n_te / max(total, 1),
+        "actual_train_unit_frac": (n_units_with_plays - int(selected.size))
+                                  / max(n_units_with_plays, 1),
+        "actual_test_unit_frac": int(selected.size) / max(n_units_with_plays, 1),
+    }
+    return is_test, info
+
+
 def assign_epochs(df: pd.DataFrame,
                    gap_days: float) -> tuple[np.ndarray, np.ndarray, dict]:
     """Split each player's timeline at gaps >= gap_days.
@@ -322,10 +436,18 @@ def main() -> None:
     ap.add_argument("--train-frac", type=float, default=0.70,
                     help="划入 train 的比例（test = 1 - 该值）；默认 0.70")
     ap.add_argument("--split-method", default="pair-random",
-                    choices=["pair-random", "beatmap-random"],
+                    choices=["pair-random", "beatmap-random", "play-quota"],
                     help="pair-random: 对 (player_id, beatmap_id) 有序对均匀随机；"
-                         "beatmap-random: 随机挑出谱面，整张谱面进同一侧")
+                         "beatmap-random: 随机挑出谱面，整张谱面进同一侧；"
+                         "play-quota: 打乱白名单，整张谱面依次进 test，直到 test "
+                         "的 play 数达到 1-train_frac")
     ap.add_argument("--split-seed", type=int, default=20260928)
+    ap.add_argument("--whitelist", default=None,
+                    help="play-quota 用的谱面白名单 CSV（beatmap_id 列）；默认 "
+                         "data/processed/whitelist_{tag}.csv，再退到 manifests/")
+    ap.add_argument("--allow-unlisted", action="store_true",
+                    help="play-quota 时允许不在白名单里的幸存谱面进入候选池；"
+                         "默认遇到就报错")
     ap.add_argument("--min-plays-per-pair", type=int, default=2,
                     help="每个 (player, beatmap) 对的记录数 < 此值时剔除；默认 2 "
                          "（即只打过一次的对剔除）")
@@ -367,8 +489,18 @@ def main() -> None:
     if args.min_plays_per_player < 0:
         raise SystemExit(f"--min-plays-per-player 不能为负，得到 {args.min_plays_per_player}")
 
+    if args.allow_unlisted and args.split_method != "play-quota":
+        raise SystemExit("--allow-unlisted 只对 --split-method play-quota 有意义")
+
     src = resolve_input(args.tag, args.inp)
-    out_csv = Path(args.out) if args.out else OUT / f"step1_{args.tag}_pairbest.csv"
+    whitelist = wl_path = None
+    if args.split_method == "play-quota":
+        wl_path = resolve_whitelist(args.tag, args.whitelist)
+        whitelist = read_whitelist(wl_path)
+    default_name = (f"step1_{args.tag}_pairbest_playquota.csv"
+                    if args.split_method == "play-quota"
+                    else f"step1_{args.tag}_pairbest.csv")
+    out_csv = Path(args.out) if args.out else OUT / default_name
     if out_csv.suffix == ".parquet":
         out_csv = out_csv.with_suffix(".csv")
     out_pq = out_csv.with_suffix(".parquet")
@@ -442,7 +574,16 @@ def main() -> None:
     out["n_plays"] = n_plays.astype(np.int64)
 
     # ---- (5) train/test split on the surviving pairs ---------------------------
-    is_test, split_info = split_rows(out, args.split_method, args.train_frac, args.split_seed)
+    if args.split_method == "play-quota":
+        is_test, split_info = split_by_play_quota(
+            out, whitelist, args.train_frac, args.split_seed, args.allow_unlisted)
+        split_info["whitelist"] = str(wl_path)
+        print(f"[step1/pairbest] whitelist: {wl_path} ({whitelist.size:,} charts, "
+              f"{split_info['n_whitelist_in_data']:,} with surviving pairs; "
+              f"{split_info['n_unlisted']:,} unlisted)", flush=True)
+    else:
+        is_test, split_info = split_rows(out, args.split_method, args.train_frac,
+                                         args.split_seed)
     out["split"] = np.where(is_test, "test", "train")
     out = out[OUT_COLS]
     n_tr, n_te = int((~is_test).sum()), int(is_test.sum())
@@ -479,7 +620,7 @@ def main() -> None:
     else:
         units_tr = np.unique(out.beatmap_id.to_numpy()[~is_test])
         units_te = np.unique(out.beatmap_id.to_numpy()[is_test])
-        unit_name = "谱面"
+        unit_name = "谱面（白名单配额）" if args.split_method == "play-quota" else "谱面"
     shared = np.intersect1d(units_tr, units_te, assume_unique=True)
 
     # output rows are an unmodified subset of the input rows (player_id is the
@@ -488,6 +629,7 @@ def main() -> None:
     subset_ok = bool(df.iloc[keep_idx][val_cols].reset_index(drop=True)
                      .equals(out[val_cols].reset_index(drop=True)))
 
+    frac_tol = 0.02 if args.split_method == "play-quota" else 0.01
     checks: dict[str, bool] = {
         "rows_nonempty": len(out) > 0,
         "one_row_per_player_beatmap": pair_dup == 0,
@@ -504,11 +646,17 @@ def main() -> None:
         "split_labels_valid": bool(set(out["split"].unique()) <= {"train", "test"}
                                 and n_tr + n_te == len(out)),
         "split_units_disjoint": shared.size == 0,
-        "actual_train_frac_within_1pct": abs(split_info["actual_train_frac"]
-                                             - args.train_frac) <= 0.01,
+        f"actual_train_frac_within_{int(frac_tol * 100)}pct": abs(
+            split_info["actual_train_frac"] - args.train_frac) <= frac_tol,
         "loss_negative": bool((out["loss"] < 0).all()),
         "output_rows_are_unmodified_input_rows": subset_ok,
     }
+    if args.split_method == "play-quota":
+        chart_splits = out.groupby("beatmap_id", sort=False)["split"].nunique()
+        checks["whitelist_covers_all_charts"] = split_info["n_unlisted"] == 0
+        checks["test_play_share_reaches_target"] = bool(
+            split_info["actual_test_frac"] >= 1.0 - args.train_frac - EPS)
+        checks["test_charts_are_whole"] = bool((chart_splits == 1).all())
 
     # ---- write (atomic) --------------------------------------------------------
     out_csv.parent.mkdir(parents=True, exist_ok=True)

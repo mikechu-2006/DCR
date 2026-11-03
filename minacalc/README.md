@@ -23,7 +23,15 @@ MinaCalc 衍生实现；原先调用它的管线脚本、配置与设计文档�
 ~~~bash
 python -m minacalc            # 自检：聚合、三次式、耐力、单调性、解析对照
 python -m minacalc chart.osu  # 另外读一张谱（需要先编译 C++ 导出器）
+
+# 人工检查 score()：beatmap id + 玩家向量 -> 7 维难度与预计成绩
+python scripts/inspect_score.py 1000026 -p 20,19,18,17,18,19,1.0
+python scripts/inspect_score.py 1000026 -p 20 19 18 17 18 19 --diag --json
 ~~~
+
+`inspect_score.py` 的「7 维难度」= 6 个技能维（`required_skill`）+
+overall（六维同值玩家二分到 `goal`）；`core.py` 里玩家的第 7 维是耐力系数，
+不是谱面难度。预计成绩是 `score()` 的 gotpoints / MaxPoints。
 
 ## 在代码里用
 

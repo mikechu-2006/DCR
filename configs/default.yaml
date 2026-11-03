@@ -14,6 +14,10 @@
 #   configs/exp_10k.yaml             10k 全流程（旧 clean 口径，需要 10k dump）
 #   configs/exp_cm3p_1k.yaml         CM3P 内容向量（线性点积）
 #   configs/exp_cm3p_mlp_1k.yaml     CM3P 内容锚定 MLP
+#   configs/exp_pairbest_playquota_cm3p_1k.yaml
+#                                    新版 step1（白名单配额划分）+ CM3P
+#   configs/exp_pairbest_coldstart_cm3p_mlp_1k.yaml
+#                                    pairbest + beatmap-random（整张谱面留出）+ CM3P MLP
 # ==============================================================================
 
 name: template          # 实验名，拼在目录名后面：experiments/20261012_153012_template
@@ -53,6 +57,11 @@ steps: {}
 #     # 默认版本 = pairbest（口径 A）。旧 play 级口径写 version: clean，
 #     # 但它的 test 是未清洗的 play，不能和 pairbest 的 test 混用。
 #     version: pairbest
+#     # 白名单配额划分（清洗同 pairbest，把白名单打乱后整张谱面依次进 test，
+#     # 直到 test 的 play 数达到 1-train_frac）：
+#     # version: pairbest_playquota
+#     # inputs:
+#     #   whitelist: data/processed/whitelist_1k.csv
 #     inputs:                      # 可选：显式指定输入，跳过 cache 自动查找
 #       plays: data/processed/step0_1k.csv
 #     params:

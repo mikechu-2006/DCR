@@ -1,0 +1,81 @@
+(base) mikechu@mikechu-VMware-Virtual-Platform:~/Documents/Projects/DCR$ python3 scripts/inspect_score.py 4305472 -p 20 19 18 17 18 19 --diag
+beatmap : 4305472  (minacalc-itv, 289 区间, rate=1, MaxPoints=4532)
+player  : stream=20.00 js=19.00 hs=18.00 jackspeed=17.00 cj=18.00 tech=19.00 endurance=1.000
+
+== 7 维难度（goal=0.93，均无疲劳；技能维=required_skill，overall=六维同值）==
+维度                        谱面均值      所需技能       玩家
+stream                   16.99     20.18    20.00
+jumpstream / js          18.12     22.28    19.00
+handstream / hs          15.48     19.76    18.00
+jackspeed                24.36     30.22    17.00
+chordjack / cj           12.88     15.75    18.00
+technical / tech         17.42     20.90    19.00
+overall                      -     21.91        -
+  注: 技能维是 required_skill 的 sum/无疲劳口径，且不含 jack 事件；overall 用实际 combine。
+
+== 预计成绩 ==
+  score   0.782012  (78.201%)   [gotpoints / MaxPoints，不是 mania ACC]
+  points  3544.080 / 4532.000
+  lost    987.920  = 左手 478.129 + 右手 489.367 + tech_extra 20.424
+  jack    events
+
+== 诊断（开关对分数的影响）==
+  当前配置              0.782012
+  endurance=None（关疲劳）      0.811047  (Δ +0.029035)
+  use_jack=False（关 jack 事件） 0.556766  (Δ -0.225246)
+  combine=max              0.717589  (Δ -0.064424)
+  combine=sum              0.336409  (Δ -0.445603)
+(base) mikechu@mikechu-VMware-Virtual-Platform:~/Documents/Projects/DCR$ python3 scripts/inspect_score.py 2935411 -p 22 22 26 22 22 22 --diag
+beatmap : 2935411  (minacalc-itv, 299 区间, rate=1, MaxPoints=4188)
+player  : stream=22.00 js=22.00 hs=26.00 jackspeed=22.00 cj=22.00 tech=22.00 endurance=1.000
+
+== 7 维难度（goal=0.93，均无疲劳；技能维=required_skill，overall=六维同值）==
+维度                        谱面均值      所需技能       玩家
+stream                   16.11     20.77    22.00
+jumpstream / js          14.54     20.17    22.00
+handstream / hs          13.74     19.94    26.00
+jackspeed                21.66     29.63    22.00
+chordjack / cj           11.69     15.38    22.00
+technical / tech         16.43     21.68    22.00
+overall                      -     21.89        -
+  注: 技能维是 required_skill 的 sum/无疲劳口径，且不含 jack 事件；overall 用实际 combine。
+
+== 预计成绩 ==
+  score   0.935183  (93.518%)   [gotpoints / MaxPoints，不是 mania ACC]
+  points  3916.545 / 4188.000
+  lost    271.455  = 左手 157.283 + 右手 104.026 + tech_extra 10.146
+  jack    events
+
+== 诊断（开关对分数的影响）==
+  当前配置              0.935183
+  endurance=None（关疲劳）      0.937170  (Δ +0.001988)
+  use_jack=False（关 jack 事件） 0.794374  (Δ -0.140809)
+  combine=max              0.902766  (Δ -0.032416)
+  combine=sum              0.844838  (Δ -0.090344)
+(base) mikechu@mikechu-VMware-Virtual-Platform:~/Documents/Projects/DCR$ python3 scripts/inspect_score.py 1001780 -p 25 25 30 25 25 25 --diag
+beatmap : 1001780  (minacalc-itv, 228 区间, rate=1, MaxPoints=4420)
+player  : stream=25.00 js=25.00 hs=30.00 jackspeed=25.00 cj=25.00 tech=25.00 endurance=1.000
+
+== 7 维难度（goal=0.93，均无疲劳；技能维=required_skill，overall=六维同值）==
+维度                        谱面均值      所需技能       玩家
+stream                   21.46     25.33    25.00
+jumpstream / js          22.55     26.23    25.00
+handstream / hs          13.93     16.38    30.00
+jackspeed                30.07     35.02    25.00
+chordjack / cj           16.54     19.16    25.00
+technical / tech         22.02     25.20    25.00
+overall                      -     26.19        -
+  注: 技能维是 required_skill 的 sum/无疲劳口径，且不含 jack 事件；overall 用实际 combine。
+
+== 预计成绩 ==
+  score   0.881532  (88.153%)   [gotpoints / MaxPoints，不是 mania ACC]
+  points  3896.372 / 4420.000
+  lost    523.628  = 左手 239.409 + 右手 268.389 + tech_extra 15.830
+  jack    events
+
+== 诊断（开关对分数的影响）==
+  当前配置              0.881532
+  endurance=None（关疲劳）      0.900811  (Δ +0.019279)
+  use_jack=False（关 jack 事件） 0.709568  (Δ -0.171965)
+  combine=max              0.840758  (Δ -0.040775)
+  combine=sum              0.701922  (Δ -0.179611)

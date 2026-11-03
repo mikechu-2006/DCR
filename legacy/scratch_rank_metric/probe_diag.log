@@ -1,0 +1,10 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[   1.7s] N 12476783 U 3758711
+Traceback (most recent call last):
+  File "/home/mikechu/Documents/Projects/DCR/scratch_rank_metric/probe_diag.py", line 67, in <module>
+    b,_,r=fit_bt(m)
+          ~~~~~~^^^
+  File "/home/mikechu/Documents/Projects/DCR/scratch_rank_metric/probe_diag.py", line 41, in fit_bt
+    u,c=np.unique(A[mask].astype(np.int64)*M+B[mask],return_inverse=True,return_counts=True)
+    ^^^
+ValueError: too many values to unpack (expected 2)

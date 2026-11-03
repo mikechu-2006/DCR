@@ -138,8 +138,12 @@ def _cache_candidates(step: str, output: str, tag: str,
         # 600 MB 的 .osu 语料不放 cache_dir（它跨实验复用），见 cfg.osu_cache_dir
         return (str(resolve_path((cfg or {}).get("osu_cache_dir") or "data/osu_cache")),)
     if (step, output) == ("step1", "plays"):
-        if _effective_version(cfg, "step1") == "pairbest":
+        version = _effective_version(cfg, "step1")
+        if version == "pairbest":
             return (f"step1_{tag}_pairbest.parquet", f"step1_{tag}_pairbest.csv")
+        if version == "pairbest_playquota":
+            return (f"step1_{tag}_pairbest_playquota.parquet",
+                    f"step1_{tag}_pairbest_playquota.csv")
         return (f"step1_{tag}.parquet", f"step1_{tag}.csv")
     table = {
         ("step0", "plays"): ("step0_{tag}.parquet", "step0_{tag}.csv"),

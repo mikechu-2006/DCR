@@ -1,0 +1,79 @@
+# results/ —— 实验结果索引
+
+本目录只放**能被文档直接引用的小体积产物**（JSON / CSV / Markdown / PNG），以及
+可重建的大产物子目录。原始 dump、训练中间件与 `experiments/` 不入库；每个数字都应
+能对应到下表的「生成」命令与「解读」文档。
+
+> 2026-11 整理：`rank_eval_1k_*` 收进 `rank_eval_1k/`；`minacalc_whitelist_stats/`
+> 与 `verify_native_vs_modified.*` 收进 `minacalc/`；旧 clean 口径的 `step2_1k_*`
+> 收进 `step2_1k/`（原 `results/step2_1k_summary_loss.json` 现为
+> `results/step2_1k/summary_loss.json`）。
+
+## 目录
+
+| 路径 | 内容 | 生成 | 解读 |
+|---|---|---|---|
+| [`rank_eval_1k/`](rank_eval_1k/) | 1k pairbest 上 MinaCalc / osumania_map_analyser 的 rank-NLL（full / msd / LN / RC） | [`scripts/step2_rank_eval.py`](../scripts/step2_rank_eval.py) | [docs/rank_eval.md](../docs/rank_eval.md) |
+| [`cm3p_rank_1k/`](cm3p_rank_1k/) | CM3P 内容向量 → per-chart 难度的训练结果、P1/P2/published 评测、新玩家 val、paired ΔNLL | [`scripts/run_cm3p_rank_experiments.py`](../scripts/run_cm3p_rank_experiments.py) | [docs/cm3p_rank.md](../docs/cm3p_rank.md) |
+| [`minacalc/whitelist_stats/`](minacalc/whitelist_stats/) | 白名单 21,949 张图的 MinaCalc 全曲/分段难度分布 | [`scripts/minacalc_whitelist_stats.py`](../scripts/minacalc_whitelist_stats.py) | [report.md](minacalc/whitelist_stats/report.md)、[docs/models.md §4](../docs/models.md) |
+| [`minacalc/verify_native_vs_modified.*`](minacalc/) | C++ 原生 MinaCalc 505 与本地 Python 逐区间打分的 120 图核对 | 一次性核对（脚本未入库） | [minacalc/README.md](../minacalc/README.md) |
+| [`minacalc/inspect_score_example.txt`](minacalc/inspect_score_example.txt) | `inspect_score.py` 的终端示例（7 维难度） | [`scripts/inspect_score.py`](../scripts/inspect_score.py) | [minacalc/README.md](../minacalc/README.md) |
+| [`player_vector_fit/`](player_vector_fit/) | 100 名玩家的 MiniCalc 技能拟合 vs CM3P+MLP 对照 | [`scripts/fit_player_vectors.py`](../scripts/fit_player_vectors.py) | [summary_table.md](player_vector_fit/10k_100/summary_table.md) |
+| [`mirt_cnonneg_1k/`](mirt_cnonneg_1k/) | mirt 的 D 非负约束分析（旧 clean 口径） | `scripts/step2_predict.py`（历史运行） | [legacy/docs/step2_prediction.md](../legacy/docs/step2_prediction.md) |
+| [`step2_1k/`](step2_1k/) | 2026-10 旧 clean 口径的 step2 潜向量、指标与维度扫描笔记 | `scripts/step2_predict.py`（历史运行） | [docs/models.md §2](../docs/models.md) |
+
+## 主结果对应到哪些文件
+
+| 结论 | 文件 | 详见 |
+|---|---|---|
+| legacy clean 的 bias / mf_dot / mirt RMSE | [`step2_1k/summary_loss.json`](step2_1k/summary_loss.json) | [docs/models.md §2.1](../docs/models.md) |
+| pairbest 口径 A 的 mf_dot dim=8 | [`step2_1k/pair_distinct_dimsweep.txt`](step2_1k/pair_distinct_dimsweep.txt) | [docs/models.md §2.2](../docs/models.md) |
+| MinaCalc `msd_overall`：captured 0.4067 | [`rank_eval_1k/msd.json`](rank_eval_1k/msd.json)、[`full.json`](rank_eval_1k/full.json) | [docs/rank_eval.md §3](../docs/rank_eval.md) |
+| analyser Sunny / Daniel：captured 0.472 | [`rank_eval_1k/full.json`](rank_eval_1k/full.json)、[`summary.csv`](rank_eval_1k/summary.csv) | [docs/rank_eval.md §4](../docs/rank_eval.md) |
+| LN / RC 子集 | [`ln_mix.json`](rank_eval_1k/ln_mix.json)、[`ln15.json`](rank_eval_1k/ln15.json)、[`rc.json`](rank_eval_1k/rc.json) | [docs/rank_eval.md §4.3–4.4](../docs/rank_eval.md) |
+| CM3P 的 P1 / P2 / published 评测 | [`cm3p_rank_1k/rank_eval_p1_final.json`](cm3p_rank_1k/rank_eval_p1_final.json) 等 | [docs/cm3p_rank.md §5](../docs/cm3p_rank.md) |
+| 新玩家（player-disjoint）val | [`cm3p_rank_1k/player_disjoint_val.json`](cm3p_rank_1k/player_disjoint_val.json) | [docs/cm3p_rank.md §5.2](../docs/cm3p_rank.md) |
+| 配对 ΔNLL 与 95% CI | [`cm3p_rank_1k/paired_delta.json`](cm3p_rank_1k/paired_delta.json)、[`paired_delta_p2.json`](cm3p_rank_1k/paired_delta_p2.json) | [docs/cm3p_rank.md §5.5](../docs/cm3p_rank.md) |
+| 白名单 MinaCalc 难度分布 | [`minacalc/whitelist_stats/report.md`](minacalc/whitelist_stats/report.md) | [docs/models.md §4](../docs/models.md) |
+
+## 命名与口径
+
+* **`_1k` / `_10k`**：`data/raw` 里对应的 dump tag；数字只在同一 tag 内比较。
+* **`_final.json`**：`run_cm3p_rank_experiments.py` 之后用官方 runner 重跑得到的评测；
+  同目录下未带 `_final` 的 JSON 是训练时的 quick-eval，**不要引用**。
+* **`*.parquet`**：逐谱面信号表（`beatmap_id + <signal>`），是官方评测的输入，可重建。
+* **`*_pp.csv`**：逐玩家 Spearman，用于画分布 / 诊断，不参与主表。
+* **`captured`** 的分母是 cross-fitted BT ceiling；**不同 map 集 / 不同子集 / 不同
+  ceiling 的 captured 不能直接比**（见 [docs/metrics.md §4](../docs/metrics.md)）。
+* **RMSE 与 rank-NLL 是两套口径**：clean 的 RMSE、pairbest 的 RMSE、rank-NLL 的 NLL
+  三者互不可比，详见 [docs/rank_eval.md §6](../docs/rank_eval.md)。
+
+## 复现
+
+~~~bash
+# rank-NLL：MinaCalc / analyser（ceiling 会缓存到 data/processed/rank_eval_cache/）
+python scripts/step2_rank_eval.py \
+    --in data/processed/step1_1k_pairbest.parquet \
+    --signal-table data/processed/rank_signals_1k.parquet \
+    --signals msd_overall --split all --min-l 10 --folds 2 --bootstrap 300 \
+    --out results/rank_eval_1k/msd.json
+
+# CM3P → per-chart 难度（约 30 min CPU；--quick 只做烟测）
+python scripts/run_cm3p_rank_experiments.py --quick
+
+# 白名单 MinaCalc 分布
+python scripts/minacalc_whitelist_stats.py --jobs 8
+
+# 玩家向量拟合
+python scripts/fit_player_vectors.py --dataset 10k --players 100 --seed 20261023
+
+# experiments/ 索引（本机，不入库）
+python scripts/index_experiments.py
+~~~
+
+## 版本控制
+
+* **入库**：JSON / CSV / Markdown / PNG / TXT（小体积、可引用）。
+* **不入库**：`*.npz` / `*.parquet` / `*.npy`（由上述命令重建）；
+  `experiments/` 整个目录也不入库。
+* 删除某个结果目录前，先确认没有 docs 或脚本引用它：`grep -rn "results/<dir>" docs scripts`。

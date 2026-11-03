@@ -16,8 +16,9 @@ bias / mf_dot 等 oracle、CM3P 内容向量）以及 [`minacalc/`](../minacalc/
 | [`configs/`](configs/) | 4 | 旧维度扫描、map_analyser、MinaCalc L1/L2 配置 |
 | [`logs/`](logs/) | 32 | 2026-09 ~ 2026-10 的历史运行日志（新日志在各实验目录的 `logs/`） |
 | [`results/`](results/) | 6 | 已退役分析（PCA）的旧结果目录 |
+| [`scratch_rank_metric/`](scratch_rank_metric/) | 30 | 2026-10-31 开发 rank-NLL 时的临时探针、小样本烟测与中间结果（含 [说明](scratch_rank_metric/README.md)） |
 | `local/`（仅本机） | 2 | `DCR.bundle`、`upload_to_github.sh`（被 .gitignore 忽略，不随仓库分发） |
-| [`MANIFEST.tsv`](MANIFEST.tsv) | — | 两轮整理的全部 `old → new` 路径（260 条，含删除的缓存） |
+| [`MANIFEST.tsv`](MANIFEST.tsv) | — | 三轮整理的全部 `old → new` 路径（289 条，含删除的缓存） |
 
 ## 第一轮：退役分析 + 实验目录（2026-10-20）
 
@@ -48,6 +49,19 @@ bias / mf_dot 等 oracle、CM3P 内容向量）以及 [`minacalc/`](../minacalc/
   MinaCalc、HPC runbook 原文全部归档到这里。
 * **step1/clean 仍留在主线**：MinaCalc/CM3P 的旧配置曾显式使用它，且
   `step1_pairbest.py` 复用了它的工具函数。
+
+## 第三轮：rank-NLL 开发产物（2026-11）
+
+* **临时目录归档**：仓库根的 `scratch_rank_metric/` 整体移到这里
+  （[`scratch_rank_metric/`](scratch_rank_metric/)）。里面的 `probe*.py` 是开发
+  `dcr/rank_metrics.py` 时的探索脚本，结论已经写进
+  [docs/metrics.md](../docs/metrics.md) 与 [docs/rank_eval.md](../docs/rank_eval.md)；
+  正式实现和自检在 `dcr/rank_metrics.py`、`scripts/step2_rank_eval.py`、
+  `scripts/test_rank_metrics.py`。
+* **results/ 分组**：主线结果按主题收进子目录（`rank_eval_1k/`、`minacalc/`、
+  `step2_1k/`），索引见 [results/README.md](../results/README.md)。这一步只搬运行产物，
+  不改任何数字；legacy 文档里 `results/step2_1k_summary_loss.json` 等旧路径按迁移前
+  位置书写。
 
 ## 使用说明
 

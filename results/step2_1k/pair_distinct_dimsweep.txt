@@ -1,0 +1,2 @@
+,,RMSE,spearman
+mf_dot_dim8             mf_dot           0.6844	   0.6966    452,664

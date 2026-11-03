@@ -1,0 +1,54 @@
+# CM3P 内容锚定 MLP（step2/cm3p_mlp）+ pairbest 口径 A + 谱面级划分（冷启动）。
+#
+#   python main.py -c configs/exp_pairbest_coldstart_cm3p_mlp_1k.yaml
+#   python main.py -c configs/exp_pairbest_coldstart_cm3p_mlp_1k.yaml --only step2_cm3p_mlp
+#
+# 与 configs/exp_cm3p_mlp_1k.yaml 的三处差别，正好对应"强制冷启动"：
+#   1. step1 用 pairbest（口径 A）而不是 legacy clean：一行 = 一个 (玩家段, 谱面) 对，
+#      清洗规则（玩家>=20 条、1 年空窗拆玩家、每对最高成绩、单次对剔除、
+#      最高 ACC ∈ (0.90, 0.998]）与默认口径完全一致。
+#   2. split_method: beatmap-random —— 划分单位是**谱面**而不是 (玩家, 谱面) 对：
+#      一张谱面的所有对必在同一侧，因此 test 谱面在 train 里一次都没出现过。
+#   3. content_eval_heldout: true —— 词表按 train 谱面建，但把 test 里没在 train 出现的
+#      谱面也追加进 item 词表；这些谱面的 bm 恒为 0（不训练），预测完全由内容塔
+#      g_theta(C_m) 给出。没有这个开关，冷启动谱面会因 item 未登录而无法打分。
+#
+# 内容表用 local 版（data/processed/chart_content_cm3p_local.parquet，21,949 张 = 1k 白名单
+# 全量，无音频编码，同一编码器）：pairbest 的 6,828 张谱面 100% 覆盖。
+# 已发布的 chart_content_cm3p.parquet 只覆盖 54.7% 的行（4,042 张），且
+# data/processed/cm3p_mix_report.json 的结论是 do-not-mix —— 两张表不能混用；要换表就整体换。
+name: pairbest_coldstart_cm3p_mlp_1k
+tag: 1k
+io:
+  out_format: parquet
+steps:
+  step1:
+    version: pairbest
+    params:
+      train_frac: 0.70
+      split_method: beatmap-random   # 谱面级划分：test 谱面整张留出（冷启动）
+      split_seed: 20260928
+      min_plays_per_pair: 2
+      max_best_acc: 0.998
+      acc_floor: 0.90
+      gap_days: 365
+      min_plays_per_player: 200
+  step2:
+    version: cm3p_mlp
+    inputs:
+      content: data/processed/chart_content_cm3p_local.parquet
+    params:
+      dim: 16            # 交互空间宽度 = g_theta 输出宽度（不是 512）
+      hid: 64
+      depth: 2           # 内容塔 Linear 层数；2 = 一个隐藏层
+      epochs: 60
+      lr: 0.02
+      mlp_wd: 1.0e-4
+      eu_wd: 1.0e-4
+      player_tower: "on"
+      ln: "on"
+      head: dot
+      content_reduce: raw   # 直接喂 512 维原始向量，投影由 MLP 学
+      content_dim: 512
+      content_eval_heldout: true   # 冷启动：test 谱面全部按内容向量打分
+      save_preds: true

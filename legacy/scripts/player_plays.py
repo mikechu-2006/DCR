@@ -218,7 +218,7 @@ def read_api_json(path: Path) -> list[dict]:
         checksum = (beatmap.get("checksum") or score.get("beatmap_md5") or "").strip().lower()
         user = score.get("user")
         rows.append({
-            "source": f"api:{path.stem}",
+            "source": score.get("source") or f"api:{path.stem}",
             "player": user.get("username") if isinstance(user, dict) else None,
             "beatmap_id": int(beatmap_id) if beatmap_id else None,
             "beatmap_md5": checksum or None,
@@ -267,7 +267,9 @@ def analyse(user, plays: pd.DataFrame, wl: pd.DataFrame,
     plays = plays.copy()
     plays["beatmap_id"] = plays["beatmap_id"].astype("Int64")
     plays["beatmap_md5"] = plays["beatmap_md5"].astype("string").str.lower()
-    plays["played_at"] = pd.to_datetime(plays["played_at"], utc=True, errors="coerce")
+    # format="ISO8601"：stable 的 "+00:00" 和 API/lazer 的 "...Z" 混在一起也能逐条解析
+    plays["played_at"] = pd.to_datetime(plays["played_at"], format="ISO8601",
+                                        utc=True, errors="coerce")
 
     md5_to_id = dict(zip(wl["checksum"], wl["beatmap_id"]))
     # API rows already carry ids; stable rows get theirs from the whitelist checksum

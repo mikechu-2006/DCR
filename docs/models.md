@@ -27,6 +27,24 @@ step2 只读 step1 的输出表，按 `split` 列取数：
 观测单位由 step1 决定：默认 pairbest 是「一行一个 (玩家段, 谱面) 对」；
 legacy clean 是「一行一个 play」。两套的数字不可直接比较。
 
+### 1.1 排名指标（rank-NLL）
+
+上面的 RMSE / Spearman 评价的是 **loss 的数值预测**；rank-NLL 评价的是 **难度序**，两者回答不同问题。
+定义、cross-fitted BT ceiling、`captured`、权重与训练目标见 [docs/metrics.md](metrics.md)；
+1k 上的 MinaCalc / osumania_map_analyser（含 LN）结果见 [docs/rank_eval.md](rank_eval.md)。
+
+* `dcr/rank_metrics.py`：成对 NLL、BT MLE、per-player Spearman、torch 训练损失；
+* `scripts/step2_rank_eval.py`：对一个 per-chart 难度列算 rank-NLL；
+* CM3P 内容→rank-NLL 的方法论与实验：[docs/cm3p_rank.md](cm3p_rank.md)（M0–M2、P1/P2、
+  new-player val、content ceiling）。
+* `step2/predict --rank-loss add|only`：把成对 BT loss 作为训练目标（默认 `none`）；
+  `--rank-ties half` 让 tie 取 0.5 目标，与 rank-NLL 指标一致（默认 `skip` 不变）。
+* 评测模型 bm 的难度序时用 `step2_rank_eval.py --split test --ceiling-fit all [--strict-pairs]`：
+  $b$ 用全部行拟合、只在 test 行评测；旧的 `--ceiling-fit split` 会欠拟合并让 captured >1。
+
+rank-NLL 的分母是 cross-fitted ceiling（1k 上约 0.563），不是 `log 2`；报告时必须同时给
+`captured` 与 `ceiling_nll`，否则不同覆盖子集不可比。
+
 ## 2. oracle 基线：`step2/predict`
 
 ~~~text
@@ -133,6 +151,17 @@ HPC 依赖见 `requirements-cm3p.txt`、`vendor/` 与 `scripts/slurm/*.slurm`。
 
 MinaCalc 相关只保留 [minacalc/](../minacalc/) 这个包本身（逐区间可微打分、C++ 区间导出、
 玩家技能求解）；用法见 [minacalc/README.md](../minacalc/README.md)。
+
+白名单上的难度分布（全曲 `required_skill`、0.5 s 区间 pooled、位置十分段、难度分档）
+用 [scripts/minacalc_whitelist_stats.py](../scripts/minacalc_whitelist_stats.py) 生成：
+
+```bash
+python scripts/minacalc_whitelist_stats.py --jobs 8
+# 产物：results/minacalc/whitelist_stats/{report.md,*.csv,summary.json}
+```
+
+1k 白名单（21,949 张，6,509,928 个 0.5 s 区间）的结果见
+[results/minacalc/whitelist_stats/report.md](../results/minacalc/whitelist_stats/report.md)。
 
 原先的 MSD 特征路线（`step0h_minacalc_msd.py`、`step2_minacalc_as_feature.py`、
 `step2_minacalc_L2.py`）与 fit-skills 脚本、配置、设计文档都已归档到 `legacy/`，

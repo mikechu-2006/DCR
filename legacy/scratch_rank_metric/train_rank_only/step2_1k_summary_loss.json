@@ -1,0 +1,201 @@
+{
+  "runs": {
+    "bias": {
+      "variant": "bias",
+      "args": {
+        "tag": "1k",
+        "target": "loss",
+        "label_shift": 0.0,
+        "models": "bias",
+        "dim": 16,
+        "epochs": 1,
+        "lr": 0.02,
+        "wd": 0.0001,
+        "batch": 8192,
+        "features": "F0",
+        "entity": "player",
+        "seed": 0,
+        "out_prefix": "step2",
+        "proc_dir": "data/processed",
+        "out_dir": "scratch_rank_metric/train_rank_only",
+        "train_path": "scratch_rank_metric/step1_small.parquet",
+        "split_col": "split",
+        "eval_every": 1,
+        "rank_loss": "only",
+        "rank_weight": 0.1,
+        "rank_beta": 1.0,
+        "p_drift": "none",
+        "chart_content": "none",
+        "restrict_to_content": "off",
+        "content_path": "data/processed/chart_content_cm3p.parquet",
+        "content_dim": 64,
+        "content_reduce": "pca",
+        "content_eval_heldout": false,
+        "d_constraint": "none",
+        "d_logit_wd": null,
+        "c_logit_wd": null,
+        "c_init_std": null,
+        "drop_bias": "none",
+        "d_init_std": null,
+        "device": "auto",
+        "threads": 2,
+        "save_preds": false
+      },
+      "mechanism": {
+        "p_drift": "none",
+        "d_constraint": "none",
+        "d_init_std": 0.05,
+        "by_model": {
+          "bias": {
+            "d_constraint": "none",
+            "c_constraint": "none",
+            "c_eff_wd": 0.0,
+            "d_logit_wd": 0.0001,
+            "c_logit_wd": 0.0001,
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "bm": 0.0001
+            },
+            "no_decay": []
+          }
+        }
+      },
+      "engine": {
+        "name": "torch",
+        "version": "2.13.0+cpu",
+        "device": "cpu",
+        "threads": 2,
+        "deterministic_algorithms": true
+      },
+      "split": {
+        "from": "step1",
+        "col": "split",
+        "spec": {
+          "method": "pair-random",
+          "unit": "pair",
+          "n_units": 857912,
+          "n_train_units": 601051,
+          "n_test_units": 256861,
+          "actual_train_frac": 0.7005974971791978,
+          "actual_test_frac": 0.2994025028208021,
+          "seed": 20260928,
+          "train_frac": 0.7,
+          "test_frac": 0.30000000000000004,
+          "col": "split",
+          "labels": [
+            "train",
+            "test",
+            "dropped"
+          ],
+          "rows": {
+            "train": 671105,
+            "test": 415710,
+            "dropped": 312800
+          },
+          "players_below_min_plays": 99,
+          "rows_in_players_below_min_plays": 10218,
+          "rows_after_player_floor": 1389397
+        },
+        "unit": "pair",
+        "n_units": 9527,
+        "n_test_units": 2912,
+        "observed_test_frac": 0.3056576047024247,
+        "rows": {
+          "train": 6615,
+          "test": 2912,
+          "dropped": 0
+        }
+      },
+      "sizes": {
+        "train_plays": 6615,
+        "test_plays": 2912,
+        "dropped_rows": 0,
+        "n_entities": 120,
+        "n_items": 2494,
+        "train_rows_in_vocab": 6615,
+        "test_rows_covered": 2397
+      },
+      "label": {
+        "shift": 0.0,
+        "definition": "log(shift + exp(step0_loss)) = log(1+shift-ACC)"
+      },
+      "content": null,
+      "time_drift": null,
+      "results": {
+        "bias": {
+          "n_scored": 2397,
+          "coverage": 0.823146,
+          "rmse": 4.638062,
+          "mae": 4.540416,
+          "spearman": 0.227077,
+          "pp_p50": 98.551197,
+          "pp_p90": 101.625002,
+          "pp_mean": 98.73042,
+          "pp_gt1_frac": 1.0,
+          "pp_gt5_frac": 1.0
+        }
+      },
+      "degeneracy": {
+        "bias": {
+          "C_neg_count": 19953,
+          "C_numel": 39904,
+          "C_neg_frac": 0.500025,
+          "charts_with_neg_C": 2494,
+          "charts_total": 2494,
+          "C_min": -0.224706,
+          "C_max": 0.236598
+        }
+      },
+      "preds_path": null,
+      "checks": [
+        {
+          "name": "pair_never_crosses_split",
+          "ok": true,
+          "detail": "0 个划分单位同时出现在两侧 (train 侧 6,615 / test 侧 2,912)"
+        },
+        {
+          "name": "train_and_test_disjoint",
+          "ok": true,
+          "detail": "train rows on a held-out pair = 0; test rows on a held-out pair = 2,912/2,912"
+        },
+        {
+          "name": "test_pair_frac",
+          "ok": true,
+          "detail": "观测 test 单位占比 30.5658% vs step1 报告 29.94%（容差 2%）"
+        },
+        {
+          "name": "loss_in_range",
+          "ok": true,
+          "detail": "test(1k) loss in [-6.2144, -2.3151], expected [-12.4663, -0.2669]"
+        },
+        {
+          "name": "vocab_from_train_only",
+          "ok": true,
+          "detail": "120 entities / 2,494 items == unique train ids"
+        },
+        {
+          "name": "determinism_selftest",
+          "ok": true,
+          "detail": "same seed -> bitwise identical parameters on a synthetic training path"
+        },
+        {
+          "name": "coverage_reported",
+          "ok": true,
+          "detail": "1 result blocks carry coverage + n_scored"
+        },
+        {
+          "name": "no_test_leak",
+          "ok": true,
+          "detail": "training rows used = 6,615; of those on a held-out pair = 0; test tensors never enter the optimiser"
+        },
+        {
+          "name": "npz_matches_summary",
+          "ok": true,
+          "detail": "bias:ok"
+        }
+      ],
+      "seconds": 2.2
+    }
+  }
+}

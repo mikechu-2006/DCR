@@ -487,6 +487,9 @@ def parse_args(argv=None):
     ap.add_argument("--content-reduce", default="raw", choices=["raw", "pca"],
                     help="raw (default): feed the table's own 512-d vectors, let the MLP learn the "
                          "projection.  pca: whiten to --content-dim first, as the linear pipeline does.")
+    ap.add_argument("--content-eval-heldout", action="store_true",
+                    help="evaluate test charts that never appear in train (chart-level split): "
+                         "the MLP still maps their content, bm starts at 0 and is not trained.")
     # architecture
     ap.add_argument("--hid", type=int, default=64,
                     help="width of the content tower's hidden layer(s)")
@@ -540,6 +543,16 @@ def parse_args(argv=None):
     ap.add_argument("--batch", type=int, default=8192)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--eval-every", type=int, default=20)
+    ap.add_argument("--rank-loss", default="none", choices=["none", "add", "only"],
+                    help="pairwise Bradley-Terry loss on the batch: add to MSE, "
+                         "or replace it (only: the output is a score, not a calibrated loss)")
+    ap.add_argument("--rank-weight", type=float, default=0.1,
+                    help="weight of the rank loss when --rank-loss add")
+    ap.add_argument("--rank-beta", type=float, default=1.0,
+                    help="fixed logistic scale of the rank loss")
+    ap.add_argument("--rank-ties", default="skip", choices=["skip", "half"],
+                    help="pairwise rank loss ties: skip (legacy) or 0.5 "
+                         "(metric-consistent, see docs/metrics.md)")
     ap.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"])
     ap.add_argument("--threads", type=int, default=0)
     ap.add_argument("--save-preds", action="store_true",
@@ -618,7 +631,8 @@ def main():
     cross_units = np.intersect1d(unit_tr, unit_te, assume_unique=True)
     test_pairs = np.unique(row_keys[te_mask])
     tr_pairs = np.unique(row_keys[tr_mask])
-    expected_test_frac = float((split_spec or {}).get("actual_test_frac")
+    expected_test_frac = float((split_spec or {}).get("actual_test_unit_frac")
+                               or (split_spec or {}).get("actual_test_frac")
                                or (n_test_pairs / max(n_pairs, 1)))
     frac_tol = 0.02
     print(f"[split] train {len(train):,} / test {len(test):,} / dropped {n_dropped:,} rows | "
@@ -648,14 +662,23 @@ def main():
 
     # ------------------------------------------------------------------ vocab
     ent_ids = np.unique(train.player_id.to_numpy())
-    item_ids = np.unique(train.beatmap_id.to_numpy())
+    train_item_ids = np.unique(train.beatmap_id.to_numpy())
+    heldout_item_ids = np.empty(0, dtype=np.int64)
+    item_ids = train_item_ids
+    if args.content_eval_heldout:
+        heldout_item_ids = np.setdiff1d(np.unique(test.beatmap_id.to_numpy()),
+                                        train_item_ids, assume_unique=True)
+        item_ids = np.union1d(train_item_ids, heldout_item_ids)
     ents = {e: i for i, e in enumerate(ent_ids)}
     items = {m: i for i, m in enumerate(item_ids)}
-    print(f"train vocab: {len(ents):,} entities, {len(items):,} items", flush=True)
+    print(f"train vocab: {len(ents):,} entities, {len(items):,} items "
+          f"({len(train_item_ids):,} train + {len(heldout_item_ids):,} held-out test)",
+          flush=True)
 
     d_raw = None
     Z, content_info = sp.align_content(content_ids, content_E, item_ids,
-                                       args.content_dim, args.content_reduce)
+                                       args.content_dim, args.content_reduce,
+                                       fit_item_ids=train_item_ids)
     d_raw = int(Z.shape[1])
     chart_feats = torch.as_tensor(Z, dtype=torch.float32, device=device)
     # g_theta's OUTPUT width is the interaction space; its INPUT width is d_raw.  Unlike the
@@ -696,10 +719,18 @@ def main():
         loss_ok = bool(np.isfinite(te_y).all() and (te_y <= 0).all())
         loss_detail = f"test({args.tag}) loss in [{te_y.min():.4f}, {te_y.max():.4f}]"
     chk.check("loss_in_range", loss_ok, loss_detail)
-    chk.check("vocab_from_train_only",
-              np.array_equal(ent_ids, np.unique(train.player_id.to_numpy()))
-              and np.array_equal(item_ids, np.unique(train.beatmap_id.to_numpy())),
-              f"{ent_ids.size:,} entities / {item_ids.size:,} items == unique train ids")
+    if heldout_item_ids.size:
+        vocab_ok = (np.array_equal(ent_ids, np.unique(train.player_id.to_numpy()))
+                    and np.array_equal(item_ids,
+                                       np.union1d(train_item_ids, heldout_item_ids)))
+        vocab_detail = (f"{ent_ids.size:,} entities == train ids; {item_ids.size:,} items "
+                        f"= {train_item_ids.size:,} train + {heldout_item_ids.size:,} held-out "
+                        f"test (content-eval-heldout)")
+    else:
+        vocab_ok = (np.array_equal(ent_ids, np.unique(train.player_id.to_numpy()))
+                    and np.array_equal(item_ids, np.unique(train.beatmap_id.to_numpy())))
+        vocab_detail = f"{ent_ids.size:,} entities / {item_ids.size:,} items == unique train ids"
+    chk.check("vocab_from_train_only", vocab_ok, vocab_detail)
     chk.check("determinism_selftest", determinism_selftest(device),
               "same seed -> bitwise identical parameters (AnchoredMLP + grouped Adam)")
     step = max(1, len(item_ids) // 64)
@@ -774,7 +805,16 @@ def main():
             tt = tr_t_t[b] if tr_t_t is not None else None
             opt.zero_grad(set_to_none=True)
             pred = model.forward(tr_e_t[b], tr_i_t[b], x1, tau, tt)
-            ((pred - tr_y_t[b]) ** 2).mean().backward()
+            mse = ((pred - tr_y_t[b]) ** 2).mean()
+            if args.rank_loss == "none":
+                loss = mse
+            else:
+                rl = sp.pairwise_rank_loss(pred, tr_e_t[b], tr_y_t[b],
+                                           beta=args.rank_beta,
+                                           ties=args.rank_ties)
+                loss = rl if args.rank_loss == "only" \
+                    else mse + args.rank_weight * rl
+            loss.backward()
             opt.step()
         if args.eval_every and (ep + 1) % args.eval_every == 0:
             pv = model.predict(te_e_t, te_i_t, te_x_t, te_tau_t, te_t_t)
@@ -914,6 +954,9 @@ def main():
                   "train_rows_in_vocab": int(tr_ok.sum()), "test_rows_covered": int(te_ok.sum())},
         "content": {"mode": "cm3p", "path": str(args.content_path), "dim": d_raw, "reduce": args.content_reduce,
                     "n_charts_with_vector": int(len(content_ids)), "filtered_rows": content_drop,
+                    "eval_heldout": bool(args.content_eval_heldout),
+                    "heldout_test_charts": int(heldout_item_ids.size),
+                    "heldout_bm": "0 (not trained)" if heldout_item_ids.size else None,
                     "note": "C is frozen, g_theta is shared across charts: per-chart free params = bm only"},
         "time_drift": None if args.p_drift != "time" else {"t_ref_year_ce": round(t_ref, 4),
                                                            "unit": "years"},

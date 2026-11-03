@@ -90,6 +90,7 @@ experiments/20261020_193449_pairbest_1k/
 | step0 | `whitelist` | `scripts/step0g_whitelist.py` | 白名单表 + 缓存状态（`cacheable`） |
 | step0 | `validate_mix` | `scripts/step0e_validate_mix.py` | 校验不同来源的 CM3P 向量能否混用 |
 | step1 | `pairbest` | `scripts/step1_pairbest.py` | **默认 A**：一对一行，规则见 [data.md](data.md) §3 |
+| step1 | `pairbest_playquota` | `scripts/step1_pairbest.py` | pairbest 清洗 + 白名单配额划分：整张谱面依次进 test，直到 test 占 `1-train_frac` |
 | step1 | `clean` | `scripts/step1_clean.py` | legacy play 级：划分后清洗 train 侧，需显式 `version: clean` |
 | step2 | `predict` | `scripts/step2_predict.py` | bias / mf_dot / mirt（+ CM3P 内容向量） |
 | step2 | `cm3p_mlp` | `scripts/step2_cm3p_mlp.py` | CM3P 内容锚定 MLP |

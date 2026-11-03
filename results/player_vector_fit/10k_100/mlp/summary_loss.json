@@ -1,0 +1,247 @@
+{
+  "runs": {
+    "mlp16_h64_L2": {
+      "variant": "mlp16_h64_L2",
+      "model_class": "AnchoredMLP",
+      "arch": {
+        "kind": "anchored_mlp",
+        "nonlinearity": "on",
+        "content_tower": {
+          "in": 512,
+          "hidden": [
+            64
+          ],
+          "out": 16,
+          "act": "gelu",
+          "hidden_norm": "off",
+          "dropout": 0.0,
+          "out_init_std": 0.01
+        },
+        "player_tower": "on",
+        "ln": "on",
+        "head": "dot",
+        "field_weight": "off",
+        "gate": {
+          "init": 1.0,
+          "learnable": "on",
+          "bound": "none",
+          "final": 0.816235
+        }
+      },
+      "params": {
+        "total": 40364,
+        "train_plays": 3969,
+        "plays_per_param": 0.098,
+        "groups": [
+          {
+            "group": "main effects b0/bu/bm",
+            "params": 3562,
+            "wd": 0.0001
+          },
+          {
+            "group": "player table Eu",
+            "params": 1600,
+            "wd": 0.0001
+          },
+          {
+            "group": "player tower + LayerNorm",
+            "params": 304,
+            "wd": 0.0001
+          },
+          {
+            "group": "content tower g_theta",
+            "params": 34896,
+            "wd": 0.0001
+          },
+          {
+            "group": "interaction w / b_h",
+            "params": 2,
+            "wd": 0.0
+          }
+        ]
+      },
+      "args": {
+        "tag": "10k100",
+        "target": "loss",
+        "proc_dir": "/tmp/mlp100_10k",
+        "out_dir": "/tmp/mlp100_10k/results",
+        "train_path": "/tmp/mlp100_10k/subset.parquet",
+        "split_col": "split",
+        "features": "F0",
+        "drop_bias": "none",
+        "p_drift": "none",
+        "out_prefix": "step2_heldout",
+        "content_path": "data/processed/chart_content_cm3p_local.parquet",
+        "content_dim": 512,
+        "content_reduce": "raw",
+        "content_eval_heldout": true,
+        "hid": 64,
+        "depth": 2,
+        "hidden_layers": null,
+        "hidden_act": "gelu",
+        "hidden_norm": "off",
+        "dim": 16,
+        "out_init_std": 0.01,
+        "dropout": 0.0,
+        "player_tower": "on",
+        "nonlinearity": "on",
+        "ln": "on",
+        "head": "dot",
+        "field_weight": "off",
+        "gate_init": 1.0,
+        "gate_learnable": "on",
+        "gate_bound": "none",
+        "epochs": 60,
+        "lr": 0.02,
+        "wd": 0.0001,
+        "mlp_wd": 0.0001,
+        "eu_wd": 0.0001,
+        "batch": 8192,
+        "seed": 0,
+        "eval_every": 20,
+        "device": "auto",
+        "threads": 4,
+        "save_preds": true
+      },
+      "engine": {
+        "name": "torch",
+        "version": "2.13.0+cpu",
+        "device": "cpu",
+        "threads": 4,
+        "deterministic_algorithms": true
+      },
+      "split": {
+        "from": "step1",
+        "col": "split",
+        "spec": null,
+        "unit": "pair",
+        "n_units": 8984,
+        "n_test_units": 5015,
+        "observed_test_frac": 0.5582146037399822,
+        "rows": {
+          "train": 3969,
+          "test": 5015,
+          "dropped": 0
+        }
+      },
+      "sizes": {
+        "train_plays": 3969,
+        "test_plays": 5015,
+        "dropped_rows": 0,
+        "n_entities": 100,
+        "n_items": 3461,
+        "train_rows_in_vocab": 3969,
+        "test_rows_covered": 5015
+      },
+      "content": {
+        "mode": "cm3p",
+        "path": "data/processed/chart_content_cm3p_local.parquet",
+        "dim": 512,
+        "reduce": "raw",
+        "n_charts_with_vector": 21949,
+        "filtered_rows": {
+          "rows_dropped": 0,
+          "rows_total": 8984
+        },
+        "eval_heldout": true,
+        "heldout_test_charts": 1420,
+        "heldout_bm": "0 (not trained)",
+        "note": "C is frozen, g_theta is shared across charts: per-chart free params = bm only"
+      },
+      "time_drift": null,
+      "results": {
+        "mlp16": {
+          "n_scored": 5015,
+          "coverage": 1.0,
+          "rmse": 1.628482,
+          "mae": 1.359415,
+          "spearman": 0.118639,
+          "pp_p50": 3.414669,
+          "pp_p90": 7.592011,
+          "pp_mean": 3.917243,
+          "pp_gt1_frac": 0.885344,
+          "pp_gt5_frac": 0.261815,
+          "train_rmse": 1.538704,
+          "test_minus_train": 0.089778
+        }
+      },
+      "curve": [
+        {
+          "epoch": 20,
+          "test_rmse": 4.071304,
+          "seconds": 0.5
+        },
+        {
+          "epoch": 40,
+          "test_rmse": 3.025113,
+          "seconds": 1.1
+        },
+        {
+          "epoch": 60,
+          "test_rmse": 1.628482,
+          "seconds": 1.7
+        }
+      ],
+      "degeneracy": {
+        "gate_w": 0.816235,
+        "D_row_sd": 4e-06,
+        "P_row_sd": 0.348239,
+        "content_tower_weight_norm": 17.677427
+      },
+      "checks": [
+        {
+          "name": "pair_never_crosses_split",
+          "ok": true,
+          "detail": "0 units on both sides"
+        },
+        {
+          "name": "train_and_test_disjoint",
+          "ok": true,
+          "detail": "train rows on a held-out pair = 0; test rows on a held-out pair = 5,015/5,015"
+        },
+        {
+          "name": "test_pair_frac",
+          "ok": true,
+          "detail": "no step1 report; observed 55.8215%"
+        },
+        {
+          "name": "loss_in_range",
+          "ok": true,
+          "detail": "test(10k100) loss in [-6.2116, -2.3069]"
+        },
+        {
+          "name": "vocab_from_train_only",
+          "ok": true,
+          "detail": "100 entities == train ids; 3,461 items = 2,041 train + 1,420 held-out test (content-eval-heldout)"
+        },
+        {
+          "name": "determinism_selftest",
+          "ok": true,
+          "detail": "same seed -> bitwise identical parameters (AnchoredMLP + grouped Adam)"
+        },
+        {
+          "name": "content_aligned_with_item_ids",
+          "ok": true,
+          "detail": "3,461 train charts; 64 probe ids resolve; row norm in [1.0000, 1.0000] (unit-norm vectors are what g_theta's LayerNorm expects)"
+        },
+        {
+          "name": "coverage_reported",
+          "ok": true,
+          "detail": "1 result block carries coverage + n_scored: coverage=1.0000, n_scored=5,015"
+        },
+        {
+          "name": "no_test_leak",
+          "ok": true,
+          "detail": "training rows used = 3,969; on a held-out pair = 0"
+        },
+        {
+          "name": "npz_matches_summary",
+          "ok": true,
+          "detail": "P (100, 16), C/D (3461, 16) (C = D = g_theta(C_m), the matrix actually used by the interaction), bm 3,461"
+        }
+      ],
+      "seconds": 4.0,
+      "preds_path": "/tmp/mlp100_10k/results/step2_heldout_10k100_preds_loss.npz"
+    }
+  }
+}

@@ -77,7 +77,7 @@ CM3P 需要谱面正文，dump 不带正文。`step0/fetch_osu` 把白名单里�
 3. 单次对剔除：n_plays < 2 的对整对剔除
 4. 高 ACC 剔除：最高 ACC > 0.998 的对整对剔除
 5. 低 ACC 剔除：最高 ACC <= 0.90 的对整对剔除
-6. 划分：在幸存对上 pair-random 70/30（也可 beatmap-random）
+6. 划分：在幸存对上 pair-random 70/30（也可 beatmap-random，或 play-quota）
 ~~~
 
 清洗在划分**之前**，所以 test 也经过了同样的 pair 过滤；这正是「删除所有单独的
@@ -106,6 +106,16 @@ step0 的 5 列 + `split` + `player_id_base`（原玩家 id）+ `player_seg`（�
 
 四个口径的 1k/10k 结果见归档文档；对应配置是
 `configs/exp_pairbest_1k.yaml` / `exp_pairbest_shift_1k.yaml` 等。
+
+划分变体（不是标签消融）：
+
+* `--split-method beatmap-random`：按**谱面**划分，一张图的所有对必在同一侧；
+  配合 `content_eval_heldout` 可做冷启动，配置
+  [configs/exp_pairbest_coldstart_cm3p_mlp_1k.yaml](../configs/exp_pairbest_coldstart_cm3p_mlp_1k.yaml)。
+* `--split-method play-quota`（step 版本 `step1/pairbest_playquota`）：打乱白名单后
+  整张谱面依次进 test，直到 test 的 play 数达到 `1-train_frac`；test 与 train 的谱面
+  集合互斥，实际比例略高于 `train_frac`（整图不可拆），`split.actual_test_frac` 是实际值。
+  配置 [configs/exp_pairbest_playquota_cm3p_1k.yaml](../configs/exp_pairbest_playquota_cm3p_1k.yaml)。
 
 ## 4. step1/clean（legacy play 级）
 

@@ -283,12 +283,26 @@ def score(chart: ChartData, player: Player, *, combine="aggregate",
 
 
 def required_skill(chart: ChartData, dim: int, goal=0.93, **kw):
-    """单维评分时需要的技能（诊断用）：把其它维难度清零后二分。"""
+    """单维评分时需要的技能（诊断用）：把其它维难度清零后二分。
+
+    jackspeed（dim=3）和 technical（dim=5）在 score() 里会用到 chart.jack：
+    前者把区间失分整行换成逐事件 jack 损失，后者叠加 tech 的 jack 额外项。
+    因此这里必须把 jack 事件带进子图，否则 jackspeed 会退回
+    base_adj_diff 的 NPSBase 死数据，得到一个和 score() 无关的假值。
+    其余维保持不启用 jack，避免交叉污染。
+    """
+    jack = chart.jack if (dim in (3, 5) and chart.jack is not None) else None
     sub = ChartData(chart.name, chart.rate, chart.interval, chart.pts,
-                    chart.diffs.copy(), chart.source, dict(chart.meta))
+                    chart.diffs.copy(), chart.source, dict(chart.meta),
+                    jack=jack)
     for k in range(6):
         if k != dim:
             sub.diffs[k] = 0.0
+
+    # 逐维隔离：jackspeed 只开事件模型，technical 只开额外项；
+    # 调用方显式传入时以调用方为准。
+    kw.setdefault("use_jack", dim == 3)
+    kw.setdefault("tech_jack_extra", dim == 5)
 
     def value(xv):
         p = Player(**{d: 0.0 for d in DIMS})

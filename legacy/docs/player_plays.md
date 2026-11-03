@@ -67,8 +67,21 @@ lazer 的成绩存在 Realm 数据库里，谱面带在线 id，信息更全（�
 | Linux | `~/.local/share/osu/client.realm` |
 | Flatpak | `~/.var/app/sh.ppy.osu/data/osu/client.realm` |
 
-注意：Realm 文件需要 schema 才能读，我会先拿副本试解析（只读，不写回）；
-如果版本对不上，再退回方案 C。**不要把唯一的 client.realm 覆盖掉**，先复制。
+Realm 文件要先转成 JSON。[legacy/scripts/realm_to_scores.js](../scripts/realm_to_scores.js)
+会复制一份文件，用「空 schema + migration 回调」读出这个 realm 的真实 schema，
+再用它在副本上读 `Score` 表（输入文件只读，不会被写回）：
+
+```bash
+# 一次性依赖：realm 的 Node 绑定（临时目录，不进仓库）
+mkdir -p /tmp/realmwork && cd /tmp/realmwork
+npm_config_cache=/tmp/npm-cache npm install realm && cd -
+
+NODE_PATH=/tmp/realmwork/node_modules node legacy/scripts/realm_to_scores.js \
+    --realm data/player/17598247/client.realm \
+    --out   data/player/17598247/realm_scores.json
+```
+
+**不要把唯一的 client.realm 覆盖掉**：转换只读副本。
 
 ## 5. 方案 C：osu! API v2（不传客户端文件）
 
@@ -85,7 +98,7 @@ lazer 的成绩存在 Realm 数据库里，谱面带在线 id，信息更全（�
 cd /home/mikechu/Documents/Projects/DCR
 export OSU_CLIENT_ID=你的ClientID
 read -rs OSU_CLIENT_SECRET && export OSU_CLIENT_SECRET   # 粘贴后回车，不回显
-python scripts/fetch_player_scores.py --user 17598247
+python3 legacy/scripts/fetch_player_scores.py --user 17598247
 ```
 
 脚本会写 `data/player/17598247/api_user.json`、`api_best.json`、`api_recent.json`。
@@ -100,11 +113,16 @@ python scripts/fetch_player_scores.py --user 17598247
 
 ```bash
 # A：stable
-python scripts/player_plays.py --user 17598247 \
+python3 legacy/scripts/player_plays.py --user 17598247 \
     --scores-db data/player/17598247/scores.db
 
-# B/C：API JSON（可以同时给多个文件，和 scores.db 混用也行）
-python scripts/player_plays.py --user 17598247 \
+# B：lazer（先转 JSON）＋ A 合并去重
+python3 legacy/scripts/player_plays.py --user 17598247 \
+    --scores-db data/player/17598247/scores.db \
+    --api-json data/player/17598247/realm_scores.json
+
+# C：API JSON（可以同时给多个文件）
+python3 legacy/scripts/player_plays.py --user 17598247 \
     --api-json data/player/17598247/api_best.json \
     --api-json data/player/17598247/api_recent.json
 ```
@@ -121,10 +139,11 @@ python scripts/player_plays.py --user 17598247 \
 
 ```
 玩家 17598247
-  来源    data/player/17598247/scores.db  (26,481 行 / 11,331 个 MD5)
+  来源    data/player/17598247/scores.db  (109 行 / 93 个 MD5)
+  来源    data/player/17598247/realm_scores.json  (4,942 行 / 1,111 张谱面)
   白名单  21,949 张 4K 谱面
-  玩过    11,331 张（去重；模式 mania:11284, osu:47）
-  交集    1,234 张（白名单 5.62%，玩过 10.89%）
+  玩过    1,204 张（去重；模式 osu:3754, mania:1293, catch:4）
+  交集    301 张（白名单 1.37%，玩过 25.00%）
 ```
 
 ## 7. 口径
@@ -143,3 +162,25 @@ python scripts/player_plays.py --user 17598247 \
   随时可以在设置页删除该应用，token 立即失效。
 * `scores.db` / `client.realm` 只在本机读取；脚本不会写回原文件，
   也不会把内容发到任何地方。
+
+## 9. 实测：17598247（2026-10-21）
+
+输入：`scores.db`（109 条，全部 osu!std，2025-09 ~ 2025-10）＋ `client.realm`
+（4,942 条：osu 3,645 / mania 1,293 / catch 4，2019-11 ~ 2026-10；5 条无谱面链接跳过）。
+
+| 指标 | 数值 |
+|---|---|
+| 白名单 | 21,949 张 4K 谱面 |
+| 玩过（去重） | 1,204 张；其中 mania 385 张 |
+| **交集** | **301 张**（白名单的 1.37%，mania 谱面的 78.2%，全部谱面的 25.0%） |
+| 交集上的成绩 | 1,044 条 |
+| 星数分布 | 2-3:13 / 3-4:81 / 4-5:163 / 5-6:35 / 6-7:6 / 7-8:1 / 8+:2（中位 4.32★） |
+| 最近一次游玩 | 2024 年 20 张 / 2025 年 79 张 / 2026 年 202 张 |
+| 未进白名单 | 903 张，其中 mania 84 张（7K / 未收录 / 非 4K…） |
+
+最难的三张：8.48★ Calamity at the Scarlet Mansion（CL+HT）、8.08★ Warrior、
+7.02★ GRAVITY（CL+MR）。交集上的 mod 分布以 NM 为主（972/1,044），其次是
+HT（48）和 DT（10）。
+
+产物在 `data/processed/player_17598247/`：`plays.csv`（5,051 条）、
+`whitelist_hits.csv`（301 行）、`report.json`。

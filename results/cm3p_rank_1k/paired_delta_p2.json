@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "in": "/home/mikechu/Documents/Projects/DCR/data/processed/step1_1k_pairbest.parquet",
+    "signal_table": "results/cm3p_rank_1k/signals_p2.parquet",
+    "split": "test",
+    "n_rows": 33139,
+    "n_maps": 4565,
+    "n_pairs": 766369,
+    "n_instances": 1144617,
+    "n_clusters": 913,
+    "bootstrap": 400,
+    "seed": 0,
+    "seconds": 3.3
+  },
+  "signals": {
+    "cm3p_linear_cd_l1e3": {
+      "beta": 0.7147201138980577,
+      "rate": 0.6159761927499441
+    },
+    "cm3p_linear_extra_cd_l1e3": {
+      "beta": 0.9621379762539783,
+      "rate": 0.5794069619673771
+    },
+    "cm3p_mlp_cd": {
+      "beta": 0.7030161937377657,
+      "rate": 0.6159692421557431
+    },
+    "sunny_star": {
+      "beta": 0.7630797132230837,
+      "rate": 0.6301360500227903
+    },
+    "daniel_star": {
+      "beta": 0.7825488048876311,
+      "rate": 0.6293255392315378
+    },
+    "msd_overall": {
+      "beta": 0.7101783180811967,
+      "rate": 0.6384882426981332
+    }
+  },
+  "pairs": {
+    "cm3p_linear_extra_cd_l1e3:cm3p_linear_cd_l1e3": {
+      "delta": -0.03656923078256702,
+      "ci": [
+        -0.040138030945395684,
+        -0.03245549966688814
+      ],
+      "p_delta_lt_0": 1.0,
+      "nll_a": 0.5794069619673771,
+      "nll_b": 0.6159761927499441
+    },
+    "cm3p_mlp_cd:cm3p_linear_cd_l1e3": {
+      "delta": -6.950594200971771e-06,
+      "ci": [
+        -0.0023804088459408236,
+        0.0022072707201223076
+      ],
+      "p_delta_lt_0": 0.48,
+      "nll_a": 0.6159692421557431,
+      "nll_b": 0.6159761927499441
+    },
+    "cm3p_linear_extra_cd_l1e3:cm3p_mlp_cd": {
+      "delta": -0.03656228018836605,
+      "ci": [
+        -0.04104828221200177,
+        -0.03197881722270641
+      ],
+      "p_delta_lt_0": 1.0,
+      "nll_a": 0.5794069619673771,
+      "nll_b": 0.6159692421557431
+    }
+  }
+}

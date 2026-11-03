@@ -1,0 +1,82 @@
+{
+ "meta": {
+  "bootstrap": 20,
+  "folds": 1,
+  "generated_at": "2026-10-31 18:49:12",
+  "in": "scratch_rank_metric/step1_small.parquet",
+  "knots": 8,
+  "link": "linear",
+  "metric": "pairwise Bradley-Terry NLL, cross-fitted ceiling",
+  "min_l": 3,
+  "n_maps_total": 2940,
+  "n_players_total": 120,
+  "n_rows_total": 9527,
+  "seed": 0,
+  "signal_table": "data/processed/rank_signals_1k.parquet",
+  "signals": [
+   "msd_overall"
+  ],
+  "split": "all",
+  "tag": ""
+ },
+ "signals": {
+  "msd_overall": {
+   "bits_saved": 0.08390789254140696,
+   "bootstrap": {
+    "captured": [
+     0.14952227433319096,
+     0.21396277108346873
+    ],
+    "lw": [
+     0.43406324413248704,
+     0.5038198218855361
+    ],
+    "macro": [
+     0.42195018302329,
+     0.5029462045131956
+    ],
+    "nll": [
+     0.6205185179012643,
+     0.641881924033379
+    ]
+   },
+   "captured": 0.17357819766803625,
+   "ceiling_coverage": 1.0,
+   "ceiling_n": 826724,
+   "ceiling_nll": 0.3580790676104517,
+   "ceiling_per_player": {
+    "fisher_l3": 0.8344031133684977,
+    "lw": 0.8080286263852422,
+    "macro": 0.7432458822844735,
+    "median": 0.7725600651033839,
+    "n": 120
+   },
+   "coverage_maps": 1.0,
+   "coverage_rows": 1.0,
+   "link": {
+    "beta": 0.7559004523182787,
+    "kind": "linear"
+   },
+   "n_instances": 826724,
+   "n_maps": 2940,
+   "n_pairs": 620925,
+   "n_players": 120,
+   "n_rows": 9527,
+   "n_ties": 4,
+   "nll": 524958.7126742522,
+   "nll_per_instance": 0.6349866614181422,
+   "norm_rho_lw": 0.5672987446425308,
+   "norm_rho_macro": 0.6061793205387508,
+   "per_player": {
+    "fisher_l3": 0.4852824638278572,
+    "lw": 0.4617793902475267,
+    "macro": 0.45362181927762013,
+    "median": 0.47401791352152567,
+    "n": 120
+   },
+   "random_lw": 0.007824716988983831,
+   "rho_bhat": 0.5498509730076772,
+   "tau_bhat": 0.41341702392936885
+  }
+ }
+}
