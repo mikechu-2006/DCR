@@ -81,6 +81,14 @@ MIX_JSON="${MIX_JSON:-data/processed/cm3p_mix_report.json}"
 CANONICAL="${CANONICAL:-data/processed/chart_content_cm3p.parquet}"
 INFER_BATCH="${INFER_BATCH:-8}"
 WORKERS="${WORKERS:-4}"
+# ---- T1/T2 (plan v5); the defaults preserve the legacy pipeline --------------
+CROP="${CROP:-legacy}"                 # legacy = old flags; canon = hitsound/kiai/SV off
+WINDOWS="${WINDOWS:-off}"              # on = also export .cache/cm3p/win + index
+WINDOW_DIR="${WINDOW_DIR:-.cache/cm3p/win}"
+WINDOW_INDEX="${WINDOW_INDEX:-.cache/cm3p/index.parquet}"
+WINDOW_BATCH="${WINDOW_BATCH:-16}"
+CORE_AUDIT="${CORE_AUDIT:-16}"
+MANIA_COLUMNS="${MANIA_COLUMNS:-auto}"
 
 # ---- offline environment -----------------------------------------------------
 # HF weights: prefer a cache copied INTO the folder (data/raw/hf_cache), else use
@@ -108,7 +116,7 @@ echo "repo          $REPO"
 echo "python        $($PY -V 2>&1)"
 echo "HF_HOME       $HF_HOME (offline=$HF_HUB_OFFLINE)"
 echo "CM3P_ROOT     $CM3P_ROOT   attn=$CM3P_ATTN"
-echo "encode        $EMBED_MANIFEST  ->  $EMBED_OUT"
+echo "encode        $EMBED_MANIFEST  ->  $EMBED_OUT  (crop=$CROP windows=$WINDOWS)"
 echo "osu cache     $OSU_CACHE"
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv 2>/dev/null || true
 
@@ -267,8 +275,11 @@ fi
 # full run uses, then compare geometries (docs/cm3p_remote_runbook.md section 4).
 if [ "${SKIP_PROBE:-0}" != "1" ]; then
   echo; echo "=== stage 1/3: PROBE (no-audio vs published vectors) ==="
+  # the probe is always the LEGACY representation: it measures the no-audio domain
+  # shift against the published table, not the T1 crop.
   "$PY" scripts/step0c_chart_content.py --source osu-dir \
       --ids-file "$PROBE_MANIFEST" --osu-dir "$OSU_CACHE" --audio off \
+      --crop legacy --windows off --mania-columns off \
       --infer-batch "$INFER_BATCH" --out "$PROBE_OUT" || exit 1
 
   "$PY" scripts/step0e_validate_mix.py --computed "$PROBE_OUT" --json "$MIX_JSON" || exit 1
@@ -296,10 +307,16 @@ if [ "${LIMIT:-0}" != "0" ]; then
 fi
 "$PY" scripts/step0c_chart_content.py --source osu-dir \
     --ids-file "$EMBED_MANIFEST" --osu-dir "$OSU_CACHE" --audio off \
+    --crop "$CROP" --windows "$WINDOWS" --mania-columns "$MANIA_COLUMNS" \
+    --window-dir "$WINDOW_DIR" --window-index "$WINDOW_INDEX" \
+    --window-batch "$WINDOW_BATCH" --core-audit "$CORE_AUDIT" \
     --infer-batch "$INFER_BATCH" --out "$EMBED_OUT" $LIMIT_ARGS || exit 1
 
 # ---- stage 3 (optional): fold the local rows into the canonical table --------
-if [ "${MERGE:-0}" = "1" ]; then
+if [ "${MERGE:-0}" = "1" ] && { [ "$CROP" != "legacy" ] || [ "$WINDOWS" = "on" ]; }; then
+  echo; echo "MERGE=1 skipped: CROP=$CROP WINDOWS=$WINDOWS is a new representation;"
+  echo "the canonical table is legacy-flag rows and must not be mixed with it."
+elif [ "${MERGE:-0}" = "1" ]; then
   echo; echo "=== stage 3/3: MERGE $EMBED_OUT -> $CANONICAL (new row wins) ==="
   "$PY" scripts/step0c_chart_content.py --source table --in "$EMBED_OUT" \
       --tag "$TAG" --out "$CANONICAL" || exit 1

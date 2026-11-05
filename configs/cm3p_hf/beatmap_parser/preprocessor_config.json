@@ -1,0 +1,18 @@
+{
+  "add_distances": false,
+  "add_hitsounds": true,
+  "add_kiai": true,
+  "add_mania_sv": true,
+  "add_positions": true,
+  "add_snapping": false,
+  "add_sv": true,
+  "add_timing": true,
+  "add_timing_points": true,
+  "auto_map": {
+    "AutoProcessor": "processing_cm3p.CM3PProcessor"
+  },
+  "feature_extractor_type": "CM3PBeatmapParser",
+  "mania_bpm_normalized_scroll_speed": true,
+  "processor_class": "CM3PProcessor",
+  "slider_version": 2
+}

@@ -129,9 +129,10 @@ CM3P 覆盖约一半谱面，下列 RMSE 只在「有内容向量」的子集上
 # 1) 抓 .osu 正文（默认整个白名单，可断点续传）
 python scripts/step0d_fetch_osu.py --ids-file manifests/whitelist_1k.csv --out-dir data/osu_cache
 
-# 2) 无音频推理 → 本地内容表
+# 2) 无音频推理 → 本地内容表（legacy 口径；复现旧表时必须显式给 --crop legacy）
 python scripts/step0c_chart_content.py --source osu-dir --ids-file manifests/whitelist_1k.csv \
-    --osu-dir data/osu_cache --audio off --out data/processed/chart_content_cm3p_local.parquet
+    --osu-dir data/osu_cache --audio off --crop legacy --windows off \
+    --out data/processed/chart_content_cm3p_local.parquet
 
 # 3) 混用探针（可选）：与已发布表的重叠图余弦是否够高
 python scripts/step0e_validate_mix.py --computed data/processed/chart_content_cm3p_probe.parquet
@@ -146,6 +147,28 @@ python scripts/step0g_whitelist.py --tag 1k --meta data/processed/beatmap_meta_1
 [legacy/docs/cm3p_remote_runbook.md](../legacy/docs/cm3p_remote_runbook.md) 与
 [legacy/docs/cm3p_hpc_slurm.md](../legacy/docs/cm3p_hpc_slurm.md)；
 HPC 依赖见 `requirements-cm3p.txt`、`vendor/` 与 `scripts/slurm/*.slurm`。
+
+### 3.5 口径限制：C 与 d 都是 OD 盲的
+
+CM3P 的 beatmap 词表里没有 OD/HP/AR，metadata 塔（`include_metadata=False`）也没有 OD，
+所以内容向量 `C` 与任何由它学到的难度 `d` 都不包含 OD。下游若要预测「我会打多少 ACC」，
+必须自己把 OD（以及 HP/keycount 等谱面常数）接进去；**不要把 `d` 当绝对难度**。
+`scripts/step2_cm3p_rank.py --model linear_extra --extra-signals od,...` 是现成的接入点；
+「OD × 内容」的交互项属于下游特征工程，不改 CM3P 侧的产出。
+
+### 3.6 输入裁剪、窗口导出与池化（v5）
+
+`--crop canon`（T1）删掉 hitsound/volume、kiai、mania SV；**T1 是固定预处理，不是实验变量**。
+`--windows on`（T2）把每张图的 16 s 窗口存成 float16 `.npy`，并写 `.cache/cm3p/index.parquet`。
+**重要**：上游从未发出 `[MANIA_COLUMN_*]`（`parsing_cm3p.py:501` 写 `Group.column`，
+`tokenization_cm3p.py:191` 读 `Group.mania_column`），所以冻结的 CM3P 向量是 column-blind 的
+（真实配置每个 tap 4 token）。
+
+另外，真实 HF checkpoint 的 preprocessor config 是 `add_snapping=False`、`add_cls_token=True`、
+`max_length=2000`，不是上游 yaml 的 True/False/4000；T0 记录并使用真实值，
+CropSpec 只改三个载荷开关，其余从 checkpoint 继承。T3 的 A0 是**同一 canon 窗口库**上的对照，
+不要求复现旧表的 NLL。实现、核心信息审计、opt-in patch 与 T3 池化 A0–A6 见
+[docs/cm3p_crop_windows.md](cm3p_crop_windows.md)。
 
 ## 4. MinaCalc
 

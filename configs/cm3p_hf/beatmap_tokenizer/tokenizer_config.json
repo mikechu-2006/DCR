@@ -1,0 +1,119 @@
+{
+  "add_cls_token": true,
+  "added_tokens_decoder": {
+    "3958": {
+      "content": "[BOS]",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    },
+    "3959": {
+      "content": "[EOS]",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    },
+    "3960": {
+      "content": "[UNK]",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    },
+    "3961": {
+      "content": "[SEP]",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    },
+    "3962": {
+      "content": "[PAD]",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    },
+    "3963": {
+      "content": "[CLS]",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    },
+    "3964": {
+      "content": "[MASK]",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    },
+    "3965": {
+      "content": "[AUDIO_BOS]",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    },
+    "3966": {
+      "content": "[AUDIO_EOS]",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    },
+    "3967": {
+      "content": "[AUDIO]",
+      "lstrip": false,
+      "normalized": false,
+      "rstrip": false,
+      "single_word": false,
+      "special": true
+    }
+  },
+  "additional_special_tokens": [
+    "[AUDIO_BOS]",
+    "[AUDIO_EOS]",
+    "[AUDIO]"
+  ],
+  "auto_map": {
+    "AutoProcessor": "processing_cm3p.CM3PProcessor"
+  },
+  "bos_token": "[BOS]",
+  "clean_up_tokenization_spaces": false,
+  "cls_token": "[CLS]",
+  "distance_step": 4,
+  "eos_token": "[EOS]",
+  "extra_special_tokens": {},
+  "mask_token": "[MASK]",
+  "max_distance": 640,
+  "max_time": 16000,
+  "min_time": 0,
+  "model_max_length": 1000000000000000019884624838656,
+  "pad_token": "[PAD]",
+  "position_range": [
+    -256,
+    768,
+    -256,
+    640
+  ],
+  "position_split_axes": true,
+  "position_step": 4,
+  "processor_class": "CM3PProcessor",
+  "sep_token": "[SEP]",
+  "separate_new_combo_token": false,
+  "time_step": 10,
+  "tokenizer_class": "CM3PBeatmapTokenizer",
+  "unk_token": "[UNK]"
+}

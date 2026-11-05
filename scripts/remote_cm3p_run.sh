@@ -38,6 +38,14 @@ OUT_LOCAL=${OUT_LOCAL:-data/processed/chart_content_cm3p_local.parquet}
 OUT_PROBE=${OUT_PROBE:-data/processed/chart_content_cm3p_probe.parquet}
 WORKERS=${WORKERS:-4}
 PY=${PY:-python}
+# ---- T1/T2 (plan v5); the defaults preserve the legacy pipeline --------------
+CROP=${CROP:-legacy}                 # legacy = old flags; canon = hitsound/kiai/SV off
+WINDOWS=${WINDOWS:-off}              # on = also export .cache/cm3p/win + index
+WINDOW_DIR=${WINDOW_DIR:-.cache/cm3p/win}
+WINDOW_INDEX=${WINDOW_INDEX:-.cache/cm3p/index.parquet}
+WINDOW_BATCH=${WINDOW_BATCH:-16}
+CORE_AUDIT=${CORE_AUDIT:-16}
+MANIA_COLUMNS=${MANIA_COLUMNS:-auto}
 # CM3P head is @torch.compile-decorated; Inductor would shell out to nvcc and can die
 # with "PermissionError: [Errno 13] Permission denied: 'nvcc'" -- inference is eager.
 export TORCH_COMPILE_DISABLE=${TORCH_COMPILE_DISABLE:-1}
@@ -109,8 +117,11 @@ fi
 
 if [ "${SKIP_PROBE:-0}" != "1" ]; then
   say "4/6 PROBE: re-encode 256 already-published charts with the no-audio path"
+  # the probe keeps the LEGACY representation: it measures the no-audio domain shift
+  # against the published table, not the T1 crop.
   $PY scripts/step0c_chart_content.py --source osu-dir --ids-file "$PROBE" \
-      --osu-dir "$OSU_CACHE" --audio off --out "$OUT_PROBE" --infer-batch 8
+      --osu-dir "$OSU_CACHE" --audio off --crop legacy --windows off \
+      --mania-columns off --out "$OUT_PROBE" --infer-batch 8
   say "5/6 PROBE GATE: may the two tables be mixed?"
   $PY scripts/step0e_validate_mix.py --computed "$OUT_PROBE" \
       --json data/processed/cm3p_mix_report.json
@@ -121,11 +132,16 @@ else
   say "4-5/6 probe skipped (SKIP_PROBE=1)"
 fi
 
-say "6/6 full run: $EMBED"
+say "6/6 full run: $EMBED (crop=$CROP windows=$WINDOWS)"
 $PY scripts/step0c_chart_content.py --source osu-dir --ids-file "$EMBED" \
-    --osu-dir "$OSU_CACHE" --audio off --out "$OUT_LOCAL" --infer-batch "${INFER_BATCH:-8}"
+    --osu-dir "$OSU_CACHE" --audio off --crop "$CROP" --windows "$WINDOWS" \
+    --mania-columns "$MANIA_COLUMNS" --window-dir "$WINDOW_DIR" \
+    --window-index "$WINDOW_INDEX" --window-batch "$WINDOW_BATCH" \
+    --core-audit "$CORE_AUDIT" --out "$OUT_LOCAL" --infer-batch "${INFER_BATCH:-8}"
 
-if [ "${MERGE:-0}" = "1" ]; then
+if [ "${MERGE:-0}" = "1" ] && { [ "$CROP" != "legacy" ] || [ "$WINDOWS" = "on" ]; }; then
+  say "6b/6 merge skipped: CROP=$CROP WINDOWS=$WINDOWS is a new representation"
+elif [ "${MERGE:-0}" = "1" ]; then
   say "6b/6 merge $OUT_LOCAL -> data/processed/chart_content_cm3p.parquet"
   $PY scripts/step0c_chart_content.py --source table --in "$OUT_LOCAL" --tag "$TAG"
 fi

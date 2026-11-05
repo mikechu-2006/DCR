@@ -375,6 +375,9 @@ def parse_args(argv=None):
     ap.add_argument("--content-ceiling", action="store_true",
                     help="also fit the model on the evaluation pairs themselves "
                          "(in-sample oracle; not a generalising result)")
+    ap.add_argument("--dump-heads", default=None,
+                    help="save the linear head(s) for T3 window pooling: maps, fold, "
+                         "w (K x content_dim), w_full, mu, sd (linear models only)")
     ap.add_argument("--out-signals", required=True)
     ap.add_argument("--out-json", required=True)
     ap.add_argument("--threads", type=int, default=6)
@@ -452,6 +455,8 @@ def main() -> int:
     best_epoch = None
     val_nll = None
     fold_info = []
+    fold = np.zeros(M, dtype=np.int64)
+    fold_w: list[np.ndarray] = []
     epochs_for_final = int(args.epochs)
     if args.chart_only:
         pass
@@ -528,6 +533,8 @@ def main() -> int:
             if args.model in ("linear", "linear_extra", "ext_blend"):
                 wk, tr_nll = fit_linear(X, tab_kf, best_lam)
                 dk = X @ wk
+                if args.model != "ext_blend":
+                    fold_w.append(wk)
             else:
                 w0k, _ = fit_linear(X, tab_kf, float(args.lam))
                 if tab_kv is not None and tab_kv.n_pairs:
@@ -578,6 +585,34 @@ def main() -> int:
         ceiling_nll = float(rm.fit_link(tab_te, dc).nll / tab_te.n_instances)
         print(f"[content-ceiling] in-sample test nll={ceiling_nll:.5f} "
               f"(oracle; not a generalising result)", flush=True)
+
+    # ------------------------------------------------------------ T3 head dump
+    if args.dump_heads:
+        if args.model not in ("linear", "linear_extra"):
+            raise SystemExit("--dump-heads supports linear/linear_extra only: the T3 "
+                             "window score z_t needs a linear content head")
+        D = int(Cs.shape[1])
+        if args.chart_folds and int(args.chart_folds) > 1:
+            if len(fold_w) != int(args.chart_folds):
+                raise SystemExit(f"internal: {len(fold_w)} fold heads for "
+                                 f"{args.chart_folds} folds")
+            W = np.stack([np.asarray(x)[:D] for x in fold_w]).astype(np.float32)
+            f = fold.astype(np.int64)
+        else:
+            W = np.asarray(w)[:D].astype(np.float32)[None, :]
+            f = np.zeros(M, dtype=np.int64)
+        wf, _ = fit_linear(X, tab_tr, best_lam)
+        Path(args.dump_heads).parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(
+            args.dump_heads,
+            maps=np.asarray(maps, dtype=np.int64), fold=f, w=W,
+            w_full=np.asarray(wf)[:D].astype(np.float32),
+            mu=np.asarray(mu, dtype=np.float32), sd=np.asarray(sd, dtype=np.float32),
+            content_dim=np.int64(D), chart_folds=np.int64(W.shape[0]),
+            content_path=str(args.content_path), content_col=str(args.content_col or ""),
+            name=str(args.name))
+        print(f"[heads] {W.shape[0]} head(s) x {D} dims -> {args.dump_heads}",
+              flush=True)
 
     # ---------------------------------------------------------------- evaluate
     link = rm.fit_link(tab_te, signal)

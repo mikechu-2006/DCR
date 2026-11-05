@@ -160,11 +160,27 @@ CM3P 线性（clean 口径、覆盖子集）为 1.57595；更细的表与消融�
 
 \* val ceiling（0.58909）本身欠拟合，captured >1 不代表"超过上界"；比较模型看 NLL 与
 paired ΔNLL。P1（同玩家、同 chart 的新 pair）的数字不能当泛化结论。完整表、消融、
-negative controls 与 paired Δ 见 [docs/cm3p_rank.md](docs/cm3p_rank.md)。
+negative controls 与 paired Δ 见 [docs/cm3p_rank.md](docs/cm3p_rank.md)。上表 P2 的三行是
+单划分（split seed 20260928）的旧表，未含 external MLP；5 个划分种子的补充见下文。
 
 P2 口径的 per-chart Pearson(d,b)（同 4,565 张 test 图、同 ceiling `b`）：CM3P + external
 线性 **0.6025**、CM3P MLP 0.5613、CM3P 线性 0.5546、Sunny 0.3713；Pearson 与 NLL 基本
-同序（MLP 与线性在 Pearson 上互换），只作诊断，主指标仍是 NLL / captured（§5.3）。
+同序（CM3P-only MLP 与线性在 Pearson 上互换），只作诊断，主指标仍是 NLL / captured（§5.3）。
+
+**P2/P4 5 个划分种子复核**（种子只改 train/test 划分，模型种子固定 0；详见
+[docs/p4_multiseed.md](docs/p4_multiseed.md)）：
+
+| 口径 | 模型 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|---|
+| P2 新 chart | **CM3P + external MLP** | **0.5660 ± 0.0031** | **0.6281 ± 0.0081** | **0.5853 ± 0.0101** |
+| P2 新 chart | CM3P + external 线性 | 0.5779 ± 0.0033 | 0.5822 ± 0.0122 | 0.5523 ± 0.0086 |
+| P4 双重冷启动 | **CM3P + external MLP** | **0.5734 ± 0.0043** | **0.5881 ± 0.0264** | **0.5426 ± 0.0232** |
+| P4 双重冷启动 | CM3P + external 线性 | 0.5848 ± 0.0049 | 0.5374 ± 0.0391 | 0.5094 ± 0.0326 |
+
+CM3P-only 线性 / MLP 在 P2 为 0.6162 / 0.6166、P4 为 0.6241 / 0.6254（MLP **没有增益**）；
+Sunny / Daniel 约 0.628–0.631、star 约 0.660。**CM3P + external MLP 是唯一在两个口径上
+都稳定胜出 external 线性的方法**（paired Δ -0.0118 / -0.0114，5/5 种子）；P4 只比 P2
+差 ~0.007–0.009 nats，但 test 集与 ceiling 不同，**绝对 NLL 不可跨口径比较**。
 
 ### 文档
 
@@ -176,6 +192,7 @@ P2 口径的 per-chart Pearson(d,b)（同 4,565 张 test 图、同 ceiling `b`�
 | [docs/metrics.md](docs/metrics.md) | **指标**：难度序的成对 NLL、cross-fitted ceiling、captured、逐玩家 Spearman、训练目标 |
 | [docs/rank_eval.md](docs/rank_eval.md) | **实验**：MinaCalc / osumania_map_analyser（含 LN）的难度序评测 |
 | [docs/cm3p_rank.md](docs/cm3p_rank.md) | **实验**：CM3P → per-chart 难度序；M0–M2、P1/P2、new-player val、content ceiling |
+| [docs/p4_multiseed.md](docs/p4_multiseed.md) | **实验**：P2/P4 5 个划分种子；7 方法的 NLL / Pearson / Spearman mean±std、配对 Δ、局限 |
 | [results/README.md](results/README.md) | **结果索引**：每个产物是什么、由哪条命令生成、在哪篇文档里解读 |
 | [scripts/README.md](scripts/README.md) | **脚本索引**：step、rank 训练/评测、分析与运维脚本 |
 | [preprocess/README.md](preprocess/README.md) | step0/step1 精简参考与可运行代码 |
@@ -251,7 +268,10 @@ See [docs/procedure.md](docs/procedure.md).
 (mf_dot dim=8: 0.7015 on 1k), rank-NLL captured for MinaCalc `msd_overall` (0.4067)
 and for the strongest analyser signals (0.47), and CM3P per-chart difficulty
 (player-disjoint val NLL 0.5476 with external features; chart-disjoint captured 0.9013,
-per-chart Pearson against the BT scale 0.6025 vs 0.3713 for Sunny).
+per-chart Pearson against the BT scale 0.6025 vs 0.3713 for Sunny). A 5-split-seed P2/P4
+study ([docs/p4_multiseed.md](docs/p4_multiseed.md)) shows CM3P + external MLP is the
+strongest method in both protocols (test NLL 0.5660 / 0.5734), while CM3P-only MLP does
+not beat linear (0.6166 / 0.6254); the double-cold-start P4 costs only ~0.007–0.009 nats.
 Every artifact is indexed in [results/README.md](results/README.md).
 
 Retired scripts, archived docs, historical logs and the rank-NLL development scratch

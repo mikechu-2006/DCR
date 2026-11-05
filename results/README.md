@@ -15,6 +15,7 @@
 |---|---|---|---|
 | [`rank_eval_1k/`](rank_eval_1k/) | 1k pairbest 上 MinaCalc / osumania_map_analyser 的 rank-NLL（full / msd / LN / RC） | [`scripts/step2_rank_eval.py`](../scripts/step2_rank_eval.py) | [docs/rank_eval.md](../docs/rank_eval.md) |
 | [`cm3p_rank_1k/`](cm3p_rank_1k/) | CM3P 内容向量 → per-chart 难度的训练结果、P1/P2/published 评测、新玩家 val、paired ΔNLL | [`scripts/run_cm3p_rank_experiments.py`](../scripts/run_cm3p_rank_experiments.py) | [docs/cm3p_rank.md](../docs/cm3p_rank.md) |
+| [`p4_multiseed/`](p4_multiseed/) | P2/P4 5 个**划分种子** × 7 方法的 NLL / Pearson / Spearman、mean/std、配对 Δ；逐 seed 官方评测 JSON | [`scripts/run_p2_p4_multiseed.py`](../scripts/run_p2_p4_multiseed.py) | [docs/p4_multiseed.md](../docs/p4_multiseed.md) |
 | [`minacalc/whitelist_stats/`](minacalc/whitelist_stats/) | 白名单 21,949 张图的 MinaCalc 全曲/分段难度分布 | [`scripts/minacalc_whitelist_stats.py`](../scripts/minacalc_whitelist_stats.py) | [report.md](minacalc/whitelist_stats/report.md)、[docs/models.md §4](../docs/models.md) |
 | [`minacalc/verify_native_vs_modified.*`](minacalc/) | C++ 原生 MinaCalc 505 与本地 Python 逐区间打分的 120 图核对 | 一次性核对（脚本未入库） | [minacalc/README.md](../minacalc/README.md) |
 | [`minacalc/inspect_score_example.txt`](minacalc/inspect_score_example.txt) | `inspect_score.py` 的终端示例（7 维难度） | [`scripts/inspect_score.py`](../scripts/inspect_score.py) | [minacalc/README.md](../minacalc/README.md) |
@@ -34,6 +35,7 @@
 | CM3P 的 P1 / P2 / published 评测 | [`cm3p_rank_1k/rank_eval_p1_final.json`](cm3p_rank_1k/rank_eval_p1_final.json) 等 | [docs/cm3p_rank.md §5](../docs/cm3p_rank.md) |
 | 新玩家（player-disjoint）val | [`cm3p_rank_1k/player_disjoint_val.json`](cm3p_rank_1k/player_disjoint_val.json) | [docs/cm3p_rank.md §5.2](../docs/cm3p_rank.md) |
 | 配对 ΔNLL 与 95% CI | [`cm3p_rank_1k/paired_delta.json`](cm3p_rank_1k/paired_delta.json)、[`paired_delta_p2.json`](cm3p_rank_1k/paired_delta_p2.json) | [docs/cm3p_rank.md §5.5](../docs/cm3p_rank.md) |
+| P2/P4 5 个划分种子：external MLP 0.5660 / 0.5734 | [`p4_multiseed/summary_mean_std.csv`](p4_multiseed/summary_mean_std.csv)、[`summary.md`](p4_multiseed/summary.md) | [docs/p4_multiseed.md §5](../docs/p4_multiseed.md) |
 | 白名单 MinaCalc 难度分布 | [`minacalc/whitelist_stats/report.md`](minacalc/whitelist_stats/report.md) | [docs/models.md §4](../docs/models.md) |
 
 ## 命名与口径
@@ -60,6 +62,9 @@ python scripts/step2_rank_eval.py \
 
 # CM3P → per-chart 难度（约 30 min CPU；--quick 只做烟测）
 python scripts/run_cm3p_rank_experiments.py --quick
+
+# P2/P4 5 个划分种子 × 7 方法（CPU；两个进程各 4 线程约 1 h）
+python scripts/run_p2_p4_multiseed.py --protocols p2,p4 --seeds 1,2,3,4,5 --threads 6
 
 # 白名单 MinaCalc 分布
 python scripts/minacalc_whitelist_stats.py --jobs 8

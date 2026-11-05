@@ -1,0 +1,33 @@
+{
+  "auto_map": {
+    "AutoProcessor": "processing_cm3p.CM3PProcessor"
+  },
+  "default_kwargs": {
+    "audio_kwargs": {
+      "audio_length_per_tok": 8,
+      "hop_length": 160,
+      "max_source_positions": 1600,
+      "pad_to_multiple_of": 256000,
+      "padding": false,
+      "sampling_rate": 16000,
+      "truncation": false,
+      "window_size": 400
+    },
+    "beatmap_kwargs": {
+      "max_length": 2000,
+      "padding": "longest",
+      "truncation": "longest_first",
+      "window_length_sec": 16.0,
+      "window_stride_sec": 16.0
+    },
+    "common_kwargs": {
+      "return_tensors": "pt"
+    },
+    "metadata_kwargs": {
+      "max_length": 128,
+      "padding": "longest",
+      "truncation": "longest_first"
+    }
+  },
+  "processor_class": "CM3PProcessor"
+}

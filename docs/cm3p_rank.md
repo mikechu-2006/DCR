@@ -32,9 +32,12 @@
   （MLP+external 1.238），**不能当 captured 用**。P1 只回答"同一批玩家、新 pair"。
 * **P2（5 折 chart-disjoint）**是"新 chart"口径：CM3P-only linear captured **0.6006**
   （NLL 0.6148），CM3P-only MLP **0.5976**（0.6152，**没有增益**），而
-  **CM3P+external linear 0.9013**（NLL 0.5756）。MLP 的 P1 增益主要在 seen chart 上，
-  不能泛化到新图；外部信号是能跨图泛化的内容。同一口径的 per-chart Pearson(d,b)：
-  external linear **0.6025**、CM3P MLP 0.5613、CM3P linear 0.5546、Sunny 0.3713（§5.3）。
+  **CM3P+external linear 0.9013**（NLL 0.5756）。CM3P-only MLP 的 P1 增益主要在
+  seen chart 上，不能泛化到新图；外部信号是能跨图泛化的内容。同一口径的 per-chart
+  Pearson(d,b)：external linear **0.6025**、CM3P MLP 0.5613、CM3P linear 0.5546、
+  Sunny 0.3713（§5.3）。**5 个划分种子的复核（§5.6）**补上了当时没跑的
+  CM3P+external MLP：P2 0.5660 ± 0.0031，比 external linear 0.5779 ± 0.0033 好
+  0.0118 nats（5/5 种子）；所以"非线性对新 chart 无效"只适用于 CM3P-only。
 * **in-sample content ceiling**：CM3P-only linear 0.5879（captured_content 0.808），
   CM3P+external linear 0.5618（>1 的 oracle，见 §5.5）；linear 模型离各自 oracle 只差
   0.002–0.004 nats，说明线性族的拟合已接近极限，剩余增益来自非线性（MLP）和外部信号。
@@ -103,6 +106,13 @@ d_m = f_theta(C_m)        C_m = 冻结的 CM3P 512 维内容向量
 `data/processed/cm3p_mix_report.json` 的结论是 **DO NOT MIX**（同图余弦仅约 0.21），
 所以两张表**不能拼接**。本地表覆盖全部 step1 谱面，是主实验；发布表只在 §5.3 的独立子集里报，
 它有自己的 map 集、自己的 ceiling、自己的 baseline，不能和主表的 captured 直接比。
+
+> **内容表示的限制（2026-11）**：上游 CM3P 从未发出 `[MANIA_COLUMN_*]` token
+> （`parsing_cm3p.py:501` 写 `Group.column`，`tokenization_cm3p.py:191` 读
+> `Group.mania_column`，而 dataclass 字段是后者且从未被赋值）。因此本文所有 `C` 与 `d`
+> 都是 **column-blind** 的：列号（jack/trill/chord 的左右手结构）不在输入里。这是上游表示
+> 层面的已知局限，不是本实验的 bug。离线审计、opt-in patch 的证据与代价见
+> [docs/cm3p_crop_windows.md](cm3p_crop_windows.md) §0。
 
 ### 2.3 外部难度信号（M2 用）
 
@@ -196,6 +206,7 @@ ext blend       : d = v'S                       (只用 2 个外部信号)
 | **P2** 新 chart | 5 折 chart-disjoint：每折只用 **两张图都在训练 chart 折** 的 train 行 | test 行；每张图用"没看过该图"的折模型打分 | b 用全部行的 fold-train 玩家拟合，只在 test 行评测 | 能否泛化到没见过的图 |
 | **published subset** | 发布表 4,042 图，P1 | 对应 test 行 | 同一"全行拟合 / 子集评测"口径 | 音频版 CM3P 在覆盖子集上是否不同 |
 | **content ceiling** | 在 test pair 上 in-sample 拟合 | test pair | 同一 ceiling | 内容族还能不能降 NLL；oracle |
+| **P4** 双重冷启动 | 6×6（train 玩家 × train 谱面） | 4×4（test 玩家 × test 谱面） | b 用全部行的 fold-train 玩家拟合 | 见 [p4_multiseed.md](p4_multiseed.md) |
 
 P2 的组合方式：第 k 折的模型给所有图打分，但只把第 k 折（held-out）图的 d 写进最终
 signal；每张图的 d 都来自没看过该图成绩的模型。跨折的 pair 由两个不同折模型各提供一个
@@ -353,7 +364,7 @@ fixed 信号不训练、不看玩家，val NLL 与内容模型在同一个 held-
 
 | signal | test NLL（strict） | captured | lw | Pearson(d,b) | Spearman(d,b) | 说明 |
 |---|---|---|---|---|---|---|
-| CM3P+external linear λ1e-3, CD | **0.57563** | **0.9013** | 0.5458 | **0.6025** | 0.5623 | 5 折；最好新 chart 模型 |
+| CM3P+external linear λ1e-3, CD | **0.57563** | **0.9013** | 0.5458 | **0.6025** | 0.5623 | 5 折；本表最好（未含 external MLP，见 §5.6） |
 | CM3P linear λ1e-3, CD | 0.61484 | 0.6006 | 0.4380 | 0.5546 | 0.5192 | 5 折；P1 0.58989 → +0.025 |
 | CM3P MLP h64 L2, CD | 0.61522 | 0.5976 | 0.4328 | 0.5613 | 0.5291 | 5 折，98 epoch；**没有超过 linear** |
 | Sunny / Daniel / MSD | 0.62718 / 0.62595 / 0.63577 | 0.5059 / 0.5154 / 0.4401 | 0.5098 / 0.5041 / 0.4484 | 0.3713 / 0.3739 / 0.3575 | 0.3920 / 0.3925 / 0.3744 | fixed，同 test pair |
@@ -369,7 +380,7 @@ chart-disjoint 后 **0.6152 vs 0.6148，没有增益**；它的非线性主要�
 * 四个关心的模型按 Pearson 排：CM3P+external **0.6025** > CM3P MLP **0.5613** >
   CM3P linear **0.5546** > Sunny **0.3713**。与 NLL/captured 基本同序，唯一互换是
   MLP 与 linear：MLP 的 Pearson 高 0.007，NLL 却几乎相同（0.61522 vs 0.61484，
-  paired Δ≈0），不足以改变"非线性对新 chart 没有增益"的结论。
+  paired Δ≈0），不足以改变"CM3P-only 的非线性对新 chart 没有增益"的结论。
 * 训练模型的 Pearson **高于** Spearman（0.6025 > 0.5623、0.5546 > 0.5192），表里的
   fixed 信号相反（Sunny 0.3713 < 0.3920，Daniel/MSD 同向）。原因是模型在 linear link 下
   拟合 BT 似然，`d` 与 `b` 近似线性；Sunny/MSD 与 ACC-BT 尺度只是单调相关，scale 和
@@ -462,7 +473,35 @@ oracle 0.5879——增益来自非线性与外部信号，不是线性拟合不�
 | CD extra linear : CD MLP | **-0.03656** | [-0.04288, -0.02933] | 1.000 |
 
 CD MLP 与 CD linear 的 Δ 为 0（CI 跨 0，P=0.48）：**CM3P-only 的非线性在 chart-disjoint
-后没有增益**；CD extra 的 -0.037 才是能跨图泛化的部分。
+后没有增益**；CD extra 的 -0.037 才是能跨图泛化的部分（external MLP 见 §5.6）。
+
+### 5.6 P2/P4 多划分种子复核（external MLP）
+
+§5.3 的 P2 表只有 external linear，没有 external MLP。后续在 **5 个新的 train/test
+划分种子**（P2：pair-random 70/30 重采样；P4：玩家 × 谱面各分层 60/40，6×6 train /
+4×4 test）上补齐了 7 个方法；模型种子固定 0。test NLL 的 5-seed mean ± std：
+
+| 方法 | P2（新 chart） | P4（新玩家 + 新 chart） |
+|---|---|---|
+| **CM3P + external MLP** | **0.56602 ± 0.00307** | **0.57343 ± 0.00433** |
+| CM3P + external 线性 | 0.57786 ± 0.00335 | 0.58479 ± 0.00494 |
+| CM3P 线性 (λ1e-3) | 0.61618 ± 0.00293 | 0.62411 ± 0.00345 |
+| CM3P MLP h64 L2 | 0.61664 ± 0.00265 | 0.62540 ± 0.00653 |
+| Sunny | 0.62868 ± 0.00207 | 0.63111 ± 0.00777 |
+| Daniel | 0.62768 ± 0.00212 | 0.63102 ± 0.00601 |
+| star | 0.66153 ± 0.00137 | 0.66021 ± 0.00779 |
+
+* **external MLP 在 P2/P4 都是最好**，对 external 线性的 paired ΔNLL 分别为
+  **-0.01183 ± 0.00051** / **-0.01137 ± 0.00540**，5/5 个划分种子为负。
+* **CM3P-only MLP 仍没有增益**（P2 0.6166 vs 0.6162；P4 0.6254 vs 0.6241，Δ 符号混合）。
+  所以"非线性不能跨新图"只适用于纯 CM3P；**external 特征 + 非线性**可以泛化。
+* P2 的 5-seed 均值与已发布单划分（seed 20260928）在 ~1σ 内：external 线性 0.5779 vs
+  0.5756、CM3P 线性 0.6162 vs 0.6148、CM3P MLP 0.6166 vs 0.6152；external MLP 当时
+  没有正式 P2 数字（P1 val 0.5476 是 player-in-sample 口径）。
+* P4 只比 P2 差 ~0.007–0.009 nats（内容模型），方法排序不变；P2/P4 的 test 集与
+  ceiling 不同，绝对 NLL 不可跨口径比较。
+
+完整表、配对 Δ、Pearson/Spearman、局限见 [p4_multiseed.md](p4_multiseed.md)。
 
 ---
 
@@ -487,9 +526,12 @@ CD MLP 与 CD linear 的 Δ 为 0（CI 跨 0，P=0.48）：**CM3P-only 的非线
 5. **P2（新 chart）**：CM3P-only linear captured 0.6006（NLL 0.6148），MLP CD 0.5976
    （0.6152，**没有增益**），CM3P+external linear CD **0.9013**（0.5756）。per-chart
    Pearson(d,b) 同向：0.5546 / 0.5613 / **0.6025**（Sunny 0.3713），MLP 只在 Pearson 上
-   微高于 linear、NLL 不变（§5.3）。所以 MLP 的 P1/P1-val 增益主要在 seen chart 上；
-   **能跨图泛化的是外部内容信号**，不是 CM3P 的非线性容量。这也是本次最重要的泛化结论：
-   **非线性对新玩家有效，但对新 chart 无效**。
+   微高于 linear、NLL 不变（§5.3）。所以 **CM3P-only** MLP 的 P1/P1-val 增益主要在
+   seen chart 上；能跨图泛化的是外部内容信号。**5 个划分种子的复核（§5.6）**进一步
+   区分了两件事：CM3P-only 的非线性对新 chart 无效（0.6166 vs 0.6162），但
+   CM3P+external MLP 比 external linear 好 0.0118 nats（5/5 种子，P4 上同样 5/5）。
+   原来的"非线性对新玩家有效、对新 chart 无效"应改为"**CM3P-only 的非线性**对新
+   chart 无效；external 特征上的非线性可以跨新图"。
 6. **P1 captured >1 不是模型超过 ceiling**：P1 的 signal 用评测玩家的其他 pair 拟合，
    ceiling 的 `b` 按玩家 cross-fit、完全不含这些玩家；这是 player-in-sample。
    val captured 也 >1，因为 val ceiling（80% 玩家、coverage 0.883）本身欠拟合。
@@ -506,8 +548,10 @@ CD MLP 与 CD linear 的 Δ 为 0（CI 跨 0，P=0.48）：**CM3P-only 的非线
   其他 train pair；ceiling 按玩家 cross-fit。P1 只回答"同批玩家、同 chart、新 pair"。
 * **val 的 0.5476 不是"新玩家+新 chart"**：val 只换玩家，chart 仍是同一批；val NLL 是
   早停选出的，且 val captured 的分母只覆盖 88.3% 的 val pair，而 val NLL 是全 val pair。
-* **P2 的 0.9013 不是"全新"**：P2 换 chart，但模型仍看过 test 玩家的其他 chart 行；
-  真正的 player-disjoint test（P3）与 P2∩P3 没有做。
+* **P2 的 0.9013 不是"全新"**：P2 换 chart，但模型仍看过 test 玩家的其他 chart 行。
+  P4（[p4_multiseed.md](p4_multiseed.md)）补了玩家+谱面双重冷启动，但 P4 是**独立
+  划分协议**（不是 P2 的同一 test 集再抽玩家），P2 本身仍不是新玩家；P3 的正式
+  runner 仍未做。
 * **external 是 stacking**：external linear/MLP = CM3P + MSD/Sunny；Sunny 单独 val 0.637、
   CM3P 单独 0.602/0.568；0.548 是两个强信号的组合，不是 CM3P 单独的功劳。CM3P 的净贡献
   看 M0/M1。
@@ -519,8 +563,9 @@ CD MLP 与 CD linear 的 Δ 为 0（CI 跨 0，P=0.48）：**CM3P-only 的非线
 
 * **captured 的绝对值依赖 ceiling 的 coverage/噪声**。本次 P1/val 都出现 captured >1；
   报告必须同时给 `ceiling_nll` / `ceiling_coverage` / `n_strict`，否则不可解释。
-* **P1 与 val/P2 不是同一个总体**。P1 = 新 pair、同 player/chart；val = 新 player、同 chart；
-  P2 = 新 chart。论文主表应放 val（新玩家）和 P2（新图）；P1 只作描述。
+* **P1 与 val/P2/P4 不是同一个总体**。P1 = 新 pair、同 player/chart；val = 新 player、
+  同 chart；P2 = 新 chart；P4 = 新 player + 新 chart。论文主表应放 val（新玩家）、
+  P2（新图）和 P4（双重冷启动）；P1 只作描述。
 * **strict pair 与 all-pair** 的 captured 差 1–2 个点（MSD 0.4401 vs 0.4192）；必须写清楚。
 * **micro NLL 与逐玩家 Spearman 大体同向但不完全同序**：MLP+external 的 lw 0.611 最高，
   MSD 的 lw 0.448 低于 Sunny 0.510；NLL 更看高高置信/大间隔 pair。主指标是 NLL。
@@ -534,8 +579,10 @@ CD MLP 与 CD linear 的 Δ 为 0（CI 跨 0，P=0.48）：**CM3P-only 的非线
   pair-random（P1），所以 test 数比 val 低。
 * **P3 未做正式 runner**：真正的 player-disjoint **test**（留出 cluster 的 test 行）没有
   跑官方 captured；val 已给出 player-disjoint 的 NLL 排序，但和 P1/P2 的 ceiling 不可直接混。
+  P4 用独立划分补了双重冷启动的 5 个种子（[p4_multiseed.md](p4_multiseed.md)），但它不是
+  同一 test 集上的 P2∩P3，且模型种子固定 0。
 * **P2 的口径**：CD 模型仍看过 test 玩家的其他 chart 行；它不是"新玩家+新 chart"。
-  真正的双重泛化需要 P2 ∩ P3，本次未做。
+  P4 做了玩家+谱面双重冷启动，但它是独立划分协议；P2 本身仍不是新玩家。
 * **本地 CM3P 是 audio-off**：主表 100% 覆盖；发布表只有 4,042/6,828（59.2%）且有音频，
   两者是不同表示（mix report：DO NOT MIX）。不能跨 coverage 比较 captured。
 * **选择偏差**：top-1000、ACC∈(0.90, 0.998]、n_plays≥2；难度序在两端最有区分度，
@@ -544,8 +591,8 @@ CD MLP 与 CD linear 的 Δ 为 0（CI 跨 0，P=0.48）：**CM3P-only 的非线
   两者的 chart-level 相关只有约 0.24–0.26；CM3P 学到的是"对这批玩家的 ACC 难度"。
 * **外部信号是既有难度系统**：M2 是 stacking/互补，不是纯内容模型；它的提升不能全部
   记在 CM3P 头上。M0（CM3P-only）和 M1 才是 CM3P 本身的贡献。
-* **计算限制**：CPU、6 线程、MLP 100 epoch；更大模型/更久训练可能继续降低 NLL，
-  但 linear 已接近 content oracle，主要剩余空间在非线性和外部特征。
+* **计算限制**：CPU、6 线程、MLP 98 epoch（CD）/100 epoch（P1 val）；更大模型/更久
+  训练可能继续降低 NLL，但 linear 已接近 content oracle，主要剩余空间在非线性和外部特征。
 
 ---
 
@@ -604,6 +651,9 @@ python scripts/step2_rank_eval.py \
     --split test --ceiling-fit all --common-maps --strict-pairs \
     --folds 2 --bootstrap 400 --cache-dir /tmp/rank_cache \
     --out results/cm3p_rank_1k/rank_eval_p2_final.json
+
+# P2/P4 多种子（5 个划分种子；训练 + 官方评测 + mean/std）
+python scripts/run_p2_p4_multiseed.py --protocols p2,p4 --seeds 1,2,3,4,5 --threads 6
 ~~~
 
 单元测试：
@@ -632,6 +682,7 @@ python scripts/test_step2_cm3p_mlp.py        # MLP 自检
 | `results/cm3p_rank_1k/paired_delta.json` / `_p2.json` | P1/P2 关键对比的配对 ΔNLL 与 95% CI |
 | `results/cm3p_rank_1k/cm3p_linear_ceiling_l1e3.json` | CM3P linear 的 in-sample content oracle |
 | `results/cm3p_rank_1k/cm3p_linear_extra_ceiling_l1e3.json` | CM3P+external linear 的 in-sample oracle |
+| `results/p4_multiseed/summary.csv` / `summary_mean_std.csv` / `summary.md` | P2/P4 5 个划分种子 × 7 方法的 NLL / Pearson / Spearman 与 mean/std（见 [p4_multiseed.md](p4_multiseed.md)） |
 
 本文所有数字都来自上述 JSON（§5.3 的 P2 表来自 `rank_eval_p2_final.json`）。
 `summary.csv` 是训练 driver 的扁平汇总；其中的 P2 行来自更早的 2 折 / λ=1e-2 运行，

@@ -116,6 +116,10 @@ step0 的 5 列 + `split` + `player_id_base`（原玩家 id）+ `player_seg`（�
   整张谱面依次进 test，直到 test 的 play 数达到 `1-train_frac`；test 与 train 的谱面
   集合互斥，实际比例略高于 `train_frac`（整图不可拆），`split.actual_test_frac` 是实际值。
   配置 [configs/exp_pairbest_playquota_cm3p_1k.yaml](../configs/exp_pairbest_playquota_cm3p_1k.yaml)。
+* **P4（双重冷启动）**：玩家和谱面各分层 60/40，train 只用 6×6、test 只用 4×4；
+  off-diagonal 行不训练，只留给 BT ceiling。实现 `scripts/step1_p4_split.py`，
+  协议与结果见 [docs/p4_multiseed.md](p4_multiseed.md)。P2 的多种子划分重采样见
+  `scripts/step1_pairbest_resplit.py`。
 
 ## 4. step1/clean（legacy play 级）
 

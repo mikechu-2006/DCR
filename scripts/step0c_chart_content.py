@@ -15,11 +15,35 @@ Sources
       whitelist.  Zero GPU cost -- this is the path the first runs use.
   --source osu-dir
       Run the CM3P beatmap tower on local .osu files.  Needs transformers + the CM3P
-      checkout + the HF checkpoint, and a GPU to be practical.  Reuses upstream's own
-      BeatmapFilesDataset so the windowing/averaging matches the published pipeline.
-      The cache now holds *every* whitelist chart (scripts/step0d_fetch_osu.py, only
-      .osu bodies -- no audio/images), so this path can cover the whole 21,949 instead
-      of the 11,877 the published table happens to contain.
+      checkout + the HF checkpoint, and a GPU to be practical.  The cache now holds
+      *every* whitelist chart (scripts/step0d_fetch_osu.py, only .osu bodies -- no
+      audio/images), so this path can cover the whole 21,949 instead of the 11,877 the
+      published table happens to contain.
+
+  --crop canon (default)
+      T1 of the v5 plan: add_hitsounds/add_kiai/add_mania_sv = False.
+      The kept flags are inherited from the checkpoint, NOT forced on: the real
+      HF preprocessor config has add_snapping=False, add_cls_token=True and
+      max_length=2000 (the upstream training yaml says True/False/4000).  --crop
+      legacy turns the three payload flags on, leaving the rest unchanged.
+  --windows on (default for --source osu-dir)
+      T2: in addition to the chart table, write one float16 .npy per chart (time-ordered
+      16 s windows) and .cache/cm3p/index.parquet.  Windows are batched by a
+      BucketSampler (ceil(len/64)*64) with dynamic padding, so pad_efficiency and
+      charts/s are reported; the old BeatmapFilesDataset path is --windows off.
+  --mania-columns auto (default)
+      Detects that upstream never emits [MANIA_COLUMN_*]: parsing_cm3p.py:501 writes
+      Group.column while tokenization_cm3p.py:191 reads Group.mania_column, which the
+      dataclass never sets.  The frozen checkpoint is therefore column-blind; 'on'
+      installs the opt-in runtime patch (fixes the attribute and the 0/1-based column),
+      which is out-of-distribution for the checkpoint.  Every index row records
+      columns_emitted so the two representations can never be mixed silently.
+
+  Merge guard
+      A run writes <out>.meta.json with its cfg_hash/crop.  Merging canon rows into a
+      table built with the legacy flags (or the reverse) is refused unless
+      --allow-mixed-crop or --refresh is given.  --crop canon defaults --out to
+      chart_content_cm3p_local_canon.parquet, leaving the legacy table untouched.
 
 Embedding convention (matches upstream extract_beatmap_embeddings.py):
   one 512-d, L2-normalised vector per beatmap = mean over its 16-second windows,
@@ -33,22 +57,27 @@ Records that are NOT silently dropped
 Idempotent merge
   If the output already exists it is loaded first, and only whitelist ids that are still
   missing are fetched/computed (--refresh forces a full recompute).  On a collision the
-  NEW row wins, so re-running with a better source upgrades rows in place.
+  NEW row wins, so re-running with a better source upgrades rows in place.  When the main
+  table is already complete but --windows on is set, the run still goes through the window
+  exporter: ready charts are skipped by the index, missing windows are filled in.
 
 Chart id vs the id inside the .osu
   Upstream keys every dataset row by the `BeatmapID:` line *inside* the body, and a chart
   that was deleted and re-uploaded is served with the NEW id there (or with 0), so the row
   no longer matches the id the file was fetched for and would be dropped without a word.
-  from_osu_dir stages an id-normalised copy for exactly those files (the cache is never
-  modified, and checksum_ok is still computed on the original file).  If a run reports
-  fewer charts than it staged, look for the "[osu] N/M .osu name a different BeatmapID"
-  line -- the tail summary of scripts/slurm/cm3p_embed.slurm calls it "no .osu in the cache",
+  the --windows off path stages an id-normalised copy for exactly those files (the cache
+  is never modified, and checksum_ok is still computed on the original file).  The T2 path
+  does not need it: it passes the original file to the processor and keys the row by the
+  file name, so the id line inside the body is never used.  If a legacy run reports fewer
+  charts than it staged, look for the "[osu] N/M .osu name a different BeatmapID" line --
+  the tail summary of scripts/slurm/cm3p_embed.slurm calls it "no .osu in the cache",
   which is only one of the two causes.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import re
 import sys
@@ -58,6 +87,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent))
+from dcr import cm3p_windows as cw  # noqa: E402
 
 PROC = Path("data/processed")
 EMBED_DIM = 512
@@ -268,26 +301,402 @@ def relabel_beatmap_id(body: bytes, bid: int) -> bytes:
     return _OSU_ID_RE.sub(lambda m: m.group(1) + str(bid).encode(), body, count=1)
 
 
-def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
-                 device: str) -> pd.DataFrame:
-    """Run the CM3P beatmap tower on local .osu/.osz files (upstream dataset + model)."""
+# ---------------------------------------------------------------- T1/T2 helpers
+def _git_commit(root: Path) -> str:
+    try:
+        import subprocess
+        r = subprocess.run(["git", "-C", str(root), "rev-parse", "--short", "HEAD"],
+                           capture_output=True, text=True, timeout=10)
+        return r.stdout.strip()
+    except Exception:
+        return ""
+
+
+def _sidecar(out: Path) -> Path:
+    return out.with_suffix(out.suffix + ".meta.json")
+
+
+def _check_merge_guard(out: Path, meta: dict | None, allow: bool) -> None:
+    """Refuse to merge rows from a different token representation into a table."""
+    if meta is None or not out.exists():
+        return
+    sc = None
+    p = _sidecar(out)
+    if p.exists():
+        try:
+            import json
+            sc = json.loads(p.read_text())
+        except Exception:
+            sc = None
+    if sc is None:
+        crop = meta.get("crop", {})
+        legacy = bool(crop.get("add_hitsounds")) and bool(crop.get("add_kiai")) \
+            and bool(crop.get("add_mania_sv"))
+        if legacy:
+            print(f"[merge] {out.name} has no cfg sidecar; assuming the legacy flags "
+                  f"(--crop legacy) -- OK", flush=True)
+            return
+        if allow:
+            print(f"[merge] WARNING: {out.name} has no cfg sidecar and this run is "
+                  f"{meta.get('crop')}; --allow-mixed-crop given", flush=True)
+            return
+        raise SystemExit(
+            f"{out} exists without a cfg sidecar (it was built with the legacy flags). "
+            "This run uses --crop canon, so merging would mix two representations. "
+            "Use a new --out, delete the table, or pass --allow-mixed-crop after "
+            "accepting the mixture.")
+    if str(sc.get("cfg_hash")) != str(meta.get("cfg_hash")):
+        msg = (f"{out} was built with cfg {sc.get('cfg_hash')} (crop "
+               f"{sc.get('crop')}) but this run is cfg {meta.get('cfg_hash')} "
+               f"(crop {meta.get('crop')})")
+        if allow:
+            print(f"[merge] WARNING: {msg}; --allow-mixed-crop given", flush=True)
+            return
+        raise SystemExit(msg + ". Use a new --out, --refresh, or --allow-mixed-crop.")
+
+
+def _precheck_sidecar(out: Path, args, allow: bool) -> None:
+    """Fail before the GPU work if the existing table uses a different crop."""
+    if not out.exists() or args.refresh:
+        return
+    p = _sidecar(out)
+    if not p.exists():
+        if args.crop == "legacy" or allow:
+            return
+        raise SystemExit(
+            f"{out} exists without a cfg sidecar (it was built with the legacy flags). "
+            "A --crop canon run would merge two representations. Use a new --out, "
+            "delete the table, or pass --allow-mixed-crop.")
+    try:
+        sc = json.loads(p.read_text())
+    except Exception:
+        return
+    decision = ("add_hitsounds", "add_kiai", "add_mania_sv")
+    want = {k: v for k, v in cw.CropSpec.from_name(args.crop).to_dict().items()
+            if k in decision}
+    got = {k: (sc.get("crop") or {}).get(k) for k in decision}
+    if got != want or sc.get("mania_columns") != args.mania_columns:
+        msg = (f"{out} was built with crop={sc.get('crop')} "
+               f"mania_columns={sc.get('mania_columns')} (cfg {sc.get('cfg_hash')}) "
+               f"but this run asks crop={want} mania_columns={args.mania_columns}")
+        if allow:
+            print(f"[merge] WARNING: {msg}; --allow-mixed-crop given", flush=True)
+            return
+        raise SystemExit(msg + ". Use a new --out, --refresh, or --allow-mixed-crop.")
+
+
+def _core_audit(files: dict[int, Path], processor, snap, tids, crop,
+                args, max_length: int) -> dict:
+    """Prove on real charts that the crop removes no note/timing information."""
+    n = int(args.core_audit)
+    if n <= 0:
+        return {"n": 0}
+    legacy = cw.CropSpec.legacy()
+    paths = sorted(files.items())[:n]
+    removed = {"hitsound": 0, "kiai": 0, "sv": 0}
+    n_notes = 0
+    n_cols = 0
+    n_core_drop = 0
+    bad: list[str] = []
+    skipped: list[str] = []
+    for bid, path in paths:
+        try:
+            crop.apply(processor.beatmap_parser)
+            ct_crop = cw.tokenize_chart(
+                processor, path, window_length_sec=snap.window_length_sec,
+                window_stride_sec=snap.window_stride_sec,
+                min_window_length_sec=snap.min_window_length_sec,
+                max_length=max_length, tids=tids, beatmap_id=bid,
+                keep_tokens=True)
+            legacy.apply(processor.beatmap_parser)
+            ct_full = cw.tokenize_chart(
+                processor, path, window_length_sec=snap.window_length_sec,
+                window_stride_sec=snap.window_stride_sec,
+                min_window_length_sec=snap.min_window_length_sec,
+                max_length=max_length, tids=tids, beatmap_id=bid,
+                keep_tokens=True)
+        except Exception as exc:
+            # a corrupt .osu is not a crop failure: the exporter will skip it too
+            skipped.append(f"{bid}: {exc}")
+            continue
+        finally:
+            crop.apply(processor.beatmap_parser)
+        a = cw.audit_crop_pair(ct_full, ct_crop)
+        for k, v in a.removed.items():
+            removed[k] += v
+        n_notes += ct_crop.n_notes
+        n_cols += ct_crop.n_column_tokens
+        n_core_drop += int(ct_crop.n_core_dropped)
+        if not a.ok:
+            bad.append(f"{bid}: " + "; ".join((a.problems + a.window_problems)[:3]))
+    summary = {"n": len(paths), "n_bad": len(bad), "n_skipped": len(skipped),
+               "removed": removed, "n_notes": n_notes,
+               "n_column_tokens": n_cols, "columns_emitted": n_cols > 0,
+               "n_core_tokens_dropped": n_core_drop}
+    if skipped:
+        print(f"[core] {len(skipped)} chart(s) could not be tokenised and were skipped "
+              f"from the audit (they are skipped by the exporter too): "
+              f"{skipped[:3]}", flush=True)
+    if bad:
+        for b in bad[:10]:
+            print(f"[core] FAIL {b}", flush=True)
+        raise SystemExit(
+            "CORE AUDIT FAILED: the crop changed the note/timing stream. Refusing "
+            "to export a window store that lost chart content.")
+    if len(skipped) == len(paths):
+        print("[core] WARNING: every audited chart failed to tokenise; the core audit "
+              "verified nothing (the exporter will skip them)", flush=True)
+    else:
+        print(f"[core] {len(paths) - len(skipped)} charts: note/timing stream identical "
+              f"after the crop; removed tokens hitsound={removed['hitsound']:,} "
+              f"kiai={removed['kiai']:,} sv={removed['sv']:,}; "
+              f"{n_notes:,} notes, {n_cols:,} column tokens", flush=True)
+    if n_core_drop:
+        print(f"[core] WARNING: {n_core_drop} core note token(s) in the audited "
+              f"charts exceed max_length={max_length}; the export records them per "
+              f"chart and --on-truncate decides (see the index).", flush=True)
+    return summary
+
+
+def _md5_of(p: Path) -> str:
+    h = hashlib.md5()
+    with open(p, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _encode_fn(model, device: str, torch_mod):
+    def encode(ids, mask):
+        with torch_mod.no_grad():
+            out = model(input_ids=torch_mod.as_tensor(ids, device=device),
+                        attention_mask=torch_mod.as_tensor(mask, device=device),
+                        return_loss=False)
+        return out.beatmap_embeds.detach().float().cpu().numpy()
+    return encode
+
+
+def _table_from_vectors(acc, wins, md5_map, csum, audio: bool, rev: str):
+    ids, embs, wins_l, oks, srcs, revs = [], [], [], [], [], []
+    for bid in sorted(acc):
+        want = csum.get(int(bid), "")
+        got = md5_map.get(int(bid), "")
+        ids.append(int(bid))
+        embs.append(np.asarray(acc[bid], dtype=np.float32))
+        n = int(wins.get(int(bid), 0))
+        wins_l.append(n if n > 0 else None)
+        oks.append((got == want) if want else None)
+        srcs.append(SRC_LOCAL_AUDIO if audio else SRC_LOCAL_NOAUDIO)
+        revs.append(rev)
+    if not ids:
+        return empty_table()
+    return _pack(ids, embs, wins_l, oks, srcs, revs)
+
+
+def _export_windows_table(files, md5_map, csum, processor, snap, tids, crop, args,
+                          rev: str, mdt, attn: str, cfg: str, encode,
+                          torch_mod) -> tuple[pd.DataFrame, dict]:
+    """T2: tokenise every chart, export .npy windows, build the chart table."""
+    win_dir = Path(args.window_dir)
+    index_path = Path(args.window_index)
+    if args.refresh_windows:
+        if index_path.exists():
+            index_path.unlink()
+        n_removed = 0
+        if win_dir.exists():
+            for p in win_dir.glob("*.npy"):
+                p.unlink()
+                n_removed += 1
+        print(f"[win] --refresh-windows: cleared the index and {n_removed:,} .npy files",
+              flush=True)
+    existing = cw.load_window_index(index_path)
+    hashes = cw.index_cfg_hashes(existing)
+    if hashes and cfg not in hashes:
+        raise SystemExit(
+            f"[win] {index_path} was built with cfg {sorted(hashes)} but this run is "
+            f"{cfg}. Mixing window representations is not allowed: pass "
+            "--refresh-windows (rebuild) or use a different --window-dir/--window-index.")
+    ready = (cw.index_ready(existing, cfg, md5_map, win_dir)
+             if existing is not None else set())
+    if ready:
+        print(f"[win] resuming: {len(ready):,}/{len(files):,} charts already exported "
+              f"under cfg {cfg}", flush=True)
+    cfg_obj = cw.ExportConfig(
+        win_dir=win_dir, index_path=index_path, max_length=snap.max_length,
+        batch_size=int(args.window_batch), buffer_windows=int(args.window_buffer),
+        seed=int(args.window_seed), dtype=args.window_dtype, cfg_hash=cfg,
+        verify_all=(int(args.verify_windows) == 0),
+        verify_first=max(1, int(args.verify_windows)),
+        on_truncate=args.on_truncate)
+    exporter = cw.WindowExporter(cfg_obj, encode, base_index=existing,
+                                 log=lambda s: print(s, flush=True))
+    acc: dict[int, np.ndarray] = {}
+    wins: dict[int, int] = {}
+    n_ready = n_failed = 0
+    checked_columns = False
+    order = sorted(files)
+    t0 = time.time()
+    for k, bid in enumerate(order):
+        path = files[bid]
+        if bid in ready:
+            mat = np.load(win_dir / f"{bid}.npy").astype(np.float32)
+            mean = mat.mean(axis=0)
+            norm = float(np.linalg.norm(mean))
+            acc[int(bid)] = (mean / norm) if norm > 0 else mean
+            wins[int(bid)] = int(mat.shape[0])
+            n_ready += 1
+            continue
+        try:
+            ct = cw.tokenize_chart(
+                processor, path, window_length_sec=snap.window_length_sec,
+                window_stride_sec=snap.window_stride_sec,
+                min_window_length_sec=snap.min_window_length_sec,
+                max_length=snap.max_length, tids=tids, beatmap_id=bid,
+                md5=md5_map.get(int(bid), ""))
+        except Exception as exc:
+            print(f"[win] WARNING: {bid} failed to tokenize: {exc}", flush=True)
+            exporter.skipped.append((int(bid), str(exc)))
+            n_failed += 1
+            continue
+        if not checked_columns and ct.n_note_tokens:
+            checked_columns = True
+            if ct.columns_emitted:
+                print(f"[core] {bid}: [MANIA_COLUMN_*] tokens are PRESENT "
+                      f"({ct.n_column_tokens:,} in {ct.n_windows} windows)", flush=True)
+            elif args.mania_columns == "auto":
+                print("[core] WARNING: no [MANIA_COLUMN_*] tokens are emitted. Upstream "
+                      "stores Group.column but the tokenizer reads Group.mania_column "
+                      "(parsing_cm3p.py:501 vs tokenization_cm3p.py:191), so the frozen "
+                      "model is column-blind. Pass --mania-columns on to install the "
+                      "opt-in parser patch (out-of-distribution for the checkpoint).",
+                      flush=True)
+            elif args.mania_columns == "on":
+                raise SystemExit(
+                    f"{bid}: --mania-columns on was requested but no column token "
+                    "was emitted; the runtime patch did not take effect")
+        wins[int(bid)] = ct.n_windows
+        exporter.add_chart(ct)
+        if (k + 1) % 200 == 0:
+            el = time.time() - t0
+            print(f"[win] tokenized {k + 1:,}/{len(order):,} charts "
+                  f"({el:.0f}s, {(k + 1) / max(el, 1e-9):.1f} charts/s)", flush=True)
+    res = exporter.finish()
+    acc.update(res.per_chart)
+    for bid, _reason in res.skipped:
+        wins.pop(int(bid), None)
+    table = _table_from_vectors(acc, wins, md5_map, csum, False, rev)
+    print(f"[win] exported {res.n_charts:,} charts / {res.n_windows:,} windows in "
+          f"{res.seconds:.0f}s ({res.n_charts / max(res.seconds, 1e-9):.2f} charts/s); "
+          f"pad_efficiency={res.pad_efficiency:.3f}; parity cosine >= "
+          f"{res.min_parity_cosine:.9f}", flush=True)
+    if res.n_truncated_windows:
+        print(f"[win] WARNING: {res.n_truncated_windows} window(s) exceeded "
+              f"max_length={snap.max_length}; {res.n_core_tokens_dropped} core note "
+              f"token(s) were dropped. The affected charts are flagged in the index "
+              f"(n_core_tokens_dropped) and excluded from nothing by default.",
+              flush=True)
+    meta = {
+        "tool": "step0c_chart_content/v4",
+        "cfg_hash": cfg,
+        "snapshot": snap.to_dict(),
+        "crop": crop.to_dict(),
+        "mania_columns": args.mania_columns,
+        "columns_emitted": bool(res.columns_emitted),
+        "model": rev,
+        "dtype": str(mdt),
+        "attn": attn,
+        "windows": {"dir": str(win_dir), "index": str(index_path),
+                    "batch": int(args.window_batch),
+                    "buffer": int(args.window_buffer),
+                    "dtype": args.window_dtype, "seed": int(args.window_seed),
+                    "on_truncate": args.on_truncate},
+        "export": res.summary(),
+        "n_target": len(files), "n_ready": n_ready, "n_failed": n_failed,
+        "n_no_windows": max(0, len(res.skipped) - n_failed),
+    }
+    cw.write_meta(index_path.with_suffix(".meta.json"), meta)
+    return table, meta
+
+
+def _dataset_table(files, csum, processor, crop, audio, batch, device,
+                   rev, args, md5_map, forward_fn):
+    """Legacy loader path (--windows off): upstream BeatmapFilesDataset."""
+    from torch.utils.data import DataLoader
+    from utils.beatmap_files_dataset import BeatmapFilesDataset
+    farm = tempfile.TemporaryDirectory(prefix="cm3p_subset_")
+    n_relabelled = 0
+    for bid, src in files.items():
+        dst = Path(farm.name) / f"{bid}.osu"
+        try:
+            inner = osu_beatmap_id(src)
+            if inner is not None and inner != bid:
+                dst.write_bytes(relabel_beatmap_id(src.read_bytes(), bid))
+                n_relabelled += 1
+            else:
+                os.symlink(os.path.abspath(src), dst)
+        except OSError as exc:
+            print(f"[osu] WARNING: cannot stage {src}: {exc}", flush=True)
+    if n_relabelled:
+        print(f"[osu] {n_relabelled:,}/{len(files):,} .osu name a different BeatmapID "
+              f"inside; staged id-normalised copies", flush=True)
+    n_files = len(list(Path(farm.name).glob("*.osu")))
+    print(f"[osu] corpus: {n_files:,} .osu staged for {len(files):,} wanted charts",
+          flush=True)
+    ds = BeatmapFilesDataset([farm.name], processor=processor,
+                             include_audio=audio, include_beatmap=True,
+                             include_metadata=False)
+    loader = DataLoader(ds, batch_size=batch, num_workers=0, drop_last=False)
+    acc: dict[int, list] = {}
+    torch_mod = __import__("torch")
+    t0 = time.time()
+    with torch_mod.no_grad():
+        for batch_i, b in enumerate(loader):
+            if len(b.get("input_ids", [])) == 0:
+                continue
+            inputs = {"input_ids": b["input_ids"].to(device),
+                      "attention_mask": b["attention_mask"].to(device)}
+            if b.get("input_features") is not None:
+                inputs["input_features"] = b["input_features"].to(device=device)
+            emb = forward_fn(inputs)
+            for i, bid in enumerate(b["beatmap_id"].tolist()):
+                if bid is None or int(bid) not in files:
+                    continue
+                acc.setdefault(int(bid), []).append(emb[i])
+            if batch_i % 10 == 0:
+                el = time.time() - t0
+                print(f"[osu] batch {batch_i + 1}: {len(acc):,}/{n_files:,} charts seen, "
+                      f"{el:.0f}s elapsed ({(batch_i + 1) / max(el, 1e-9):.2f} batch/s)",
+                      flush=True)
+    vecs: dict[int, np.ndarray] = {}
+    wins: dict[int, int] = {}
+    for bid, vs in acc.items():
+        m = np.mean(np.stack(vs), axis=0)
+        n = float(np.linalg.norm(m))
+        vecs[bid] = (m / n) if n > 0 else m
+        wins[bid] = len(vs)
+    table = _table_from_vectors(vecs, wins, md5_map, csum, audio, rev)
+    print(f"[osu] {len(vecs):,} beatmaps embedded", flush=True)
+    return table
+
+
+def from_osu_dir(dirs, want, rev, audio, batch, device, args):
+    """Run the CM3P beatmap tower on local .osu files (T1 crop + T2 windows)."""
     root = Path(os.environ.get("CM3P_ROOT", "external/cm3p")).resolve()
     if not (root / "cm3p").is_dir():
         raise SystemExit(f"{root} not found -- git clone https://github.com/OliBomby/CM3P there")
     sys.path.insert(0, str(root))
     try:
         import torch
-        from torch.utils.data import DataLoader
         from cm3p.processing_cm3p import CM3PProcessor
         from cm3p.modeling_cm3p import CM3PModel
-        from utils.beatmap_files_dataset import BeatmapFilesDataset
+        from cm3p.parsing_cm3p import get_song_length, load_beatmap  # noqa: F401
     except Exception as exc:                                   # pragma: no cover
         hint = ""
         if "hydra" in str(exc):
-            hint = ("\n  hydra-core: CM3P's config.py imports 'hydra' at module level (it only "
-                    "builds\n  train.py's ConfigStore) and utils/mmrs_dataset.py pulls it in, so "
-                    "the embed\n  path needs it even though Hydra itself is never used:  "
-                    "pip install 'hydra-core>=1.3,<1.4'")
+            hint = ("\n  hydra-core: CM3P's config.py imports 'hydra' at module level "
+                    "(it only builds\n  train.py's ConfigStore) and utils/mmrs_dataset.py "
+                    "pulls it in, so the embed\n  path needs it even though Hydra itself "
+                    "is never used:  pip install 'hydra-core>=1.3,<1.4'")
         raise SystemExit(
             "the osu-dir path needs the CM3P inference env (torch, transformers==4.55.0, "
             "hydra-core, slider) -- see requirements-cm3p.txt and legacy/docs/cm3p_hpc_slurm.md "
@@ -297,8 +706,34 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
         device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"[osu] device={device}  audio={audio}  dirs={[str(d) for d in dirs]}")
     processor = CM3PProcessor.from_pretrained(rev)
-    # The published config may ask for flash_attention_2, which needs the flash-attn wheel.
-    # Upstream README: "For CPU-only or unsupported GPUs, set attn_implementation: sdpa".
+    parser_cls = type(processor.beatmap_parser)
+    if args.mania_columns == "on":
+        cw.install_mania_column_patch(parser_cls)
+        print("[core] installed the opt-in mania-column patch (1-based column, "
+              "Group.mania_column). The published checkpoint never saw these tokens: "
+              "validate the embeddings before trusting a comparison.", flush=True)
+    crop = cw.CropSpec.from_name(args.crop)
+    crop.apply(processor.beatmap_parser)
+    snap = cw.read_processor_snapshot(processor)
+    crop = cw.CropSpec.read(processor.beatmap_parser)   # actual kept flags
+    crop.check()
+    cw.assert_processor_config(snap, strict=not args.allow_config_mismatch)
+    tids = cw.token_ids(processor)
+    print(f"[T0] beatmap kwargs: window={snap.window_length_sec:g}s "
+          f"stride={snap.window_stride_sec:g}s max_length={snap.max_length} "
+          f"truncation={snap.truncation} tokenizer.max_time={snap.tokenizer_max_time}ms "
+          f"time_step={snap.tokenizer_time_step}ms add_cls={snap.tokenizer_add_cls}",
+          flush=True)
+    print(f"[T1] crop={crop.name}: hitsounds={crop.add_hitsounds} kiai={crop.add_kiai} "
+          f"mania_sv={crop.add_mania_sv} timing={crop.add_timing} "
+          f"timing_points={crop.add_timing_points} snapping={crop.add_snapping}",
+          flush=True)
+    if args.windows == "on" and audio:
+        raise SystemExit(
+            "--audio on is not supported by the T2 window export (it tokenises with "
+            "audio=None, so the exported vectors would silently differ from the main "
+            "table). Use --audio off, or --windows off for the legacy audio path.")
+
     attn = os.environ.get("CM3P_ATTN", "sdpa")
     try:
         model = CM3PModel.from_pretrained(rev, trust_remote_code=True, revision="main",
@@ -307,18 +742,10 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
         print(f"[osu] attn_implementation={attn!r} rejected ({exc}); retrying without it",
               flush=True)
         model = CM3PModel.from_pretrained(rev, trust_remote_code=True, revision="main")
-    # bf16 on CUDA is what upstream's extract_beatmap_embeddings.py used for the published
-    # table, so it is also the faithful choice here; fp32 on CPU.
     mdt = torch.bfloat16 if device == "cuda" else torch.float32
     model = model.to(device=device, dtype=mdt).eval()
     print(f"[osu] model dtype {mdt}, attn={attn}", flush=True)
 
-    # ---- the corpus: only the charts we actually want ----------------------------
-    # Upstream parses EVERY .osu under the paths it is given, before the first batch.
-    # On 21,949 files that is minutes of silence on a network filesystem -- and the
-    # 256-chart probe would pay exactly the same price.  So locate the wanted files and
-    # hand upstream a symlink farm holding only those: the scan, the per-chart parse and
-    # the final md5 pass all shrink to the target set.
     keep = {int(b) for b in want["beatmap_id"].tolist()}
     csum = {int(b): c for b, c in zip(want["beatmap_id"], want["checksum"])}
     found = _locate_osu(dirs, keep)
@@ -326,115 +753,66 @@ def from_osu_dir(dirs, want: pd.DataFrame, rev: str, audio: bool, batch: int,
     if missing:
         print(f"[osu] WARNING: {len(missing):,} wanted charts have no .osu under "
               f"{[str(d) for d in dirs]} (e.g. {missing[:5]})", flush=True)
-    farm = tempfile.TemporaryDirectory(prefix="cm3p_subset_")
-    n_relabelled = 0
-    for bid, src in found.items():
-        dst = Path(farm.name) / f"{bid}.osu"
-        try:
-            inner = osu_beatmap_id(src)
-            if inner is not None and inner != bid:
-                # Deleted/re-uploaded chart: the body names a different beatmap (or 0).
-                # Serve a copy with the id line normalised -- the encoded tokens never read
-                # it (include_metadata=False), and the checksum below stays on the original.
-                dst.write_bytes(relabel_beatmap_id(src.read_bytes(), bid))
-                n_relabelled += 1
-            else:
-                os.symlink(os.path.abspath(src), dst)
-        except OSError as exc:                                    # pragma: no cover
-            print(f"[osu] WARNING: cannot stage {src}: {exc}", flush=True)
-    if n_relabelled:
-        print(f"[osu] {n_relabelled:,}/{len(found):,} .osu name a different BeatmapID inside; "
-              f"staged id-normalised copies so their rows keep the id they were fetched for",
-              flush=True)
-    n_files = len(list(Path(farm.name).glob("*.osu")))
-    print(f"[osu] corpus: {n_files:,} .osu staged for {len(keep):,} wanted charts", flush=True)
-    print("[osu] parsing them now -- upstream reads every file once before batch 1, which "
-          "is the long silent phase on a network FS", flush=True)
-
-    # progress inside that scan: upstream calls the module-global _parse_osu_file, so a
-    # thin wrapper is enough (best effort -- if upstream renames it we just lose progress)
-    try:
-        import utils.beatmap_files_dataset as _bfd
-        _orig_parse = _bfd._parse_osu_file
-        _scan = {"n": 0, "t0": time.time()}
-
-        def _parse_with_progress(path):
-            row = _orig_parse(path)
-            _scan["n"] += 1
-            if _scan["n"] % 2000 == 0:
-                el = time.time() - _scan["t0"]
-                print(f"[osu] parsed {_scan['n']:,}/{n_files:,} .osu "
-                      f"({el:.0f}s, {_scan['n'] / max(el, 1e-9):.0f} files/s)", flush=True)
-            return row
-
-        _bfd._parse_osu_file = _parse_with_progress
-    except Exception as exc:                                      # pragma: no cover
-        print(f"[osu] (scan progress unavailable: {exc})", flush=True)
-
-    ds = BeatmapFilesDataset([farm.name], processor=processor,
-                             include_audio=audio, include_beatmap=True, include_metadata=False)
-    loader = DataLoader(ds, batch_size=batch, num_workers=0, drop_last=False)
-
-    # map beatmap_id -> the .osu we are about to encode, so checksum_ok can be verified
-    # against the 2026-09-01 dump snapshot instead of being asserted blindly.  Keyed by the
-    # id each file was FETCHED for (the farm name), never by the id inside the body: the two
-    # disagree for the files re-staged above, and only the fetched id ties the file to a
-    # whitelist row and to a snapshot checksum.
     files: dict[int, Path] = dict(found)
 
-    def md5_of(p: Path) -> str:
-        h = hashlib.md5()
-        with open(p, "rb") as fh:
-            for chunk in iter(lambda: fh.read(1 << 20), b""):
-                h.update(chunk)
-        return h.hexdigest()
+    print(f"[osu] hashing {len(files):,} .osu files for content_md5", flush=True)
+    t_h = time.time()
+    md5_map = {bid: _md5_of(p) for bid, p in files.items()}
+    print(f"[osu] hashed in {time.time() - t_h:.1f}s", flush=True)
 
-    print(f"[osu] metadata rows: {len(ds.metadata):,} -> encoding with batch={batch}", flush=True)
-    acc: dict[int, list] = {}
-    dtype = torch.bfloat16 if device == "cuda" else torch.float32
-    t0 = time.time()
-    with torch.no_grad():
-        for batch_i, b in enumerate(loader):
-            if len(b.get("input_ids", [])) == 0:
-                continue
-            inputs = {"input_ids": b["input_ids"].to(device),
-                      "attention_mask": b["attention_mask"].to(device)}
-            if b.get("input_features") is not None:
-                inputs["input_features"] = b["input_features"].to(device=device, dtype=dtype)
+    cfg_payload = {
+        "tool": "step0c-cm3p-v4",
+        "crop": crop.to_dict(),
+        "snapshot": snap.to_dict(),
+        "mania_columns": args.mania_columns,
+        "columns_patch": cw.mania_column_patch_installed(parser_cls),
+        "model": rev, "dtype": str(mdt), "attn": attn, "audio": bool(audio),
+        # batching/seed are deliberately NOT part of the hash: windows are encoded
+        # independently (no cross-window attention), so a cache can be reused after
+        # changing --window-batch.  dtype and max_length change the vectors.
+        "window": {"dtype": args.window_dtype, "max_length": int(snap.max_length)},
+        "cm3p_commit": _git_commit(root),
+        "torch": str(torch.__version__),
+    }
+    try:
+        import transformers
+        cfg_payload["transformers"] = str(transformers.__version__)
+    except Exception:
+        pass
+    cfg = cw.cfg_hash(cfg_payload)
+
+    if audio:
+        print("[core] NOTE: the core audit tokenises with audio=None; the audio token "
+              "prefix is not part of the audit, but the note/timing stream it checks "
+              "is the same.", flush=True)
+    audit_meta = _core_audit(files, processor, snap, tids, crop, args, snap.max_length)
+    meta_base = {
+        "tool": "step0c_chart_content/v4", "cfg_hash": cfg,
+        "crop": crop.to_dict(), "snapshot": snap.to_dict(),
+        "mania_columns": args.mania_columns,
+        "columns_patch": cw.mania_column_patch_installed(parser_cls),
+        "core_audit": audit_meta, "model": rev, "dtype": str(mdt), "attn": attn,
+    }
+
+    if args.windows == "on":
+        encode = _encode_fn(model, device, torch)
+        table, meta = _export_windows_table(
+            files, md5_map, csum, processor, snap, tids, crop, args, rev, mdt,
+            attn, cfg, encode, torch)
+        meta = {**meta_base, **meta}
+        print(f"[win] index: {args.window_index}  windows: {args.window_dir}",
+              flush=True)
+        return table, meta
+
+    # ---------------------------------------------------------- legacy loader path
+    def _chart_encode(inputs):
+        with torch.no_grad():
             out = model(**inputs, return_loss=False)
-            emb = out.beatmap_embeds.detach().float().cpu().numpy()
-            for i, bid in enumerate(b["beatmap_id"].tolist()):
-                if bid is None or int(bid) not in keep:
-                    continue
-                acc.setdefault(int(bid), []).append(emb[i])
-            if batch_i % 10 == 0:
-                el = time.time() - t0
-                print(f"[osu] batch {batch_i + 1}: {len(acc):,}/{n_files:,} charts seen, "
-                      f"{el:.0f}s elapsed ({(batch_i + 1) / max(el, 1e-9):.2f} batch/s)",
-                      flush=True)
-
-    ids, embs, wins, oks, srcs, revs = [], [], [], [], [], []
-    total = len(acc)
-    for k, (bid, vecs) in enumerate(acc.items()):
-        m = np.mean(np.stack(vecs), axis=0)
-        n = float(np.linalg.norm(m))
-        want_ck = csum.get(bid, "")
-        got_ck = ""
-        if bid in files and files[bid].exists():
-            got_ck = md5_of(files[bid])
-        ids.append(bid)
-        embs.append((m / n) if n > 0 else m)
-        wins.append(len(vecs))
-        oks.append((got_ck == want_ck) if want_ck else None)
-        srcs.append(SRC_LOCAL_AUDIO if audio else SRC_LOCAL_NOAUDIO)
-        revs.append(rev)
-        if k and k % 2000 == 0:
-            print(f"[osu] checksums {k:,}/{total:,} (second silent pass over the corpus)",
-                  flush=True)
-    print(f"[osu] {len(ids):,} beatmaps embedded")
-    if not ids:
-        return empty_table()
-    return _pack(ids, embs, wins, oks, srcs, revs)
+        return out.beatmap_embeds.detach().float().cpu().numpy()
+    table = _dataset_table(files, csum, processor, crop, audio, batch, device,
+                           rev, args, md5_map, _chart_encode)
+    meta = {**meta_base, "windows": None}
+    return table, meta
 
 
 # ------------------------------------------------------------------------------ merge
@@ -474,14 +852,54 @@ def parse_args(argv=None):
     ap.add_argument("--in", dest="in_path", default=None,
                     help="--source table: an already-computed content table to merge in")
     ap.add_argument("--infer-batch", type=int, default=8,
-                    help="osu-dir only: beatmaps per forward pass (NOT --batch, which is rows)")
+                    help="--windows off only: beatmaps per forward pass (NOT --batch, rows)")
+    ap.add_argument("--crop", default="canon", choices=["canon", "legacy"],
+                    help="T1: canon turns hitsounds/kiai/mania-SV off; legacy reproduces "
+                         "the old table")
+    ap.add_argument("--mania-columns", default="auto", choices=["auto", "on", "off"],
+                    help="auto detects the upstream Group.column bug and leaves columns "
+                         "off (checkpoint parity); on installs the opt-in patch (OOD for "
+                         "the checkpoint); off silences the check")
+    ap.add_argument("--windows", default="on", choices=["on", "off"],
+                    help="T2: export per-window .npy + index (on) or use the legacy "
+                         "BeatmapFilesDataset loader (off)")
+    ap.add_argument("--window-dir", default=".cache/cm3p/win",
+                    help="T2: directory for <beatmap_id>.npy")
+    ap.add_argument("--window-index", default=".cache/cm3p/index.parquet",
+                    help="T2: window index parquet")
+    ap.add_argument("--window-batch", type=int, default=16,
+                    help="T2: windows per forward pass")
+    ap.add_argument("--window-buffer", type=int, default=4096,
+                    help="T2: windows buffered before a bucket is flushed")
+    ap.add_argument("--window-dtype", default="float16", choices=["float16", "float32"],
+                    help="T2: on-disk window dtype (float16 = 218 MB for 21,949 charts)")
+    ap.add_argument("--window-seed", type=int, default=0, help="T2: bucket shuffle seed")
+    ap.add_argument("--refresh-windows", action="store_true",
+                    help="T2: delete the window index and every .npy before rebuilding")
+    ap.add_argument("--on-truncate", default="warn", choices=["warn", "error", "allow"],
+                    help="T2: what to do when a window exceeds max_length and loses core "
+                         "tokens (warn/error/allow)")
+    ap.add_argument("--verify-windows", type=int, default=64,
+                    help="T2: parity-check N charts by reading the .npy back; 0 = all")
+    ap.add_argument("--core-audit", type=int, default=16,
+                    help="T1: tokenise N charts with legacy+canon and prove the core "
+                         "stream is identical (0 = off)")
+    ap.add_argument("--allow-config-mismatch", action="store_true",
+                    help="T0: run with the real preprocessor window/max_length even if "
+                         "they are not 16/4000")
+    ap.add_argument("--allow-mixed-crop", action="store_true",
+                    help="allow merging rows from a different crop/cfg into --out")
     ap.add_argument("--hf-path", default="data/raw/cm3p_embeddings/beatmap_embeddings.parquet")
     ap.add_argument("--osu-dir", action="append", default=None,
                     help="directory (or .osu/.osz file) to embed; repeatable; --source osu-dir")
     ap.add_argument("--audio", default="off", choices=["on", "off"],
                     help="osu-dir only: fuse audio.  MUST NOT be mixed with hf-precomputed rows "
                          "(they were computed with audio); the source column records it")
-    ap.add_argument("--out", default=str(PROC / "chart_content_cm3p.parquet"))
+    ap.add_argument("--out", default=None,
+                    help="output parquet (default: chart_content_cm3p.parquet for "
+                         "hf-precomputed; chart_content_cm3p_local_canon.parquet for "
+                         "osu-dir+canon; chart_content_cm3p_local.parquet for "
+                         "osu-dir+legacy)")
     ap.add_argument("--refresh", action="store_true",
                     help="ignore the existing table and recompute every id")
     ap.add_argument("--batch", type=int, default=8192)
@@ -493,7 +911,16 @@ def parse_args(argv=None):
 def main() -> None:
     args = parse_args()
     t0 = time.time()
+    if args.out is None:
+        if args.source == "osu-dir":
+            name = ("chart_content_cm3p_local_canon.parquet" if args.crop == "canon"
+                    else "chart_content_cm3p_local.parquet")
+        else:
+            name = "chart_content_cm3p.parquet"
+        args.out = str(PROC / name)
     out = Path(args.out)
+    if args.source == "osu-dir":
+        _precheck_sidecar(out, args, args.allow_mixed_crop)
 
     want = load_want(args)
     print(f"target set: {len(want):,} beatmaps "
@@ -506,6 +933,7 @@ def main() -> None:
         missing = missing.head(args.limit)
     print(f"to fetch: {len(missing):,}  (already present: {len(base):,})")
 
+    meta = None
     if args.source == "table":
         # merge mode: the incoming table is the whole point, whether or not anything is
         # "missing" relative to the whitelist
@@ -513,8 +941,18 @@ def main() -> None:
             raise SystemExit("--source table needs --in PATH")
         new = load_table(args.in_path)
     elif len(missing) == 0:
-        print("nothing to do; the table is already complete for this whitelist")
-        new = empty_table()
+        if args.source == "osu-dir" and args.windows == "on":
+            if not args.osu_dir:
+                raise SystemExit("--source osu-dir needs at least one --osu-dir")
+            target = want if not args.limit else want.head(args.limit)
+            print(f"main table complete; exporting/verifying the T2 window store for "
+                  f"{len(target):,} charts", flush=True)
+            new, meta = from_osu_dir(args.osu_dir, target, CM3P_REPO,
+                                     args.audio == "on", args.infer_batch,
+                                     args.device, args)
+        else:
+            print("nothing to do; the table is already complete for this whitelist")
+            new = empty_table()
     elif args.source == "hf-precomputed":
         src = Path(args.hf_path)
         if not src.exists():
@@ -523,11 +961,17 @@ def main() -> None:
     else:
         if not args.osu_dir:
             raise SystemExit("--source osu-dir needs at least one --osu-dir")
-        new = from_osu_dir(args.osu_dir, missing, CM3P_REPO, args.audio == "on",
-                           args.infer_batch, args.device)
+        new, meta = from_osu_dir(args.osu_dir, missing, CM3P_REPO, args.audio == "on",
+                                 args.infer_batch, args.device, args)
 
+    if meta is not None:
+        _check_merge_guard(out, meta, args.allow_mixed_crop)
     table = merge(base, new)
     write_atomic(table, out)
+    if meta is not None:
+        cw.write_meta(_sidecar(out), {**meta, "out": str(out), "n_rows": int(len(table))})
+        print(f"[cfg] {meta.get('cfg_hash')} crop={meta.get('crop')} "
+              f"windows={meta.get('windows')}")
 
     # --------------------------------------------------------------------- report
     have = set(table["beatmap_id"].tolist())

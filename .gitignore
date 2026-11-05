@@ -204,3 +204,6 @@ upload_to_github.sh
 push.log
 slurm_*.out
 slurm_*.err
+
+# P2/P4 多种子训练的逐 seed 日志（本地产物；JSON 汇总入库）
+results/p4_multiseed/logs/

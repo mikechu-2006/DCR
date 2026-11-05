@@ -9,12 +9,15 @@
 | 文件 | step 版本 | 说明 |
 |---|---|---|
 | `step0_preprocess.py` | `step0/preprocess` | dump → play 表（5 列）+ 谱面元数据（17 列） |
-| `step0c_chart_content.py` | `step0/chart_content` | beatmap_id → CM3P 512 维内容向量 |
+| `step0c_chart_content.py` | `step0/chart_content` | beatmap_id → CM3P 512 维内容向量；`--crop canon`（T1）+ `--windows on`（T2 窗口导出/分桶）；见 docs/cm3p_crop_windows.md |
+| `cm3p_token_budget.py` | — | 离线 T0/T1 审计：token/note、截断、hold split、**core stream 裁剪前后完全一致**；`--verify-cm3p` 在集群上对真实 tokenizer |
 | `step0d_fetch_osu.py` | `step0/fetch_osu` | 按 id 清单抓 `.osu` **正文** |
 | `step0g_whitelist.py` | `step0/whitelist` | 白名单表 + 缓存状态（`cacheable`） |
 | `step0e_validate_mix.py` | `step0/validate_mix` | 校验不同来源的 CM3P 向量能否混用 |
 | `step1_pairbest.py` | `step1/pairbest` | **默认 A**：一对一行（规则见 docs/data.md） |
 | `step1_clean.py` | `step1/clean` | legacy play 级：划分后清洗 train 侧 |
+| `step1_pairbest_resplit.py` | — | 重新生成 pair-random 70/30 划分（P2 多种子；split 是 step1 最后一步，等价于重跑 step1 换 split-seed） |
+| `step1_p4_split.py` | — | P4 双重冷启动划分：玩家/谱面各分层 60/40，6×6 train / 4×4 test；见 docs/p4_multiseed.md |
 | `step2_predict.py` | `step2/predict` | bias / mf_dot / mirt（+ CM3P 内容向量） |
 | `step2_cm3p_mlp.py` | `step2/cm3p_mlp` | CM3P 内容锚定 MLP |
 | `test_step2_cm3p_mlp.py` | — | 上述 MLP 的 7 条自检（合成张量，1 秒，不需要 data/） |
@@ -23,13 +26,20 @@
 | `test_step2_rank_eval.py` | — | rank runner 的端到端合成测试：`--ceiling-fit all|split`、`--common-maps`、`--strict-pairs`（不需要 data/） |
 | `step2_cm3p_rank.py` | — | CM3P 内容→per-chart 难度，按 rank-NLL counts 训练（M0/M1/M2；P1/P2/content ceiling）；见 docs/cm3p_rank.md |
 | `run_cm3p_rank_experiments.py` | — | 上述模型的实验驱动（P1/P2/published/合并评测） |
+| `run_p2_p4_multiseed.py` | — | P2/P4 5 个**划分种子** × 7 方法的实验驱动与 mean/std 汇总；见 docs/p4_multiseed.md |
+| `cm3p_pool.py` | — | T3 窗口池化 A0–A6：特征（a0–a5）或 A6 chart-disjoint TCN 信号 |
+| `run_cm3p_pool_experiments.py` | — | T3 驱动：A0–A6 → P2 5 折 → 官方 NLL + paired ΔNLL + Go/no-go |
+| `stratified_delta_nll.py` | — | 计划 §9：在 `count_total` 分位层内比较 legacy vs canon 的 paired ΔNLL |
+| `test_cm3p_windows.py` | — | T0/T1/T2 合成自检（裁剪审计、分桶、导出、column patch、离线会计） |
+| `test_cm3p_pool.py` | — | T3 合成自检（A0–A5 宽度/A0 等价、A6 小样本、驱动 merge/summary） |
 | `paired_delta_nll.py` | — | 同一 cluster/pair 的配对 ΔNLL + bootstrap CI |
 | `player_disjoint_val.py` | — | 20% held-out player cluster 的 val NLL 表（含 fixed baseline） |
 
 公共路径参数（不传时保持旧行为）：
 
 * `step0_preprocess.py`：`--dump-dir --beatmap-src --whitelist --out --meta-out --work-dir`
-* `step0c_chart_content.py`：`--tag --meta-dir --ids-file --in --out`
+* `step0c_chart_content.py`：`--tag --meta-dir --ids-file --in --out`；
+  T1/T2：`--crop canon|legacy --windows on|off --mania-columns auto|on|off --window-dir --window-index`
 * `step0d_fetch_osu.py`：`--ids-file --out-dir --state`
 * `step0g_whitelist.py`：`--tag --meta --cache --out --manifest-out --dropped-out --json`
 * `step0e_validate_mix.py`：`--computed --probe-npz --json`
