@@ -1,0 +1,43 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[19:37:11] === p4 seed 1 (6,828 charts) ===
+[19:37:11] p4 s1 linear: train
+[19:38:42] p4 s1 linear_extra: train
+[19:40:05] p4 s1: signals 6828 charts x 5 cols (cm3p_linear, cm3p_linear_extra, sunny_star, daniel_star, star) -> results/d2v_main/p4_cm3p/p4/s1/signals.parquet
+[19:40:05] p4 s1: eval
+[19:40:13] === p4 seed 2 (6,828 charts) ===
+[19:40:13] p4 s2 linear: train
+[19:41:29] p4 s2 linear_extra: train
+[19:42:42] p4 s2: signals 6828 charts x 5 cols (cm3p_linear, cm3p_linear_extra, sunny_star, daniel_star, star) -> results/d2v_main/p4_cm3p/p4/s2/signals.parquet
+[19:42:42] p4 s2: eval
+[19:42:49] === p4 seed 3 (6,828 charts) ===
+[19:42:49] p4 s3 linear: train
+[19:43:50] p4 s3 linear_extra: train
+[19:44:52] p4 s3: signals 6828 charts x 5 cols (cm3p_linear, cm3p_linear_extra, sunny_star, daniel_star, star) -> results/d2v_main/p4_cm3p/p4/s3/signals.parquet
+[19:44:52] p4 s3: eval
+[19:45:00] === p4 seed 4 (6,828 charts) ===
+[19:45:00] p4 s4 linear: train
+[19:46:23] p4 s4 linear_extra: train
+[19:47:37] p4 s4: signals 6828 charts x 5 cols (cm3p_linear, cm3p_linear_extra, sunny_star, daniel_star, star) -> results/d2v_main/p4_cm3p/p4/s4/signals.parquet
+[19:47:37] p4 s4: eval
+[19:47:44] === p4 seed 5 (6,828 charts) ===
+[19:47:44] p4 s5 linear: train
+[19:48:56] p4 s5 linear_extra: train
+[19:50:14] p4 s5: signals 6828 charts x 5 cols (cm3p_linear, cm3p_linear_extra, sunny_star, daniel_star, star) -> results/d2v_main/p4_cm3p/p4/s5/signals.parquet
+[19:50:14] p4 s5: eval
+[19:50:23] aggregate -> results/d2v_main/p4_cm3p/summary.csv / summary_mean_std.csv / summary.md
+# P2 / P4 multi-seed summary
+
+Seeds are train/test split seeds; model seed is fixed at 0.
+
+## P4（新玩家 + 新 chart，6×6 / 4×4）
+
+ceiling NLL = 0.56540 ± 0.00859 （5 seeds）
+
+| 方法 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|
+| CM3P + external 线性 | 0.60335 ± 0.00515 | 0.4892 ± 0.0247 | 0.4464 ± 0.0215 |
+| CM3P 线性 (λ1e-3) | 0.63050 ± 0.00270 | 0.4520 ± 0.0219 | 0.4084 ± 0.0174 |
+| Sunny | 0.63111 ± 0.00777 | 0.3098 ± 0.0608 | 0.3480 ± 0.0492 |
+| Daniel | 0.63102 ± 0.00601 | 0.3077 ± 0.0614 | 0.3440 ± 0.0497 |
+| star | 0.66021 ± 0.00779 | 0.2813 ± 0.0626 | 0.3090 ± 0.0509 |
+

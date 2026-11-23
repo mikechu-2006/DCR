@@ -308,3 +308,26 @@ python scripts/run_p2_p4_multiseed.py --quick --seeds 99
 | `results/p4_multiseed/<p>/s<seed>/signals.parquet` | 7 个信号合并表（可重建；parquet 不入库） |
 | `data/processed/step1_1k_pairbest_p2_s<seed>.parquet` | P2 重采样划分（可重建） |
 | `data/processed/step1_1k_pairbest_p4_s<seed>.parquet` | P4 划分（可重建） |
+
+---
+
+## 9. 后续：canon 裁剪内容表的复跑（2026-11-09）
+
+同一协议、同一批划分文件，只把内容表从 legacy 换成 HPC 作业 `13613023` 产出的
+`chart_content_cm3p_local_canon.parquet`（fixed 三个信号不重训，逐位相同）：
+4 个 embedding 方法在 P2/P4 上**一致变差**（ΔNLL +0.0047…+0.0208，40 个
+seed×方法组合里 39 个为正），训练 NLL 也同时变差；方法排序不变。
+详见 [p4_multiseed_canon.md](p4_multiseed_canon.md)，产物在
+`results/p4_multiseed_canon/`。
+
+同一协议还在"官方发布向量覆盖的 4,042 图"子集上跑了 published / legacy / canon
+三臂（[p4_multiseed_pub.md](p4_multiseed_pub.md)）：官方向量全面好于本地 audio-off
+（−0.011…−0.029），canon 的代价在子集上同样复现。
+
+## 10. 后续：完整 audio-on 内容表的复跑（2026-11-18）
+
+把 HPC 新算的 2,782 张 audio-on 向量与 published 的 4,037 张合并成 6,819 张完整表，
+并在新划分上与 audio-off legacy 做同划分、同 ceiling 的配对对照。**结果：4 个 embedding
+方法在 P2/P4 上都是 5/5 个种子变好（ΔNLL −0.0076…−0.0218），CM3P + external MLP 仍最好。**
+数据边界（删 4 张缺口、严格重建得到 6,819 图 / 109,569 行）、结果和局限见
+[p4_multiseed_audio.md](p4_multiseed_audio.md)，产物在 `results/p4_multiseed_audio/`。

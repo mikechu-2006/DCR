@@ -1,0 +1,103 @@
+{
+ "meta": {
+  "bootstrap": 300,
+  "ceiling_fit": "all",
+  "ceiling_fit_maps": 1365,
+  "ceiling_fit_rows": 23905,
+  "common_maps": false,
+  "folds": 2,
+  "generated_at": "2026-11-23 19:24:21",
+  "in": "data/processed/step1_1k_pairbest_d2v_holdout.parquet",
+  "knots": 8,
+  "link": "linear",
+  "metric": "pairwise Bradley-Terry NLL, cross-fitted ceiling",
+  "min_l": 10,
+  "n_maps_total": 1365,
+  "n_players_total": 933,
+  "n_rows_total": 23905,
+  "seed": 0,
+  "signal_table": "results/d2v_main/p2_hold_d2v_ext_signals.parquet",
+  "signals": [
+   "cm3p_rank"
+  ],
+  "split": "test",
+  "strict_pairs": false,
+  "tag": ""
+ },
+ "signals": {
+  "cm3p_rank": {
+   "bits_saved": 0.14320946660317868,
+   "bits_saved_all": 0.14320946660317868,
+   "bits_saved_strict": null,
+   "bootstrap": {
+    "captured": [
+     0.6744167835606951,
+     0.8783683828027591
+    ],
+    "lw": [
+     0.4555831196362155,
+     0.5072806738893461
+    ],
+    "macro": [
+     0.4512762989739613,
+     0.5014943555681791
+    ],
+    "nll": [
+     0.5842985935826667,
+     0.605470859545768
+    ]
+   },
+   "captured": 0.7537524008865176,
+   "captured_all": 0.7537524008865176,
+   "captured_strict": null,
+   "ceiling_coverage": 0.9360574550903675,
+   "ceiling_eval_rows": 7276,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 1365,
+   "ceiling_fit_rows": 23905,
+   "ceiling_n": 51222,
+   "ceiling_nll": 0.5614524252414386,
+   "ceiling_per_player": {
+    "fisher_l3": 0.6444216133418854,
+    "lw": 0.5985350480759987,
+    "macro": 0.5870125143196369,
+    "median": 0.6252173913043478,
+    "n": 279
+   },
+   "coverage_maps": 0.6996336996336996,
+   "coverage_rows": 0.30437147040368123,
+   "link": {
+    "beta": 0.6981111471893863,
+    "kind": "linear"
+   },
+   "n_instances": 54721,
+   "n_instances_used": 54721,
+   "n_maps": 955,
+   "n_pairs": 35302,
+   "n_players": 835,
+   "n_rows": 7276,
+   "n_strict": null,
+   "n_ties": 1,
+   "nll": 32497.813778522515,
+   "nll_all": 32497.813778522515,
+   "nll_all_per_instance": 0.5938819425544584,
+   "nll_per_instance": 0.5938819425544584,
+   "nll_strict": null,
+   "nll_strict_per_instance": null,
+   "norm_rho_lw": 0.809040678924506,
+   "norm_rho_macro": 0.8148429491198115,
+   "pearson_bhat": 0.4838047374496253,
+   "per_player": {
+    "fisher_l3": 0.5158059723009049,
+    "lw": 0.48354995448590327,
+    "macro": 0.4776547038402203,
+    "median": 0.521978021978022,
+    "n": 285
+   },
+   "random_lw": -0.0036093926483019186,
+   "rho_bhat": 0.45582218764978766,
+   "strict_pairs": false,
+   "tau_bhat": 0.3232484880415336
+  }
+ }
+}

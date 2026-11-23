@@ -71,7 +71,10 @@ def test_pools() -> None:
         check("head bundle shapes", h.w.shape == (2, 512) and h.w_full.shape == (512,))
         check("fold weight", np.allclose(h.weight_for(0), h.w[0])
               and np.allclose(h.weight_for(999), h.w_full))
-        widths = {"a0": 512, "a1": 1024, "a2": 519, "a3": 521, "a4": 512, "a5": 512}
+        check("full weight", np.allclose(h.weight_for(0, mode="full"), h.w_full)
+              and np.allclose(h.weight_for(1, mode="full"), h.w_full))
+        widths = {"a0": 512, "a0l": 514, "a1": 1024, "a2": 519, "a2b": 519,
+                  "a2c": 521, "a3": 521, "a4": 512, "a5": 512}
         for v, want in widths.items():
             df = pool.build_feature_table(idx, win, v, h, log=lambda s: None)
             got = int(df.features.iloc[0].size)
@@ -81,11 +84,34 @@ def test_pools() -> None:
         a0 = pool.pool_chart("a0", W, 0, h)
         check("A0 is unit mean", abs(np.linalg.norm(a0) - 1) < 1e-5
               and np.allclose(a0, W.mean(0) / np.linalg.norm(W.mean(0)), atol=1e-6))
-        # A2 is deterministic and finite
+        # A0L = A0 + log mean_norm + log n
+        a0l = pool.pool_chart("a0l", W, 0, h)
+        check("A0L width/append", a0l.size == 514
+              and np.allclose(a0l[:512], a0)
+              and np.isclose(a0l[512], np.log(max(idx.loc[0, "mean_norm"], 1e-8)),
+                             atol=1e-4)
+              and np.isclose(a0l[513], np.log(W.shape[0])))
+        # A2/A2b/A2c are deterministic and finite; quantiles are ordered
         a2 = pool.pool_chart("a2", W, 0, h)
+        a2b = pool.pool_chart("a2b", W, 0, h)
+        a2c = pool.pool_chart("a2c", W, 0, h)
+        a3 = pool.pool_chart("a3", W, 0, h)
         check("A2 finite", np.isfinite(a2).all())
-        a2b = pool.pool_chart("a2", W, 0, h)
-        check("A2 deterministic", np.allclose(a2, a2b))
+        check("A2 deterministic", np.allclose(a2, pool.pool_chart("a2", W, 0, h)))
+        check("A2b finite", np.isfinite(a2b).all() and a2b.size == 519)
+        check("A2b quantiles ordered", a2b[514] <= a2b[515] <= a2b[516])
+        check("A2c finite", np.isfinite(a2c).all() and a2c.size == 521)
+        check("A2c quantiles ordered", a2c[514] <= a2c[515] <= a2c[516] <= a2c[517] <= a2c[518])
+        check("A3 runs non-negative", a3.size == 521 and (a3[519:] >= 0).all())
+        # head mode full: every chart uses w_full, not the chart's fold head
+        z_fold = h.z(W, 1, mode="fold")
+        z_full = h.z(W, 1, mode="full")
+        check("head mode full", np.allclose(z_full, ((W - h.mu) / h.sd) @ h.w_full)
+              and not np.allclose(z_fold, z_full))
+        full_tbl = pool.build_feature_table(idx, win, "a2b", h, head_mode="full",
+                                            log=lambda s: None)
+        check("head_mode=full table", len(full_tbl) == 20
+              and int(full_tbl.features.iloc[0].size) == 519)
         # exclude-truncated
         idx2 = idx.copy()
         idx2.loc[0, "n_core_tokens_dropped"] = 2

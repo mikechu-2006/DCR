@@ -1,0 +1,55 @@
+{
+  "generated": "2026-11-10T13:25:52+0800",
+  "n_sample": 5,
+  "n_ok": 4,
+  "n_error": 1,
+  "cos": {
+    "mean": 0.9982075691223145,
+    "median": 0.9983280301094055,
+    "min": 0.9972522258758545,
+    "p05": 0.9973991572856903,
+    "p10": 0.9975460886955261,
+    "n_ge_0_99": 4,
+    "n_ge_0_999": 0
+  },
+  "config": {
+    "audio": "on",
+    "audio_loader": "librosa",
+    "crop": "legacy",
+    "dtype": "float32",
+    "pad_mode": "longest",
+    "max_length": 2000,
+    "win_batch": 4,
+    "device": "cpu",
+    "model_dir": "data/raw/cm3p_model_26cc694",
+    "attn": "sdpa",
+    "official_table": "data/processed/chart_content_cm3p.parquet"
+  },
+  "processor": {
+    "window_length_sec": 16.0,
+    "window_stride_sec": 16.0,
+    "max_length": 2000,
+    "padding": "longest",
+    "truncation": "longest_first",
+    "audio_sampling_rate": 16000,
+    "audio_pad_to_multiple_of": 256000,
+    "audio_hop_length": 160,
+    "audio_length_per_tok": 8,
+    "audio_max_source_positions": 1600,
+    "parser": {
+      "add_hitsounds": true,
+      "add_kiai": true,
+      "add_mania_sv": true,
+      "add_snapping": false,
+      "add_timing": true,
+      "add_timing_points": true,
+      "add_positions": true
+    },
+    "tokenizer_max_time": 16000,
+    "tokenizer_time_step": 10,
+    "tokenizer_add_cls": true
+  },
+  "processor_mismatches": [],
+  "elapsed_sec": 19.9,
+  "out": "results/cm3p_probe_official/probe_pilot.jsonl"
+}

@@ -132,6 +132,17 @@ population/composition study, never a learning curve.
 > (`data/raw/extracted_random/` and the `interim_random/` scratch, ~300 MB total).
 > Nothing in the pipeline or in any analysis script reads it.
 
+> **2026-11-19 correction — the paragraph above is wrong.** Re-downloading
+> `2026_09_01_performance_mania_random_10000.tar.bz2` (447,544,515 B) shows it is a
+> full **13-table** dump: `scores.sql` 563 MB, `osu_scores_mania_high.sql` 190 MB,
+> `osu_beatmaps.sql` 56 MB, `sample_users.sql` 272 KB, plus failtimes / difficulty /
+> beatmapsets. The "two aggregate tables, no score table" reading almost certainly
+> came from a **truncated extraction**: the 161 MB + 1.8 MB it lists are exactly
+> `osu_user_beatmap_playcount` + `osu_user_stats_mania`, and ~300 MB matches that
+> partial extraction. Step 0 runs on it as-is and yields 1,110,238 plays /
+> 3,194 players / 109,787 pairbest rows. See
+> [docs/low_difficulty_data.md](../../docs/low_difficulty_data.md).
+
 **`10k` ships the legacy score table but not `scores`.** Consequences, in order of
 how much they cost:
 

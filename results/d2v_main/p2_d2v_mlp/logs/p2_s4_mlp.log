@@ -1,0 +1,3 @@
+/home/mikechu/anaconda3/bin/python3 scripts/step2_cm3p_rank.py --in data/processed/step1_1k_pairbest_p2_s4.parquet --content-path data/processed/chart_content_d2v_holdout.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 8 --name cm3p_mlp_h64_L2 --out-signals results/d2v_main/p2_d2v_mlp/p2/s4/signals/cm3p_mlp_h64_L2.parquet --out-json results/d2v_main/p2_d2v_mlp/p2/s4/signals/cm3p_mlp_h64_L2.json --chart-only --chart-folds 5 --chart-seed 0 --model mlp --lam 1e-2 --hid 64 --depth 2 --dropout 0.1 --lr 3e-3 --epochs 98
+
+OMP: Warning #179: Function Can't set size of SHM failed:

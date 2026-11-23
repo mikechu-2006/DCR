@@ -1,0 +1,228 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+150 chart(s) / 135 set(s) to fetch
+[10/135] ok=11 err=0 125s (12.5s/set)
+[20/135] ok=22 err=0 224s (11.2s/set)
+[30/135] ok=36 err=0 320s (10.7s/set)
+[40/135] ok=46 err=0 410s (10.2s/set)
+[50/135] ok=58 err=0 579s (11.6s/set)
+[60/135] ok=69 err=0 701s (11.7s/set)
+  set 2481465 retry 1/4 (ChunkedEncodingError: ("Connection broken: ConnectionResetError(104, 'Connection reset by peer')", ConnectionResetError(104, 'Connection reset by peer')))
+  set 2481465 retry 2/4 (ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer')))
+[70/135] ok=79 err=0 1263s (18.0s/set)
+[80/135] ok=91 err=0 1391s (17.4s/set)
+[90/135] ok=102 err=0 1513s (16.8s/set)
+[100/135] ok=112 err=0 1675s (16.8s/set)
+[110/135] ok=125 err=0 1840s (16.7s/set)
+[120/135] ok=135 err=0 1974s (16.4s/set)
+[130/135] ok=145 err=0 2098s (16.1s/set)
+done: ok=150 err=0 in 35.9 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+150 chart(s) / 136 set(s) to fetch
+[10/136] ok=12 err=0 95s (9.5s/set)
+[20/136] ok=24 err=0 239s (12.0s/set)
+[30/136] ok=36 err=0 450s (15.0s/set)
+  [429] set 2062204: sleep 30s
+  [429] set 2127065: sleep 30s
+  [429] set 2230145: sleep 30s
+  [429] set 2230145: sleep 30s
+  [429] set 2230145: sleep 30s
+  [429] set 2230145: sleep 30s
+[fail] 4732521 set=2230145: download failed: None
+[40/136] ok=45 err=1 750s (18.7s/set)
+  [429] set 2381413: sleep 30s
+  [429] set 2401466: sleep 30s
+  [429] set 2401466: sleep 30s
+  [429] set 2401466: sleep 30s
+  [429] set 2473122: sleep 30s
+  [429] set 1265413: sleep 30s
+[50/136] ok=55 err=1 1117s (22.3s/set)
+  set 585451 retry 1/4 (ConnectionError: HTTPSConnectionPool(host='bm10.ppy.sh', port=443): Read timed out.)
+  set 585451 retry 2/4 (ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer')))
+[60/136] ok=66 err=1 1668s (27.8s/set)
+[70/136] ok=78 err=1 2071s (29.6s/set)
+[80/136] ok=91 err=1 2392s (29.9s/set)
+[90/136] ok=101 err=1 2530s (28.1s/set)
+[fail] 486889 set=206487: no audio member
+[100/136] ok=110 err=2 2639s (26.4s/set)
+[110/136] ok=121 err=2 4802s (43.7s/set)
+[120/136] ok=131 err=2 5041s (42.0s/set)
+[130/136] ok=141 err=2 5383s (41.4s/set)
+done: ok=148 err=2 in 91.2 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+150 chart(s) / 145 set(s) to fetch
+[fail] 486889 set=206487: no audio member
+[10/145] ok=9 err=1 142s (14.2s/set)
+[20/145] ok=21 err=1 242s (12.1s/set)
+[30/145] ok=31 err=1 339s (11.3s/set)
+[40/145] ok=41 err=1 442s (11.1s/set)
+[50/145] ok=51 err=1 640s (12.8s/set)
+[60/145] ok=62 err=1 754s (12.6s/set)
+[70/145] ok=72 err=1 830s (11.9s/set)
+[80/145] ok=82 err=1 916s (11.5s/set)
+[90/145] ok=92 err=1 1006s (11.2s/set)
+[100/145] ok=102 err=1 1216s (12.2s/set)
+[110/145] ok=113 err=1 1371s (12.5s/set)
+[120/145] ok=124 err=1 1531s (12.8s/set)
+[130/145] ok=134 err=1 1682s (12.9s/set)
+[140/145] ok=144 err=1 1778s (12.7s/set)
+done: ok=149 err=1 in 30.2 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+150 chart(s) / 141 set(s) to fetch
+[fail] 486889 set=206487: no audio member
+[10/141] ok=11 err=1 127s (12.7s/set)
+[20/141] ok=22 err=1 297s (14.8s/set)
+  [429] set 549370: sleep 30s
+  [429] set 549370: sleep 30s
+  [429] set 549370: sleep 30s
+  [429] set 549370: sleep 30s
+[fail] 1218591 set=549370: download failed: None
+  set 591171 retry 1/4 (ReadTimeout: HTTPSConnectionPool(host='osu.ppy.sh', port=443): Read timed out. (read timeout=20))
+  [429] set 591171: sleep 30s
+  [429] set 591171: sleep 30s
+  [429] set 591171: sleep 30s
+[fail] 1252742 set=591171: download failed: HTTPSConnectionPool(host='osu.ppy.sh', port=443): Read timed out. (read timeout=20)
+  [429] set 657818: sleep 30s
+  [429] set 657818: sleep 30s
+  [429] set 657818: sleep 30s
+  [429] set 657818: sleep 30s
+[fail] 1393331 set=657818: download failed: None
+  [429] set 663203: sleep 30s
+  [429] set 663203: sleep 30s
+  [429] set 663203: sleep 30s
+  [429] set 663203: sleep 30s
+[fail] 1403810 set=663203: download failed: None
+  [429] set 757340: sleep 30s
+  [429] set 757340: sleep 30s
+  [429] set 757340: sleep 30s
+[30/141] ok=28 err=5 1039s (34.6s/set)
+[40/141] ok=39 err=5 1179s (29.5s/set)
+  [429] set 1751091: sleep 30s
+  [429] set 1842152: sleep 30s
+  [429] set 1854144: sleep 30s
+[50/141] ok=51 err=5 1369s (27.4s/set)
+  [429] set 1956659: sleep 30s
+  [429] set 1956659: sleep 30s
+  [429] set 1956659: sleep 30s
+  [429] set 2011972: sleep 30s
+  [429] set 2011972: sleep 30s
+  [429] set 2024734: sleep 30s
+[60/141] ok=61 err=5 1666s (27.8s/set)
+  [429] set 2045182: sleep 30s
+  [429] set 2045182: sleep 30s
+  [429] set 2048185: sleep 30s
+  [429] set 2080049: sleep 30s
+[70/141] ok=72 err=5 1872s (26.7s/set)
+  [429] set 2135401: sleep 30s
+[80/141] ok=82 err=5 1992s (24.9s/set)
+[90/141] ok=92 err=5 2081s (23.1s/set)
+[100/141] ok=102 err=5 2177s (21.8s/set)
+  [429] set 2276863: sleep 30s
+  [429] set 2287693: sleep 30s
+  [429] set 2288990: sleep 30s
+  [429] set 2298930: sleep 30s
+[110/141] ok=112 err=5 2394s (21.8s/set)
+[120/141] ok=124 err=5 2486s (20.7s/set)
+[130/141] ok=134 err=5 2562s (19.7s/set)
+[140/141] ok=144 err=5 2676s (19.1s/set)
+done: ok=145 err=5 in 44.9 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+150 chart(s) / 143 set(s) to fetch
+[fail] 486889 set=206487: no audio member
+[10/143] ok=10 err=1 127s (12.7s/set)
+[20/143] ok=22 err=1 223s (11.2s/set)
+  [429] set 640240: sleep 30s
+[30/143] ok=32 err=1 377s (12.6s/set)
+[40/143] ok=42 err=1 755s (18.9s/set)
+[50/143] ok=53 err=1 1513s (30.3s/set)
+[60/143] ok=64 err=1 1913s (31.9s/set)
+[70/143] ok=75 err=1 2341s (33.4s/set)
+[80/143] ok=86 err=1 2561s (32.0s/set)
+[90/143] ok=96 err=1 2732s (30.4s/set)
+[100/143] ok=106 err=1 2860s (28.6s/set)
+[110/143] ok=116 err=1 3006s (27.3s/set)
+[120/143] ok=126 err=1 3136s (26.1s/set)
+[130/143] ok=136 err=1 3688s (28.4s/set)
+[140/143] ok=146 err=1 4125s (29.5s/set)
+done: ok=149 err=1 in 69.7 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+150 chart(s) / 131 set(s) to fetch
+[fail] 486889 set=206487: no audio member
+[fail] 487516 set=206487: no audio member
+[10/131] ok=10 err=2 307s (30.7s/set)
+[20/131] ok=20 err=2 469s (23.5s/set)
+[30/131] ok=30 err=2 725s (24.2s/set)
+[40/131] ok=40 err=2 1081s (27.0s/set)
+[50/131] ok=51 err=2 1205s (24.1s/set)
+[60/131] ok=63 err=2 1285s (21.4s/set)
+[70/131] ok=78 err=2 1603s (22.9s/set)
+[80/131] ok=90 err=2 1907s (23.8s/set)
+[90/131] ok=101 err=2 2352s (26.1s/set)
+[100/131] ok=113 err=2 2725s (27.3s/set)
+[110/131] ok=125 err=2 3187s (29.0s/set)
+[120/131] ok=137 err=2 3520s (29.3s/set)
+[130/131] ok=147 err=2 3647s (28.1s/set)
+done: ok=148 err=2 in 61.0 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+150 chart(s) / 130 set(s) to fetch
+[fail] 486889 set=206487: no audio member
+[fail] 487516 set=206487: no audio member
+[10/130] ok=11 err=2 148s (14.8s/set)
+[20/130] ok=23 err=2 271s (13.5s/set)
+[30/130] ok=36 err=2 391s (13.0s/set)
+[40/130] ok=49 err=2 608s (15.2s/set)
+[50/130] ok=59 err=2 910s (18.2s/set)
+[60/130] ok=72 err=2 1057s (17.6s/set)
+[70/130] ok=82 err=2 1281s (18.3s/set)
+[80/130] ok=92 err=2 1418s (17.7s/set)
+[90/130] ok=102 err=2 1625s (18.1s/set)
+[100/130] ok=113 err=2 1827s (18.3s/set)
+[110/130] ok=124 err=2 2191s (19.9s/set)
+[120/130] ok=135 err=2 2466s (20.5s/set)
+[130/130] ok=148 err=2 2680s (20.6s/set)
+done: ok=148 err=2 in 44.7 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+89 chart(s) / 78 set(s) to fetch
+[fail] 486889 set=206487: no audio member
+[fail] 487516 set=206487: no audio member
+[10/78] ok=11 err=2 196s (19.6s/set)
+[20/78] ok=25 err=2 417s (20.8s/set)
+[30/78] ok=35 err=2 646s (21.5s/set)
+[40/78] ok=46 err=2 958s (24.0s/set)
+[50/78] ok=58 err=2 1283s (25.7s/set)
+[60/78] ok=68 err=2 1523s (25.4s/set)
+[70/78] ok=78 err=2 1863s (26.6s/set)
+[fail] 5607985 set=2535725: zip: File is not a zip file
+done: ok=86 err=3 in 38.8 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+3 chart(s) / 2 set(s) to fetch
+[fail] 486889 set=206487: no audio member
+[fail] 487516 set=206487: no audio member
+[fail] 5607985 set=2535725: zip: File is not a zip file
+done: ok=0 err=3 in 0.2 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+3 chart(s) / 2 set(s) to fetch
+[fail] 486889 set=206487: no audio member
+[fail] 487516 set=206487: no audio member
+done: ok=1 err=2 in 0.4 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+2 chart(s) / 1 set(s) to fetch
+[fail] 486889 set=206487: no audio member
+[fail] 487516 set=206487: no audio member
+done: ok=0 err=2 in 0.1 min
+OMP: Warning #179: Function Can't set size of SHM failed:
+auth: session cookie (web endpoint)
+2 chart(s) / 1 set(s) to fetch
+[fail] 486889 set=206487: no audio member
+[fail] 487516 set=206487: no audio member
+done: ok=0 err=2 in 0.1 min

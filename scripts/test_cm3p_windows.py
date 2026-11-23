@@ -239,6 +239,15 @@ def test_build_and_audit() -> None:
     check("removed group counts", rc["kiai"] == 3 and rc["sv"] == 4
           and rc["hitsound"] == 2, str(rc))
 
+    # a kiai/SV group immediately before [EOS] must not swallow the EOS
+    a_eos = ["[BOS]", "[CIRCLE]", "[TIME_SHIFT_0]", "[KIAI_ON]",
+             "[TIME_SHIFT_100]", "[EOS]"]
+    b_eos = ["[BOS]", "[CIRCLE]", "[TIME_SHIFT_0]", "[EOS]"]
+    check("kiai before EOS keeps EOS", w.strip_removed(a_eos) == b_eos,
+          str(w.strip_removed(a_eos)))
+    rc_eos = w.removed_counts(a_eos)
+    check("EOS not counted as kiai payload", rc_eos["kiai"] == 2, str(rc_eos))
+
     # columns on both sides
     f2 = make_ct(6, [np.array([circle, col, hs, vol], np.int32)], keep_tokens=True)
     c2 = make_ct(7, [np.array([circle, col], np.int32)], keep_tokens=True)

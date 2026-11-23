@@ -99,9 +99,11 @@ def _rel(p) -> str:
         return str(p)
 
 
-def _real_split_path(protocol: str, seed: int) -> Path:
+def _real_split_path(protocol: str, seed: int,
+                     p2_prefix: Path = P2_PREFIX,
+                     p4_prefix: Path = P4_PREFIX) -> Path:
     # prefixes are already the full stem; the split scripts append _s<seed>
-    prefix = P2_PREFIX if protocol == "p2" else P4_PREFIX
+    prefix = p2_prefix if protocol == "p2" else p4_prefix
     return Path(f"{prefix}_s{seed}.parquet")
 
 
@@ -116,27 +118,37 @@ def run(cmd: list[str], log_path: Path) -> None:
         raise SystemExit(f"command failed ({r.returncode}): {' '.join(cmd)}\n{tail}")
 
 
-def ensure_splits(seeds: list[int], protocols: list[str], force: bool) -> None:
+def ensure_splits(seeds: list[int], protocols: list[str], force: bool,
+                  p2_prefix: Path = P2_PREFIX,
+                  p4_prefix: Path = P4_PREFIX) -> None:
+    """Create the default splits on demand; custom prefixes must already exist."""
     if "p2" in protocols:
-        missing = [s for s in seeds if not _real_split_path("p2", s).exists()]
+        missing = [s for s in seeds
+                   if not _real_split_path("p2", s, p2_prefix, p4_prefix).exists()]
+        if missing and p2_prefix.resolve() != P2_PREFIX.resolve():
+            raise SystemExit(f"--split-p2 {p2_prefix}: missing seeds {missing}")
         if missing or force:
             run([PY, "scripts/step1_pairbest_resplit.py",
-                 "--in", _rel(STEP1), "--out-prefix", _rel(P2_PREFIX),
+                 "--in", _rel(STEP1), "--out-prefix", _rel(p2_prefix),
                  "--seeds", ",".join(str(s) for s in seeds)]
                 + (["--force"] if force else []),
                 Path("/tmp/p2_resplit.log"))
     if "p4" in protocols:
-        missing = [s for s in seeds if not _real_split_path("p4", s).exists()]
+        missing = [s for s in seeds
+                   if not _real_split_path("p4", s, p2_prefix, p4_prefix).exists()]
+        if missing and p4_prefix.resolve() != P4_PREFIX.resolve():
+            raise SystemExit(f"--split-p4 {p4_prefix}: missing seeds {missing}")
         if missing or force:
             run([PY, "scripts/step1_p4_split.py",
-                 "--in", _rel(STEP1), "--out-prefix", _rel(P4_PREFIX),
+                 "--in", _rel(STEP1), "--out-prefix", _rel(p4_prefix),
                  "--seeds", ",".join(str(s) for s in seeds)]
                 + (["--force"] if force else []),
                 Path("/tmp/p4_split.log"))
 
 
 def train(protocol: str, seed: int, method: str, out_dir: Path,
-          threads: int, epochs: int, p2_folds: int, force: bool) -> None:
+          threads: int, epochs: int, p2_folds: int, force: bool,
+          content: Path, split: Path, content_col: str | None = None) -> None:
     cfg = METHODS[method]
     name = cfg["signal"]
     run_dir = out_dir / protocol / f"s{seed}"
@@ -146,13 +158,15 @@ def train(protocol: str, seed: int, method: str, out_dir: Path,
         _log(f"{protocol} s{seed} {method}: exists, skip")
         return
     cmd = [PY, "scripts/step2_cm3p_rank.py",
-           "--in", _rel(_real_split_path(protocol, seed)),
-           "--content-path", _rel(CONTENT),
+           "--in", _rel(split),
+           "--content-path", _rel(content),
            "--signal-table", _rel(SIGNALS),
            "--extra-signals", "msd_overall,sunny_star",
            "--val-frac", "0", "--seed", "0", "--threads", str(threads),
            "--name", name,
            "--out-signals", _rel(sig), "--out-json", _rel(js)]
+    if content_col:
+        cmd += ["--content-col", str(content_col)]
     if protocol == "p2":
         cmd += ["--chart-only", "--chart-folds", str(p2_folds), "--chart-seed", "0"]
     cmd += list(cfg["args"])
@@ -163,7 +177,7 @@ def train(protocol: str, seed: int, method: str, out_dir: Path,
 
 
 def assemble(protocol: str, seed: int, out_dir: Path,
-             models: list[str]) -> Path:
+             models: list[str], n_charts: int) -> Path:
     run_dir = out_dir / protocol / f"s{seed}"
     model_sigs = [run_dir / "signals" / f"{METHODS[m]['signal']}.parquet"
                   for m in models]
@@ -181,30 +195,36 @@ def assemble(protocol: str, seed: int, out_dir: Path,
     fixed = pd.read_parquet(SIGNALS)[["beatmap_id", "sunny_star",
                                       "daniel_star", "star"]]
     out = base.merge(fixed, on="beatmap_id", how="inner")
-    if len(out) != 6828:
-        raise SystemExit(f"{protocol} s{seed}: assembled {len(out)} charts, expected 6828")
+    if len(out) != n_charts:
+        raise SystemExit(f"{protocol} s{seed}: assembled {len(out)} charts, "
+                         f"expected {n_charts} (from the split file)")
     cols = [METHODS[m]["signal"] for m in models] + [c for c, _ in FIXED]
+    missing = [c for c in cols if c not in out.columns]
+    if missing:
+        raise SystemExit(f"{protocol} s{seed}: assembled table missing {missing}; "
+                         f"have {list(out.columns)}")
     if out[cols].isna().any().any():
         raise SystemExit(f"{protocol} s{seed}: NaN in signal table")
     dest = run_dir / "signals.parquet"
     out.to_parquet(dest, index=False)
-    _log(f"{protocol} s{seed}: signals {len(out)} charts -> {dest}")
+    _log(f"{protocol} s{seed}: signals {len(out)} charts x {len(cols)} cols "
+         f"({', '.join(cols)}) -> {dest}")
     return dest
 
 
 def evaluate(protocol: str, seed: int, out_dir: Path, force: bool,
-             models: list[str]) -> None:
+             models: list[str], split: Path, force_eval: bool = False) -> None:
     run_dir = out_dir / protocol / f"s{seed}"
     dest = run_dir / "rank_eval.json"
-    if dest.exists() and not force:
-        _log(f"{protocol} s{seed}: eval exists, skip")
+    if dest.exists() and not force and not force_eval:
+        _log(f"{protocol} s{seed}: eval exists, skip (pass --force-eval to redo)")
         return
     sig = run_dir / "signals.parquet"
     if not sig.exists():
         raise SystemExit(f"missing {sig}")
     names = [METHODS[m]["signal"] for m in models] + [c for c, _ in FIXED]
     cmd = [PY, "scripts/step2_rank_eval.py",
-           "--in", _rel(_real_split_path(protocol, seed)),
+           "--in", _rel(split),
            "--signal-table", _rel(sig),
            "--signals", ",".join(names),
            "--split", "test", "--ceiling-fit", "all",
@@ -327,26 +347,68 @@ def parse_args(argv=None):
     ap.add_argument("--seeds", default="1,2,3,4,5")
     ap.add_argument("--models", default=",".join(METHOD_ORDER))
     ap.add_argument("--out-dir", default=None)
+    ap.add_argument("--split-p2", default=str(P2_PREFIX.relative_to(ROOT)),
+                    help="P2 split prefix; the split scripts append _s<seed>.parquet "
+                         "(default: the main 6,828-chart splits)")
+    ap.add_argument("--split-p4", default=str(P4_PREFIX.relative_to(ROOT)),
+                    help="P4 split prefix (default: the main splits)")
+    ap.add_argument("--content-path", default=str(CONTENT.relative_to(ROOT)),
+                    help="chart content table used by the CM3P models "
+                         "(default: the legacy local table; pass "
+                         "data/processed/chart_content_cm3p_local_canon.parquet "
+                         "for the canon crop)")
+    ap.add_argument("--content-col", default=None,
+                    help="content column passed to step2_cm3p_rank.py; use "
+                         "'features' for the T3 pool tables")
+    ap.add_argument("--signal-table", default=str(SIGNALS.relative_to(ROOT)),
+                    help="chart-level signal table (fixed signals + extra signals)")
+    ap.add_argument("--cache-dir", default=str(CACHE.relative_to(ROOT)),
+                    help="step2_rank_eval cache dir")
     ap.add_argument("--threads", type=int, default=6)
     ap.add_argument("--p2-folds", type=int, default=5)
     ap.add_argument("--epochs", type=int, default=98)
     ap.add_argument("--quick", action="store_true",
                     help="2 chart folds, 2 epochs, results/p4_multiseed_quick")
     ap.add_argument("--aggregate-only", action="store_true")
-    ap.add_argument("--skip-train", action="store_true")
+    ap.add_argument("--skip-train", action="store_true",
+                    help="skip training, only assemble existing signals")
+    ap.add_argument("--assemble-only", action="store_true",
+                    help="alias of --skip-train: assemble + eval existing signals")
+    ap.add_argument("--force-eval", action="store_true",
+                    help="re-run step2_rank_eval even if rank_eval.json exists")
     ap.add_argument("--skip-eval", action="store_true")
     ap.add_argument("--force", action="store_true")
     return ap.parse_args(argv)
 
 
 def main(argv=None) -> int:
+    global SIGNALS, CACHE
     args = parse_args(argv)
+    SIGNALS = Path(args.signal_table)
+    if not SIGNALS.is_absolute():
+        SIGNALS = ROOT / SIGNALS
+    CACHE = Path(args.cache_dir)
+    if not CACHE.is_absolute():
+        CACHE = ROOT / CACHE
+    if not SIGNALS.exists():
+        raise SystemExit(f"--signal-table does not exist: {SIGNALS}")
     protocols = [s.strip() for s in args.protocols.split(",") if s.strip()]
     seeds = [int(s) for s in args.seeds.split(",") if s.strip()]
     models = [s.strip() for s in args.models.split(",") if s.strip()]
     for m in models:
         if m not in METHODS:
             raise SystemExit(f"unknown method {m!r}; choose from {list(METHODS)}")
+
+    content = Path(args.content_path)
+    if not content.is_absolute():
+        content = ROOT / content
+    if not content.exists():
+        raise SystemExit(f"--content-path does not exist: {content}")
+    p2_prefix, p4_prefix = Path(args.split_p2), Path(args.split_p4)
+    if not p2_prefix.is_absolute():
+        p2_prefix = ROOT / p2_prefix
+    if not p4_prefix.is_absolute():
+        p4_prefix = ROOT / p4_prefix
 
     out_dir = Path(args.out_dir) if args.out_dir else (
         ROOT / ("results/p4_multiseed_quick" if args.quick else "results/p4_multiseed"))
@@ -356,19 +418,26 @@ def main(argv=None) -> int:
         args.p2_folds = min(args.p2_folds, 2)
         args.epochs = min(args.epochs, 2)
 
+    skip_train = args.skip_train or args.assemble_only
     if not args.aggregate_only:
-        ensure_splits(seeds, protocols, args.force)
+        ensure_splits(seeds, protocols, args.force, p2_prefix, p4_prefix)
         for protocol in protocols:
             for seed in seeds:
-                _log(f"=== {protocol} seed {seed} ===")
-                for m in models:
-                    train(protocol, seed, m, out_dir, args.threads,
-                          args.epochs, args.p2_folds, args.force)
-                assemble(protocol, seed, out_dir, models)
+                split = _real_split_path(protocol, seed, p2_prefix, p4_prefix)
+                if not split.exists():
+                    raise SystemExit(f"missing split file: {split}")
+                n_charts = int(pd.read_parquet(
+                    split, columns=["beatmap_id"])["beatmap_id"].nunique())
+                _log(f"=== {protocol} seed {seed} ({n_charts:,} charts) ===")
+                if not skip_train:
+                    for m in models:
+                        train(protocol, seed, m, out_dir, args.threads,
+                              args.epochs, args.p2_folds, args.force, content, split,
+                              args.content_col)
+                assemble(protocol, seed, out_dir, models, n_charts)
                 if not args.skip_eval:
-                    evaluate(protocol, seed, out_dir, args.force, models)
-                if args.skip_eval:
-                    continue
+                    evaluate(protocol, seed, out_dir, args.force, models, split,
+                             force_eval=args.force_eval)
         # aggregate over the seeds this process handled
     aggregate(out_dir, protocols, seeds)
     return 0

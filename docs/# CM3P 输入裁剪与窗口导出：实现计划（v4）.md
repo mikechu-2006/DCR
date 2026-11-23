@@ -199,12 +199,45 @@ blame 全挂在 grafted root 上，**没法用 git 判断这个 bug 是何时引
 | `add_timing_points` | 真实 checkpoint 是 **True** | **继承** |
 
 **为什么保留拍/小节/红线网格**：不规则的 beat/measure 间隔本身携带信息——
-切分音、变速、非整数小节正是 tech 类谱面的特征。删掉它只省约 15% token，
-却把"节奏不规则性"这个维度整个抹掉。这与"删 hitsound"的性质不同：后者是**零信息**，前者是**信息编码方式较贵**。
+切分音、变速、非整数小节正是 tech 类谱面的特征。删掉它约省 **21%** token（400 图实测；
+不同谱面不同），却把"节奏不规则性"这个维度整个抹掉。这与"删 hitsound"的性质不同：
+后者是**零信息**，前者是**信息编码方式较贵**。
+
+**一个必须澄清的误解**：`[TIME_SHIFT_t]` 不是 note 之间的 delta，而是
+`group.time - window_start_ms`（`tokenization_cm3p.py:184`），即**相对窗口起点的绝对偏移**。
+连续两个 note 的差可以由两个 token 相减得到，但 token 本身不是差值。即使把差分算出来，
+note 时间也不包含：拍号/meter、小节线、休止段里的 BPM 变化、红线的 `[TIMING_POINT]` 标记。
+这些是 timing 网格独有的信息，所以 `add_timing=False` 不是“零信息”的裁剪；它只能作为
+单独的 T1 变体做消融，不能在当前主 T1 里直接关掉。
 
 **为什么不动 `add_snapping`**：v4 写“必须保持 True”是错的。真实 checkpoint 的 processor 就是
 `add_snapping=False`；强行打开等于把模型没训练过的 `[SNAPPING_*]` 塞进去，是 OOD 输入，不是“保留信息”。
 T1 只做删载荷，不做加 token。
+
+#### 当前生效配置（本次执行就用这一套）
+
+| 层 | 键 | 生效值 | 来源 |
+|---|---|---|---|
+| Processor | `window_length_sec` / `window_stride_sec` | 16.0 / 16.0 | checkpoint |
+| | `min_window_length_sec` | 1.0 | 默认 |
+| | `max_length` | 2000 | checkpoint |
+| | `truncation` | `longest_first` | checkpoint |
+| Tokenizer | `add_cls_token` | True | checkpoint |
+| | `max_time` / `time_step` | 16000 / 10 | checkpoint |
+| | `separate_new_combo_token` | False | checkpoint |
+| Parser | `add_hitsounds` | **False** | T1 |
+| | `add_kiai` | **False** | T1 |
+| | `add_mania_sv` | **False** | T1 |
+| | `add_timing` | True | 继承 |
+| | `add_timing_points` | True | 继承 |
+| | `add_snapping` | False | 继承（不强开） |
+| | `add_positions` / `add_distances` | True / False | 继承；mania 无 x/y，positions 实际不发 |
+| | `add_sv` | True | 继承；只影响 std/catch，mania 由 `add_mania_sv` 控制 |
+| T1 | `--mania-columns` | `off`（不 patch） | 本轮决定 |
+| T2 | 窗口 / 存储 | 16 s 不重叠；float16；`max_length=2000` | 计划 |
+
+**不要顺手改**：`add_snapping`、`add_cls_token`、`max_length`、`window_*`、tokenizer 的
+`max_time/time_step/vocab`。这些不是 T1 的开关。
 
 实现：
 
@@ -271,6 +304,15 @@ v4 示例里的这两个 token 不存在。
 | `window_length_sec` / `window_stride_sec` | 保持 checkpoint 原值（文档记 16 / 16） | 已决定不改 stride |
 | `min_window_length_sec` | 1.0 | 默认 |
 | `max_length` | **使用真实值（2000）**，不要硬写成 4000 | 真实 checkpoint 是 2000；canon 0 个窗口越界，legacy 0.42% |
+
+**为什么不用 4000**：`max_length` 是**单个 16 s 窗口的 token 数**，不是按键数。400 图实测
+canon 窗口 p95=801、max=1,095；同一批窗口里最多 **447 个 note 起点**（含 hold end 为 487 个
+note group），按 canon 的 2.76 token/note 算，2,000 token 大约能放 700 个 note，而实测最多
+447 个——2,000 有约 1.8× 的 token 余量。canon 撞上限的窗口是 0/4,251。4000 虽然
+`max_position_embeddings=8192` 技术上放得下，但 checkpoint 是按 2000 训练的，4000 是新的
+序列长度分布；它只影响**真正超过 2000 的窗口**（典型窗口仍按实际长度动态 padding，不会统一
+pad 到 4000），但会把“T1/T2 固定”变成第二个变量。只有当全量 21,949 的审计显示 canon 确实有
+可观比例的窗口 >2000 时，才另开一轮“固定 4000”的 T1/T2 变体；不要和当前 T3 混跑。
 
 #### F. 怎么填（就这三行 + 继承）
 

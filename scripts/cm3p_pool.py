@@ -2,10 +2,12 @@
 """T3: build per-chart features from the CM3P window store (or the A6 signal).
 
 Examples
-    # A0..A5, one parquet per variant
-    python scripts/cm3p_pool.py --variants a0,a1,a2,a3,a4,a5 \
-        --heads results/cm3p_pool_1k/a0_heads.npz \
-        --out-dir data/processed/chart_pool_features_1k
+    # A0/A0L/A1 need no heads; A2/A2b/A2c/A3 do.
+    # P2: --head-mode fold (each chart's own fold head)
+    # P4: --head-mode full (w_full fit on the P4 train rows only)
+    python scripts/cm3p_pool.py --variants a0,a0l,a1,a2,a2b,a2c,a3 \
+        --heads results/randommerge_pool/heads/a0_heads_p2_s1.npz \
+        --head-mode fold --out-dir data/processed/chart_pool_features_randommerge/p2/s1
 
     # the plan's named artifact (A2)
     python scripts/cm3p_pool.py --variants a2 --heads ... \
@@ -60,6 +62,9 @@ def parse_args(argv=None):
                     help="one <variant>.parquet per variant (used when >1 variant)")
     ap.add_argument("--a4-beta", type=float, default=5.0)
     ap.add_argument("--a4-mode", default="weighted", choices=["weighted", "lse"])
+    ap.add_argument("--head-mode", default="fold", choices=["fold", "full"],
+                    help="fold = each chart's own fold head (P2); "
+                         "full = w_full fit on all train rows (P4)")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--exclude-truncated", action="store_true",
                     help="drop charts with n_core_tokens_dropped > 0 from the features")
@@ -82,8 +87,8 @@ def main() -> int:
     if bad:
         raise SystemExit(f"unknown variants {bad}; choose from {pool.VARIANTS}")
     heads = pool.HeadBundle.load(args.heads) if args.heads else None
-    if any(v in ("a2", "a3", "a4") for v in variants) and heads is None:
-        raise SystemExit("a2/a3/a4 need --heads (the A0 linear head bundle)")
+    if any(v in ("a2", "a2b", "a2c", "a3", "a4") for v in variants) and heads is None:
+        raise SystemExit("a2/a2b/a2c/a3/a4 need --heads (the A0 linear head bundle)")
     if "a6" in variants:
         if len(variants) > 1:
             raise SystemExit("run a6 on its own: it trains a signal, not a fixed "
@@ -118,13 +123,14 @@ def main() -> int:
 
     meta = {"variants": variants, "index": str(args.index), "win_dir": str(args.win_dir),
             "heads": str(args.heads) if args.heads else None,
+            "head_mode": args.head_mode,
             "a4_beta": args.a4_beta, "a4_mode": args.a4_mode,
             "n_charts": int(len(index)), "widths": {}, "seconds": {}}
     for v in variants:
         t0 = time.time()
         df = pool.build_feature_table(index, args.win_dir, v, heads,
                                       beta=args.a4_beta, a4_mode=args.a4_mode,
-                                      log=log)
+                                      head_mode=args.head_mode, log=log)
         out = outs[v]
         out.parent.mkdir(parents=True, exist_ok=True)
         tmp = out.with_suffix(out.suffix + ".part")

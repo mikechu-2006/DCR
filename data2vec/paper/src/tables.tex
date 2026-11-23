@@ -1,0 +1,470 @@
+
+\newcommand{\insertINtable}{
+\begin{table}[t]
+\centering
+\caption{Computer vision: top-1 validation accuracy on ImageNet-1K with ViT-B and ViT-L models. 
+\name{} ViT-B was trained for 800 epochs and ViT-L for 1,600 epochs.
+We distinguish between individual models and setups composed of multiple models (BEiT/PeCo train separate visual tokenizers and PeCo also distills two MoCo-v3 models).
+\label{tab:in}}
+% \vspace{0.075in}
+\begin{tabular}[t]{lrrrrr}
+\toprule
+& ViT-B & ViT-L \\
+\midrule
+\textit{Multiple models} \\
+BEiT~\citep{bao2021beit} & 83.2 & 85.2 \\
+PeCo~\citep{dong2022peco} & 84.5 & 86.5 \\
+\midrule
+\textit{Single models} \\
+MoCo v3~\citep{chen2021mocov3} & 83.2 & 84.1 \\
+DINO~\citep{caron2021dino} & 82.8 & - \\
+MAE~\citep{he2021mae} & 83.6 & 85.9 \\
+SimMIM~\citep{xie2021simmim} & 83.8 & - \\
+iBOT~\citep{zhou2021ibot} & 83.8 & - \\
+MaskFeat~\citep{wei2021masked} & 84.0 & 85.7 \\
+\name{} & 84.2 & 86.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+}
+
+
+
+\newcommand{\insertAStable}{
+\begin{table}[h!]
+\caption{Audio event classification: mean average precision (mAP) on the eval set of AudioSet when pre-training on all of AudioSet (AS) and/or Librispeech (LS) and fine-tuning on the 20K subset.
+\label{tab:audioset}
+}
+\vspace{0.075in}
+\centering 
+\begin{tabular}{lrr}
+\toprule
+ & Pretrain data & mAP \\
+\midrule
+SSAST~\citep{gong2021ssast} & AS, LS & 31.0 \\
+MaskSpec~\citep{chong2022maskspec} & AS & 32.3 \\
+MAE-AST~\citep{baade2022} & AS, LS & 30.6 \\
+\midrule
+data2vec & AS & 34.5 \\
+\bottomrule
+\end{tabular}
+% }
+\end{table}
+}
+
+\newcommand{\insertLLtable}{
+\begin{table*}[h!]
+\caption{Speech processing: word error rate on the \libri{} test-other when fine-tuning pre-trained models on the \libril{} low-resource labeled data setups~\citep{kahn2020librilight} of 10 min, 1 hour, 10 hours, the clean 100h subset of \libri{} and the full 960h of \libri{}. 
+For pretraining, models use 960 hours of unlabeled audio from \libri{} (\librisz{}), or the 60K hours from \libril{} (\voxsz{}); WavLM Large uses 94K hours (MIX-94K) which includes \voxsz{} as well as other datasets.
+We indicate the language model used during decoding (LM).
+Results for all dev/test sets and other LMs can be found in the supplementary material (\autoref{tab:librilight_app}).
+\label{tab:librilight}
+}
+\vspace{0.075in}
+\centering 
+% \resizebox{1.0\columnwidth}{!}{
+\begin{tabular}{lccrrrrr}
+\toprule
+& Unlabeled & \multirow{2}{*}{LM} & \multicolumn{5}{c}{Amount of labeled data} \\
+{} & data & {} & 10m & 1h & 10h & 100h & 960h \\
+\midrule
+\textit{Base models} \\
+\wvpp{}~\citep{baevski2020wav} & \librisz{} & 4-gram & 15.6 & 11.3 & 9.5 & 8.0 & 6.1 \\
+HuBERT~\citep{hsu2020hubert} & \librisz{} & 4-gram & 15.3 & 11.3 & 9.4 & 8.1 & - \\
+WavLM~\citep{chen2021wavlm} & \librisz{} & 4-gram & - & 10.8 & 9.2 & 7.7 & - \\
+\midrule
+\name{} & \librisz{} & 4-gram & 12.3 & 9.1 & 8.1 & 6.8 & 5.5 \\
+\midrule
+\textit{Large models} \\
+\wvpp{}~\citep{baevski2020wav} & \voxsz{} & 4-gram & 10.3 & 7.1 & 5.8 & 4.6 & 3.6 \\
+HuBERT~\citep{hsu2020hubert} & \voxsz{} & 4-gram & 10.1 & 6.8 & 5.5 & 4.5 & 3.7 \\
+WavLM~\citep{chen2021wavlm} & MIX-94K & 4-gram & - & 6.6 & 5.5 & 4.6 & - \\
+\midrule
+\name{} & \voxsz{} & 4-gram & 8.4 & 6.3 & 5.3 & 4.6 & 3.7 \\
+\bottomrule
+\end{tabular}
+% }
+\end{table*}
+}
+
+\newcommand{\insertLLtableApp}{
+\begin{table*}[h!t]
+\caption{Speech processing: word error rate on the \libri{} dev/test sets when training on the \libril{} low-resource labeled data setups of 10 min, 1 hour, 10 hours and the clean 100h subset of \libri{}. 
+Models use the audio of \libri{} (\librisz{}) as unlabeled data.
+\label{tab:librilight_app}
+}
+\centering 
+\begin{tabular}{lcccrrrr}
+\toprule
+\multirow{2}{*}{Model} & Unlabeled & \multirow{2}{*}{LM} & \multicolumn{2}{c}{dev} && \multicolumn{2}{c}{test} \\
+\cline{4-5}\cline{7-8} 
+{} & data & {} & clean & other && clean & other \\
+\midrule
+\midrule
+\multicolumn{8}{l}{\textbf{10 min labeled}}\\
+\wvppbase{}~\citep{baevski2020wav} & \librisz{} & 4-gram & 8.9 & 15.7 && 9.1 & 15.6 \\
+\hubase{}~\citep{hsu2020hubert} & \librisz{} & 4-gram & 9.1 & 15.0 && 9.7 & 15.3 \\ 
+\midrule
+\name{} Base & \librisz{} & 4-gram & 7.3 & 11.6 && 7.9	& 12.3 \\
+\midrule
+\midrule
+\multicolumn{8}{l}{\textbf{1h labeled}}\\
+\wvppbase{}~\citep{baevski2020wav} & \librisz{} & 4-gram & 5.0 & 10.8 && 5.5 & 11.3 \\
+\hubase{}~\citep{hsu2020hubert} & \librisz{} & 4-gram & 5.6 & 10.9 && 6.1 & 11.3 \\
+\midrule
+\name{} Base & \librisz{} & 4-gram & 4.0 & 8.5 && 4.6 & 9.1 \\
+\midrule
+\midrule
+\multicolumn{8}{l}{\textbf{10h labeled}}\\
+\wvppbase{}~\citep{baevski2020wav} & \librisz{} & 4-gram & 3.8 & 9.1 && 4.3 & 9.5 \\
+\hubase{}~\citep{hsu2020hubert} & \librisz{} & 4-gram & 3.9 & 9.0 && 4.3 & 9.4 \\
+\midrule
+\name{} Base & \librisz{} & 4-gram & 3.3 & 7.5 && 3.9 & 8.1 \\
+\midrule
+\midrule
+\multicolumn{8}{l}{\textbf{100h labeled}}\\
+Noisy student~\citep{park2020improved} & \libriunsz{} & LSTM & 3.9 & 8.8 && 4.2 & 8.6 \\
+IPL~\citep{xu2020iterative} & \voxsz{} & 4-gram+Transf. & 3.2 & 6.1 && 3.7 & 7.1 \\
+SlimIPL~\citep{likhomanenko2021slimipl} & \libriunsz{} & 4-gram+Transf. & 2.2 & 4.6 && 2.7 & 5.2 \\
+\wvppbase{}~\citep{baevski2020wav} & \librisz{} & 4-gram & 2.7 & 7.9 && 3.4 & 8.0 \\
+\hubase{}~\citep{hsu2020hubert} & \librisz{} & 4-gram & 2.7 & 7.8 && 3.4 & 8.1 \\
+\midrule
+\name{} Base & \librisz{} & 4-gram & 2.2 & 6.4 && 2.8 & 6.8 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+}
+
+\newcommand{\insertGLUEtable}{
+\begin{table*}[h!]
+\centering
+\caption{Natural language processing: GLUE results on the development set for single-task fine-tuning of individual models.
+For MNLI we report accuracy on both the matched and unmatched dev sets, for MRPC and QQP, we report the unweighted average of accuracy and F1, for STS-B the unweighted average of Pearson and Spearman correlation, for CoLA we report Matthews correlation and for all other tasks we report accuracy.
+BERT Base results are from~\citet{wu2020clear} and our baseline is RoBERTa re-trained in a similar setup as BERT.
+We also report results with wav2vec 2.0 style masking of spans of four BPE tokens with no unmasked tokens or random targets.
+\label{tab:glue}} 
+\vspace{0.075in}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+& MNLI & QNLI & RTE & MRPC & QQP & STS-B & CoLA & SST & Avg.\\
+\midrule
+BERT~\citep{devlin2018bert} & 84.0/84.4 & 89.0 & 61.0 & 86.3 & 89.1 & 89.5 & 57.3 & 93.0 & 80.7\\
+Baseline~\citep{liu2019roberta} & 84.1/83.9 & 90.4 & 69.3 & 89.0 & 89.3 & 88.9 & 56.8 & 92.3 & 82.5 \\ 
+\midrule
+\name{} & 83.2/83.0 & 90.9 & 67.0 & 90.2 & 89.1 & 87.2 & 62.2 & 91.8 & 82.7\\
+~+ wav2vec 2.0 masking & 82.8/83.4 & 91.1 & 69.9 & 90.0 & 89.0 & 87.7 & 60.3 & 92.4 & 82.9 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+}
+
+\pgfplotstableread[row sep=\\,col sep=&]{
+lyr & vitb & speechb & nlpb \\
+1 & 83.01 & 39.39 & 58.63 \\
+2 & 83.5 & 36.04 & 73.08 \\
+3 & 84.02 & 26.37 & 76.80 \\
+4 & 83.88 & 26.55 & 78.03 \\
+5 & 83.86 & 17.43 & 79.09 \\
+6 & 83.79 & 13.73 & 80.07 \\
+7 & 83.74 & 13.90 & 80.15 \\
+8 & 83.7 & 13.43 & 81.42 \\
+9 & 83.64 & 15.44 & 80.50 \\
+10 & 83.74 & 13.74 & 82.13 \\
+11 & 83.65 & 14.01 & 81.44 \\
+12 & 83.66 & 14.08 & 81.63 \\
+}\layerAblationData
+
+
+
+\newcommand{\insertLayerAblation}{
+\begin{figure*}
+\centering
+\begin{subfigure}[b]{.33\textwidth}
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+    % ybar,
+    % bar width=.12cm,
+    width=1\textwidth,
+    height=.75\textwidth,
+    legend style={font=\small,
+    at={(0.98,0.27)},
+    anchor=east,legend columns=1},
+    xticklabels from table={\layerAblationData}{lyr},
+    % xticklabel style={text height=1.5ex},
+    xticklabel style={font=\scriptsize},
+    xtick=data,
+    yticklabel style={font=\small},
+    % xtick={1,2,3,4,5,6,7,8,9,10,11,12},
+    % nodes near coords,
+    % nodes near coords align={vertical},
+    % ymin=19,ymax=26,
+    % xmin=0,xmax=5,
+    % bar width=2pt,
+    ylabel={Word error rate},
+    ylabel style={font=\small},
+    ylabel near ticks, %ylabel shift={-10pt}
+    xlabel={$K$},
+    xlabel style={font=\small},
+    % grid=both,
+    % style=thick,
+    % xticklabel={$\pgfmathprintnumber{\tick}\%$},
+    % nodes near coords={\pgfmathprintnumber\pgfplotspointmeta\%}
+    ]
+    % \addplot[black,dashed,mark=*,mark options={solid,scale=1,fill=black}] table[x expr=\coordindex,y=vitb]{\layerAblationData};
+    \addplot[blue,mark=*,mark options={solid,scale=1,fill=blue}] table[x expr=\coordindex,y=speechb]{\layerAblationData};
+    % \addplot[red,mark=*,mark options={solid,scale=1,fill=red}] table[x expr=\coordindex,y=nlpb]{\layerAblationData};
+    % \legend{Vision,Speech,NLP}
+    \end{axis}
+    \end{tikzpicture}
+    \caption{Speech}
+    \label{fig:layer_ablation_speech}
+\end{subfigure}
+\begin{subfigure}[b]{.33\textwidth}
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+    % ybar,
+    % bar width=.12cm,
+    width=1\textwidth,
+    height=.75\textwidth,
+    legend style={font=\small,
+    at={(0.98,0.27)},
+    anchor=east,legend columns=1},
+    xticklabels from table={\layerAblationData}{lyr},
+    xticklabel style={font=\scriptsize},
+    xtick=data,
+    yticklabel style={font=\small},
+    % xtick={1,2,3,4,5,6,7,8,9,10,11,12},
+    % nodes near coords,
+    % nodes near coords align={vertical},
+    % ymin=19,ymax=26,
+    % xmin=0,xmax=5,
+    % bar width=2pt,
+    ylabel={GLUE score},
+    ylabel style={font=\small},
+    ylabel near ticks, %ylabel shift={-10pt}
+    xlabel={$K$},
+    xlabel style={font=\small},
+    % grid=both,
+    % style=thick,
+    % xticklabel={$\pgfmathprintnumber{\tick}\%$},
+    % nodes near coords={\pgfmathprintnumber\pgfplotspointmeta\%}
+    ]
+    % \addplot[black,dashed,mark=*,mark options={solid,scale=1,fill=black}] table[x expr=\coordindex,y=vitb]{\layerAblationData};
+    % \addplot[blue,mark=*,mark options={solid,scale=1,fill=blue}] table[x expr=\coordindex,y=speechb]{\layerAblationData};
+    \addplot[red,mark=*,mark options={solid,scale=1,fill=red}] table[x expr=\coordindex,y=nlpb]{\layerAblationData};
+    % \legend{Vision,Speech,NLP}
+    \end{axis}
+    \end{tikzpicture}
+    \caption{NLP}
+    \label{fig:layer_ablation_nlp}
+\end{subfigure}
+\begin{subfigure}[b]{.33\textwidth}
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+    % ybar,
+    % bar width=.12cm,
+    width=1\textwidth,
+    height=.75\textwidth,
+    legend style={font=\small,
+    at={(0.98,0.27)},
+    anchor=east,legend columns=1},
+    xticklabels from table={\layerAblationData}{lyr},
+    % xticklabel style={text height=1.5ex},
+    xticklabel style={font=\scriptsize},
+    % xtick=data,
+    xtick={0,1,2,3,4,5,6,7,8,9,10,11,12},
+    yticklabel style={font=\small},
+    xlabel style={font=\small},
+    % nodes near coords,
+    % nodes near coords align={vertical},
+    ymin=80,ymax=85,
+    % xmin=0,xmax=5,
+    % bar width=2pt,
+    ylabel={Top-1 valid accuracy},
+    ylabel near ticks, %ylabel shift={-10pt}
+    xlabel={$K$},
+    ylabel style={font=\small},
+    % grid=both,
+    % style=thick,
+    % xticklabel={$\pgfmathprintnumber{\tick}\%$},
+    % nodes near coords={\pgfmathprintnumber\pgfplotspointmeta\%}
+    ]
+    \addplot[black,dashed,mark=*,mark options={solid,scale=1,fill=black}] table[x expr=\coordindex,y=vitb]{\layerAblationData};
+    % \addplot[blue,mark=*,mark options={solid,scale=1,fill=blue}] table[x expr=\coordindex,y=speechb]{\layerAblationData};
+    % \addplot[red,mark=*,mark options={solid,scale=1,fill=red}] table[x expr=\coordindex,y=nlpb]{\layerAblationData};
+    % \legend{Vision,Speech,NLP}
+    \end{axis}
+    \end{tikzpicture}
+    \caption{Vision}
+    \label{fig:layer_ablation_vision}
+\end{subfigure}
+\caption{Predicting targets which are the average of multiple layers is more robust than predicting only the top most layer ($K=1$) for most modalities. 
+We show the performance of predicting the average of $K$ teacher layer representations (\textsection\ref{sec:method_targets}).
+The effect is very pronounced for speech and NLP while for vision there is still a slight advantage of predicting more than a single layer.
+}
+\label{fig:layer_ablation}
+\end{figure*}
+}
+
+\newcommand{\insertTargetFeatureAblation}{
+\begin{table}[t]
+\centering
+\caption{Effect of using different features from the teacher model as targets: 
+we compare using the output of the self-attention module, the feed-forward module (FFN) as well as after the final residual connection (FFN + residual) and layer normalization (End of block).
+Results are not directly comparable to the main results since we use a reduced setup (\textsection\ref{sec:ablations}).
+}
+\label{tab:target_location}
+% \vspace{0.075in}
+\begin{tabular}[t]{lrrrrr}
+\toprule
+Layer & WER \\
+\midrule
+self-attention & 100.0 \\
+FFN & 13.1 \\
+FFN + residual & 14.8 \\
+End of block & 14.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+}
+
+\newcommand{\insertTeacherMaskNormAblation}{
+\begin{table}[t]
+\centering
+\caption{Effect of reducing the contextualization of our target features by masking the teacher and not normalizing the target features (\textsection\ref{sec:method_targets}).
+Results are in terms of WER on dev-other without a language model using a reduced setup.
+}
+\label{tab:teachermask_norm}
+% \vspace{0.075in}
+\begin{tabular}[t]{lrrrrr}
+\toprule
+ & WER \\
+\midrule
+Baseline & 17.1 \\
+mask teacher & 18.2 \\
+remove target normalization & 35.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+}
+
+
+\pgfplotstableread[row sep=\\,col sep=&]{
+ctxt & sec & perc & speechb \\
+2 & 0.04 & 0.3 & 78.608 \\
+5 & 0.1 & 0.8 & 63.255 \\
+10 & 0.2 & 1.6 & 29.777 \\
+25 & 0.5 & 4.1 & 23.526 \\
+50 & 1 & 8.1 & 19.681 \\
+100 & 2 & 16.2 & 15.859 \\
+all & all & 100 & 14.807 \\
+}\layerAblationContextSpeech
+
+\pgfplotstableread[row sep=\\,col sep=&]{
+ctxt & pixels & perc & vitb \\
+2 & 512 & 1 & 76.96 \\
+5 & 1280 & 2.6 & 79.34 \\
+10 & 2560 & 5.1 & 80.79 \\
+25 & 6400 & 12.8 & 82.29 \\
+50 & 12800 & 25.5 & 83.1 \\
+100 & 25600 & 51 & 83.57 \\
+all & 50176 & 100 & 83.79 \\
+}\layerAblationContextVision
+
+
+\newcommand{\insertContextAblation}{
+\begin{figure}
+\centering
+\begin{subfigure}[b]{.35\textwidth}
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+    % ybar,
+    % bar width=.12cm,
+    width=1\textwidth,
+    height=.75\textwidth,
+    legend style={font=\small,
+    at={(0.98,0.27)},
+    anchor=east,legend columns=1},
+    xticklabels from table={\layerAblationContextSpeech}{perc},
+    % xticklabel style={text height=1.5ex},
+    xticklabel style={font=\scriptsize},
+    xtick=data,
+    yticklabel style={font=\small},
+    % xtick={1,2,3,4,5,6,7,8,9,10,11,12},
+    % nodes near coords,
+    % nodes near coords align={vertical},
+    % ymin=19,ymax=26,
+    % xmin=0,xmax=5,
+    % bar width=2pt,
+    ylabel style={font=\small},
+    ylabel={Word error rate},
+    ylabel near ticks, %ylabel shift={-10pt}
+    xlabel style={font=\small},
+    xlabel={Teacher context size (\%)},
+    % grid=both,
+    % style=thick,
+    % xticklabel={$\pgfmathprintnumber{\tick}\%$},
+    % nodes near coords={\pgfmathprintnumber\pgfplotspointmeta\%}
+    ]
+    % \addplot[black,dashed,mark=*,mark options={solid,scale=1,fill=black}] table[x expr=\coordindex,y=vitb]{\layerAblationContext};
+    \addplot[blue,mark=*,mark options={solid,scale=1,fill=blue}] table[x expr=\coordindex,y=speechb]{\layerAblationContextSpeech};
+    % \addplot[red,mark=*,mark options={solid,scale=1,fill=red}] table[x expr=\coordindex,y=nlpb]{\layerAblationContext};
+    % \legend{Vision,Speech,NLP}
+    \end{axis}
+    \end{tikzpicture}
+    \caption{Speech}
+    \label{fig:context_ablation_speech}
+\end{subfigure}
+\begin{subfigure}[b]{.35\textwidth}
+    \centering
+    \begin{tikzpicture}
+    \begin{axis}[
+    % ybar,
+    % bar width=.12cm,
+    width=1\textwidth,
+    height=.75\textwidth,
+    legend style={font=\small,
+    at={(0.98,0.27)},
+    anchor=east,legend columns=1},
+    xticklabels from table={\layerAblationContextVision}{perc},
+    % xticklabel style={text height=1.5ex},
+    xticklabel style={font=\scriptsize},
+    % xtick=data,
+    xtick={0,1,2,3,4,5,6,7,8,9,10,11,12},
+    yticklabel style={font=\small},
+    % nodes near coords,
+    % nodes near coords align={vertical},
+    % ymin=80,ymax=85,
+    % xmin=0,xmax=5,
+    % bar width=2pt,
+    ylabel style={font=\small},
+    ylabel={Top-1 valid accuracy},
+    ylabel near ticks, %ylabel shift={-10pt}
+    xlabel style={font=\small},
+    xlabel={Teacher context size (\%)},
+    % grid=both,
+    % style=thick,
+    % xticklabel={$\pgfmathprintnumber{\tick}\%$},
+    % nodes near coords={\pgfmathprintnumber\pgfplotspointmeta\%}
+    ]
+    \addplot[black,dashed,mark=*,mark options={solid,scale=1,fill=black}] table[x expr=\coordindex,y=vitb]{\layerAblationContextVision};
+    % \addplot[blue,mark=*,mark options={solid,scale=1,fill=blue}] table[x expr=\coordindex,y=speechb]{\layerAblationContextVision};
+    % \addplot[red,mark=*,mark options={solid,scale=1,fill=red}] table[x expr=\coordindex,y=nlpb]{\layerAblationContextVision};
+    % \legend{Vision,Speech,NLP}
+    \end{axis}
+    \end{tikzpicture}
+    \caption{Vision}
+    \label{fig:context_ablation_vision}
+\end{subfigure}
+\caption{
+Contextualized target representations improve accuracy. 
+We mask all but a fraction of the data when constructing the target representations in the teacher for pre-training and report downstream performance for speech and vision.
+Time-steps for speech are more fine-grained (20ms patches) compared to vision (16x16 pixels per patch).
+}
+\label{fig:context_ablation}
+\end{figure}
+}

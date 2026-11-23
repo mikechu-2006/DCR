@@ -142,6 +142,14 @@ assert_processor_config）：
    用真实值截断，并按计划的 risk 表重算预算；这不是错误，因为 checkpoint 训练时就是
    2000，强扭成 4000 会改变输入分布。
 
+   `max_length` 是**单个 16 s 窗口的 token 数**，不是按键数，也不是整张图的上限。
+   canon 400 图实测窗口 p95=801、max=1,095；同一批窗口里最多 **447 个 note 起点**
+   （含 hold end 为 487 个 note group）。按 2.76 token/note 算，2,000 token 约能放 700 个
+   note，而实测最多 447 个，所以有约 1.8× 的 token 余量；撞上限 0/4,251，legacy 才有 0.42%。4000 技术上能跑
+   （模型 `max_position_embeddings=8192`），但它是新的序列长度分布，而且只影响真正超过
+   2000 的窗口（典型窗口仍按实际长度动态 padding，不会统一 pad 到 4000）；它会把固定 T1/T2
+   变成第二个变量。只有全量审计显示 canon 确有可观窗口 >2000 时才另开一轮“固定 4000”的变体。
+
 window/stride/max_time 不匹配时默认 SystemExit；--allow-config-mismatch 才继续。
 max_length 不是硬断言：实际值写进 index.meta.json / cfg_hash。
 
@@ -182,6 +190,12 @@ strip_removed 只去掉 [HITSOUND_*]、[VOLUME_*]、[KIAI_ON/OFF]、[SCROLL_SPEE
 这个比较比计数更严格：它同时检查 note 是否还在、时间/顺序是否变了、窗口归属是否错了。
 另外还断言 note-event token 数、column token 数、hold split 数完全一致。
 任何不一致 → SystemExit，拒绝导出。
+
+**2026-11-06 修复**：如果 kiai/SV 组正好是窗口里的最后一组，旧版 `strip_removed` 会一直
+处于“丢弃该组”的状态，把后面的 `[EOS]` 也吞掉；canon 侧没有这个组，所以 `[EOS]` 还在，
+逐窗比较就会出现“legacy 少一个 EOS”的假阳性。现在 `[CLS]`/`[BOS]`/`[EOS]` 会强制结束
+丢弃状态并保留；`scripts/test_cm3p_windows.py` 加了 `kiai before EOS keeps EOS` 回归测试。
+首次 full run 13593775 就是在这个假阳性上中止的（没有导出任何窗口）。
 
 离线版在 dcr/cm3p_offline.py:audit_chart（同样比较 group 的 (kind,time,snapping,column,
 scroll) 元组）。scripts/cm3p_token_budget.py 对全量 21,949 张做预算，并对其中的前 128 张
@@ -446,6 +460,17 @@ HPC 登录节点上跑过：
 index → 表 → sidecar），所以非 GPU 路径也验证过；GPU 只是把 21,949 张跑快。
 离线审计已被真实 tokenizer 校准到逐窗口相等，但**它不替代真实 checkpoint 的 T0 断言**。
 
+**CPU 单图耗时（2026-11-05，HPC 登录节点，DCR env，CPU-only）**：
+
+| 样本 | 窗口数 | `[win]` 导出 | 总 wall |
+|---|---:|---:|---:|
+| 1 张（422 notes） | 7 | 25 s | 68.7 s（含模型加载） |
+| 4 张随机 | 42（均 10.5/图） | 360 s | 380.1 s（均 95 s/图） |
+
+稳态约 **60–95 s/图**（约 **4–9 s/窗口**，取决于窗口 token 数和 CPU 负载）；首图还要加
+约 20–40 s 的 checkpoint 加载。按 90 s/图估算，21,949 张纯 CPU 约 **23 天**，
+所以全量必须用 GPU；A800 上 45–90 min 才是可接受量级。CPU 只适合 smoke test 和离线审计。
+
 **legacy 表**：`data/processed/chart_content_cm3p_local.parquet` 以本地为准
 （21,949 行、45,741,279 B、source=local-noaudio）。HPC 上那份只是副本，可丢弃。
 T3 在本机做，所以 paired ΔNLL 可以在本机直接跑。**不要**把新 canon 表并进它——
@@ -459,7 +484,7 @@ merge guard 会拒绝，除非显式 `--allow-mixed-crop`。旧表只作历史�
     EMBED_OUT=data/processed/chart_content_cm3p_local_canon.parquet \
     WINDOW_DIR=.cache/cm3p/win WINDOW_INDEX=.cache/cm3p/index.parquet \
     MANIA_COLUMNS=off \
-    sbatch -p i64m1tga800u --gres=gpu:1 -n 8 --mem=64G --time=24:00:00 \
+    sbatch -p i64m1tga800ue --gres=gpu:1 -n 8 --mem=64G --time=24:00:00 \
         scripts/slurm/cm3p_embed.slurm
 
 （真实 max_length=2000，所以 T0 不再要求 --allow-config-mismatch；snapping/CLS 从
@@ -471,6 +496,14 @@ checkpoint 继承，不要手动打开。--on-truncate 默认 warn，受影响�
 
 第一次 canon run 固定 `MANIA_COLUMNS=off`：**A0 是 T3 内部对照，不要求它复现旧图级表，
 也不要求它等于 0.61484。** T1 固定后，A1–A6 vs A0 的配对比较才是主判据。
+
+**2026-11-09 下游实测（canon vs legacy 内容表）**：把 `13613023` 的 canon 表接到
+P2/P4 的 5 个划分种子上（同协议、同划分文件、只换 content 表；fixed 信号不重训），
+4 个 embedding 方法**一致变差**：P2 ΔNLL +0.0055…+0.0197、P4 +0.0047…+0.0208
+nats，Pearson/Spearman 同向降 0.05–0.08，P2 的 train NLL 也变差 +0.007…+0.017。
+方法排序不变（external MLP 仍最好）。即 canon 删掉的 hitsound/volume、kiai、SV
+承载了与 msd/Sunny **互补**的难度信息；T1 的口径收益（token −43.7%、可缓存）
+不等于下游收益。详见 [p4_multiseed_canon.md](p4_multiseed_canon.md)。
 
 ### 可选探针：checkpoint 到底见没见过 column？
 

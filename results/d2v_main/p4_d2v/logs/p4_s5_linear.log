@@ -1,0 +1,7 @@
+/home/mikechu/anaconda3/bin/python3 scripts/step2_cm3p_rank.py --in data/processed/step1_1k_pairbest_p4_s5.parquet --content-path data/processed/chart_content_d2v_holdout.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 8 --name cm3p_linear --out-signals results/d2v_main/p4_d2v/p4/s5/signals/cm3p_linear.parquet --out-json results/d2v_main/p4_d2v/p4/s5/signals/cm3p_linear.json --model linear --lam 1e-3
+
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=6,828 (content coverage 100.0% of step1 maps) train_rows=39,665 test_rows=17,404
+[pairs] train 970,533 (2,686,472 comparisons) | test 354,187 (784,505)
+[val] 611 fit players / 0 val players; fit pairs 970,533
+[done] test_nll=0.59204 bits=0.1459 beta=0.725 -> cm3p_linear.parquet / cm3p_linear.json (60.8s)

@@ -1,0 +1,11 @@
+/home/mikechu/anaconda3/bin/python3 scripts/step2_rank_eval.py --in data/processed/step1_1k_pairbest_p4_d2vhold_s2.parquet --signal-table results/d2v_main/p4_hold_d2v/p4/s2/signals.parquet --signals cm3p_linear,cm3p_linear_extra,sunny_star,daniel_star,star --split test --ceiling-fit all --common-maps --strict-pairs --folds 2 --bootstrap 0 --seed 0 --cache-dir data/processed/rank_eval_cache --out results/d2v_main/p4_hold_d2v/p4/s2/rank_eval.json
+
+OMP: Warning #179: Function Can't set size of SHM failed:
+[common-maps] 1,365 charts shared by 5 signals (signal table 1,365 -> 1,365 rows)
+[ceiling] fit b on all 23,902 rows / 1,365 charts; evaluate on test rows (3,519 rows)
+[    7.3s] cm3p_linear              nll=0.62225 ceil=0.60372 captured=0.7928 n=28,881/30,856 lw=+0.3886 macro=+0.3788 beta=0.5809
+[    7.6s] cm3p_linear_extra        nll=0.62428 ceil=0.60372 captured=0.7701 n=28,881/30,856 lw=+0.3823 macro=+0.3701 beta=0.5819
+[    7.9s] sunny_star               nll=0.65628 ceil=0.60372 captured=0.4122 n=28,881/30,856 lw=+0.4104 macro=+0.4130 beta=0.5101
+[    8.1s] daniel_star              nll=0.65429 ceil=0.60372 captured=0.4345 n=28,881/30,856 lw=+0.4186 macro=+0.4241 beta=0.5252
+[    8.5s] star                     nll=0.67841 ceil=0.60372 captured=0.1648 n=28,881/30,856 lw=+0.2327 macro=+0.2375 beta=0.28
+wrote results/d2v_main/p4_hold_d2v/p4/s2/rank_eval.json (8.5s)

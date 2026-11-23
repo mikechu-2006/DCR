@@ -1,0 +1,2 @@
+sbatch: error: You must specify gpu GRES option to gpu partition,job submit failed.
+sbatch: error: Batch job submission failed: Unspecified error

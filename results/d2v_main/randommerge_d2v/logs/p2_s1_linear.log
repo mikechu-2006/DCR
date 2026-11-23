@@ -1,0 +1,10 @@
+/home/mikechu/anaconda3/bin/python3 scripts/step2_cm3p_rank.py --in data/processed/step1_randommerge_c_p2_s1.parquet --content-path data/processed/chart_content_d2v_holdout.parquet --signal-table data/processed/rank_signals_randommerge_od.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 6 --name cm3p_linear --out-signals results/d2v_main/randommerge_d2v/p2/s1/signals/cm3p_linear.parquet --out-json results/d2v_main/randommerge_d2v/p2/s1/signals/cm3p_linear.json --chart-only --chart-folds 5 --chart-seed 0 --model linear --lam 1e-3
+
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=20,388 (content coverage 100.0% of step1 maps) train_rows=317,108 test_rows=136,298
+[pairs] train 12,105,231 (19,336,342 comparisons) | test 3,061,303 (3,609,695)
+[val] 12097 fit players / 0 val players; fit pairs 12,105,231
+[chart-fold 0] charts=4308 rows=251,521 pairs=7,587,689 train_nll=0.59372
+[chart-fold 1] charts=3879 rows=257,843 pairs=7,971,833 train_nll=0.59354
+[chart-fold 2] charts=4086 rows=251,972 pairs=7,658,707 train_nll=0.59421
+[chart-fold 3] charts=4142 rows=247,945 pairs=7,557,018 train_nll=0.59555

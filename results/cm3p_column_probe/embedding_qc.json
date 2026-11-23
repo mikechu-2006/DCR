@@ -1,0 +1,34 @@
+{
+  "n_target": 6828,
+  "n_on": 6828,
+  "n_unique_on": 6828,
+  "missing_target": 0,
+  "n_windows_on": 79274,
+  "n_windows_equal_to_canon_off": true,
+  "per_chart_cos": {
+    "mean": 0.9821637272834778,
+    "median": 0.9820176959037781,
+    "p05": 0.9753388166427612,
+    "min": 0.9686229228973389,
+    "max": 0.9991172552108765
+  },
+  "cross_chart_cos_off": {
+    "mean": 0.9573051929473877,
+    "median": 0.9722964763641357
+  },
+  "cross_chart_cos_on": {
+    "mean": 0.968334972858429,
+    "median": 0.9791830778121948
+  },
+  "participation_ratio_off": 2.3857839107513428,
+  "participation_ratio_on": 2.563509225845337,
+  "pca1_off": 0.6131930947303772,
+  "pca1_on": 0.5919987559318542,
+  "truncated_charts": 150,
+  "truncated_windows": 434,
+  "core_tokens_dropped": 27919,
+  "columns_sum": 19725526,
+  "note_tokens_sum": 19725804,
+  "columns_emitted_all": true,
+  "checksum_ok_all": true
+}

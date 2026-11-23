@@ -375,6 +375,12 @@ def parse_args(argv=None):
     ap.add_argument("--content-ceiling", action="store_true",
                     help="also fit the model on the evaluation pairs themselves "
                          "(in-sample oracle; not a generalising result)")
+    ap.add_argument("--fit-all", action="store_true",
+                    help="fit on every row (ignore split) and skip test evaluation; "
+                         "used for deployment models")
+    ap.add_argument("--save-model", default=None,
+                    help="save one fitted model (weights + normalization) to this path; "
+                         "not supported with --chart-folds > 1")
     ap.add_argument("--dump-heads", default=None,
                     help="save the linear head(s) for T3 window pooling: maps, fold, "
                          "w (K x content_dim), w_full, mu, sd (linear models only)")
@@ -403,19 +409,28 @@ def main() -> int:
     M = int(maps.size)
     map_idx = {int(m): i for i, m in enumerate(maps)}
     df = df_all[df_all["beatmap_id"].isin(maps)].reset_index(drop=True)
-    train = df[df["split"] == "train"].reset_index(drop=True)
-    test = df[df["split"] == "test"].reset_index(drop=True)
-    if train.empty or test.empty:
+    if args.fit_all:
+        train = df.reset_index(drop=True)
+        test = df.iloc[0:0].copy()
+    else:
+        train = df[df["split"] == "train"].reset_index(drop=True)
+        test = df[df["split"] == "test"].reset_index(drop=True)
+    if train.empty or (not args.fit_all and test.empty):
         raise SystemExit(f"train={len(train)} test={len(test)} after content filter")
     print(f"[data] maps={M:,} (content coverage {keep.mean():.1%} of step1 maps) "
           f"train_rows={len(train):,} test_rows={len(test):,}", flush=True)
 
     item_tr, perf_tr, groups_tr, clusters_tr, players_tr = _encode_rows(train, map_idx)
-    item_te, perf_te, groups_te, clusters_te, players_te = _encode_rows(test, map_idx)
     tab_tr = _pair_table(groups_tr, item_tr, perf_tr, M)
-    tab_te = _pair_table(groups_te, item_te, perf_te, M)
+    if len(test):
+        item_te, perf_te, groups_te, clusters_te, players_te = _encode_rows(test, map_idx)
+        tab_te = _pair_table(groups_te, item_te, perf_te, M)
+    else:
+        item_te = perf_te = groups_te = clusters_te = players_te = None
+        tab_te = None
     print(f"[pairs] train {tab_tr.n_pairs:,} ({tab_tr.n_instances:,} comparisons) | "
-          f"test {tab_te.n_pairs:,} ({tab_te.n_instances:,})", flush=True)
+          + (f"test {tab_te.n_pairs:,} ({tab_te.n_instances:,})" if tab_te is not None
+             else "test skipped (--fit-all)"), flush=True)
 
     # content standardisation on training charts only (content-only; no labels)
     train_chart_idx = np.unique(item_tr)
@@ -507,6 +522,7 @@ def main() -> int:
             for s in range(int(args.seeds)):
                 sc, _, _, _ = fit_mlp(X, tab_tr, None, w0_all, args,
                                       int(args.seed) + s)
+                scorer = sc
                 ds.append(predict_mlp(sc, X))
             best_epoch = int(args.epochs)
             val_nll = None
@@ -569,9 +585,62 @@ def main() -> int:
     if not np.isfinite(signal).all():
         raise SystemExit(f"{signal[~np.isfinite(signal)].size} charts have no signal")
 
+    # ------------------------------------------------------------ save model
+    if args.save_model:
+        if args.chart_folds and int(args.chart_folds) > 1:
+            raise SystemExit("--save-model is not supported with --chart-folds > 1")
+        if args.chart_only:
+            raise SystemExit("--save-model needs a fitted model; do not use --chart-only")
+        import hashlib
+        import torch
+        payload = {
+            "model": args.model,
+            "name": args.name,
+            "content_path": str(args.content_path),
+            "content_md5": hashlib.md5(Path(args.content_path).read_bytes()).hexdigest(),
+            "content_dim": int(Cs.shape[1]),
+            "mu": np.asarray(mu, dtype=np.float32),
+            "sd": np.asarray(sd, dtype=np.float32),
+            "extra_names": (extra_names if args.model in
+                           ("linear_extra", "mlp_extra", "ext_blend") else []),
+            "extra_mu": (np.asarray(em, dtype=np.float32)
+                         if args.model in ("linear_extra", "mlp_extra", "ext_blend") else None),
+            "extra_sd": (np.asarray(es, dtype=np.float32)
+                         if args.model in ("linear_extra", "mlp_extra", "ext_blend") else None),
+            "d_mu_raw": 0.0,
+            "d_sd_raw": 1.0,
+            "fit_all": bool(args.fit_all),
+            "n_train_rows": int(len(train)),
+            "n_maps": int(M),
+            "train_chart_ids": np.asarray(maps[train_chart_idx], dtype=np.int64),
+            "seed": int(args.seed),
+            "hid": int(args.hid),
+            "depth": int(args.depth),
+            "dropout": float(args.dropout),
+            "epochs": int(epochs_for_final),
+            "lam": float(best_lam),
+            "git_commit": __import__("subprocess").check_output(
+                ["git", "-C", str(Path(__file__).resolve().parents[1]), "rev-parse", "HEAD"],
+                text=True).strip(),
+            "args": {k: (str(v) if isinstance(v, Path) else v)
+                     for k, v in vars(args).items()},
+        }
+        if args.model.startswith("mlp"):
+            raw = scorer.forward(torch.as_tensor(X, dtype=torch.float32)).detach().cpu().numpy()
+            payload["state_dict"] = scorer.model.state_dict()
+            payload["d_mu_raw"] = float(np.asarray(raw)[train_chart_idx].mean())
+            payload["d_sd_raw"] = float(np.asarray(raw)[train_chart_idx].std() + 1e-8)
+        else:
+            payload["w"] = np.asarray(w, dtype=np.float64)
+        save_path = Path(args.save_model)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(payload, save_path)
+        print(f"[save-model] {save_path} ({args.model}, fit_all={args.fit_all}, "
+              f"train_rows={len(train):,})", flush=True)
+
     # ---------------------------------------------------- content ceiling (M4)
     ceiling_nll = None
-    if args.content_ceiling:
+    if args.content_ceiling and tab_te is not None and tab_te.n_pairs:
         if args.model in ("linear", "linear_extra", "ext_blend"):
             wc, _ = fit_linear(X, tab_te, best_lam)
             dc = X @ wc
@@ -610,13 +679,24 @@ def main() -> int:
             mu=np.asarray(mu, dtype=np.float32), sd=np.asarray(sd, dtype=np.float32),
             content_dim=np.int64(D), chart_folds=np.int64(W.shape[0]),
             content_path=str(args.content_path), content_col=str(args.content_col or ""),
-            name=str(args.name))
+            name=str(args.name),
+            inp=str(args.inp), model=str(args.model),
+            chart_seed=np.int64(args.chart_seed), lam=np.float64(best_lam),
+            val_frac=np.float64(args.val_frac))
         print(f"[heads] {W.shape[0]} head(s) x {D} dims -> {args.dump_heads}",
               flush=True)
 
     # ---------------------------------------------------------------- evaluate
-    link = rm.fit_link(tab_te, signal)
-    test_nll = float(link.nll / tab_te.n_instances)
+    if tab_te is not None and tab_te.n_pairs:
+        link = rm.fit_link(tab_te, signal)
+        test_nll = float(link.nll / tab_te.n_instances)
+        test_bits = float(1.0 - test_nll / LOG2)
+        test_beta = float(link.beta)
+    else:
+        link = None
+        test_nll = None
+        test_bits = None
+        test_beta = None
     train_link = rm.fit_link(tab_tr, signal)
     out = {
         "name": args.name,
@@ -629,13 +709,15 @@ def main() -> int:
         "n_test_rows": int(len(test)),
         "n_train_pairs": int(tab_tr.n_pairs),
         "n_train_comparisons": int(tab_tr.n_instances),
-        "n_test_pairs": int(tab_te.n_pairs),
-        "n_test_comparisons": int(tab_te.n_instances),
+        "n_test_pairs": (int(tab_te.n_pairs) if tab_te is not None else 0),
+        "n_test_comparisons": (int(tab_te.n_instances) if tab_te is not None else 0),
         "train_nll_per_instance": float(train_link.nll / tab_tr.n_instances),
         "val_nll_per_instance": val_nll,
         "test_nll_per_instance": test_nll,
-        "test_bits_saved": float(1.0 - test_nll / LOG2),
-        "test_link_beta": float(link.beta),
+        "test_bits_saved": test_bits,
+        "test_link_beta": test_beta,
+        "fit_all": bool(args.fit_all),
+        "save_model": str(args.save_model) if args.save_model else None,
         "best_lam": best_lam,
         "best_epoch": best_epoch,
         "chart_folds": int(args.chart_folds),
@@ -655,9 +737,13 @@ def main() -> int:
         sig_df["chart_fold"] = fold
     sig_df.to_parquet(out_sig, index=False)
     out_json.write_text(json.dumps(out, indent=2, ensure_ascii=False))
-    print(f"[done] test_nll={test_nll:.5f} bits={out['test_bits_saved']:.4f} "
-          f"beta={link.beta:.3f} -> {out_sig.name} / {out_json.name} "
-          f"({out['seconds']}s)", flush=True)
+    if test_nll is not None:
+        print(f"[done] test_nll={test_nll:.5f} bits={test_bits:.4f} "
+              f"beta={test_beta:.3f} -> {out_sig.name} / {out_json.name} "
+              f"({out['seconds']}s)", flush=True)
+    else:
+        print(f"[done] train_nll={out['train_nll_per_instance']:.5f} (fit_all) "
+              f"-> {out_sig.name} / {out_json.name} ({out['seconds']}s)", flush=True)
     return 0
 
 

@@ -1,0 +1,17 @@
+/home/mikechu/anaconda3/bin/python scripts/step2_cm3p_rank.py --in data/processed/step1_1k_pairbest_p4_s5.parquet --content-path data/processed/chart_content_cm3p_local_canon_columns_on.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 6 --name cm3p_mlp_h64_L2 --out-signals results/p4_multiseed_canon_columns/p4/s5/signals/cm3p_mlp_h64_L2.parquet --out-json results/p4_multiseed_canon_columns/p4/s5/signals/cm3p_mlp_h64_L2.json --model mlp --lam 1e-2 --hid 64 --depth 2 --dropout 0.1 --lr 3e-3 --epochs 98
+
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=6,828 (content coverage 100.0% of step1 maps) train_rows=39,665 test_rows=17,404
+[pairs] train 970,533 (2,686,472 comparisons) | test 354,187 (784,505)
+[val] 611 fit players / 0 val players; fit pairs 970,533
+  [mlp ep   1] train=0.62024
+  [mlp ep  10] train=0.62441
+  [mlp ep  20] train=0.61388
+  [mlp ep  30] train=0.60748
+  [mlp ep  40] train=0.59893
+  [mlp ep  50] train=0.58770
+  [mlp ep  60] train=0.57545
+  [mlp ep  70] train=0.56613
+  [mlp ep  80] train=0.55975
+  [mlp ep  90] train=0.55464
+[done] test_nll=0.63884 bits=0.0784 beta=0.541 -> cm3p_mlp_h64_L2.parquet / cm3p_mlp_h64_L2.json (45.9s)

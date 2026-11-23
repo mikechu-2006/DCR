@@ -1,0 +1,12 @@
+[koishi] shard 6/8 200/2007 ok=4 11.26 charts/s
+[koishi] shard 6/8 400/2007 ok=15 11.81 charts/s
+[koishi] shard 6/8 600/2007 ok=26 13.20 charts/s
+[koishi] shard 6/8 800/2007 ok=57 13.83 charts/s
+[koishi] shard 6/8 1000/2007 ok=86 14.36 charts/s
+[koishi] shard 6/8 1200/2007 ok=100 15.08 charts/s
+[koishi] shard 6/8 1400/2007 ok=103 15.66 charts/s
+[koishi] shard 6/8 1600/2007 ok=109 16.79 charts/s
+[koishi] shard 6/8 1800/2007 ok=118 17.20 charts/s
+[koishi] shard 6/8 2000/2007 ok=132 17.17 charts/s
+[koishi] shard 6/8 2007/2007 ok=133 17.18 charts/s
+[koishi] wrote data/processed/signals_raw/koishi_10k_s6.ndjson (2007 rows, ok=133)

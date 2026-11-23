@@ -1,0 +1,72 @@
+/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/arrays/masked.py:61: UserWarning: Pandas requires version '1.3.6' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+sample: results/cm3p_probe_official/sample_low.csv (3 charts)
+/hpc2ssd/softwares/anaconda3/lib/python3.11/site-packages/torchvision/io/image.py:13: UserWarning: Failed to load image Python extension: 'Could not load this library: /hpc2ssd/softwares/anaconda3/lib/python3.11/site-packages/torchvision/image.so'If you don't plan on using image functionality from `torchvision.io`, you can ignore this warning. Otherwise, there might be something wrong with your environment. Did you have `libjpeg` or `libpng` installed before building `torchvision` from source?
+  warn(
+/hpc2ssd/softwares/anaconda3/lib/python3.11/site-packages/torchvision/datapoints/__init__.py:12: UserWarning: The torchvision.datapoints and torchvision.transforms.v2 namespaces are still Beta. While we do not expect major breaking changes, some APIs may still change according to user feedback. Please submit any feedback you may have in this issue: https://github.com/pytorch/vision/issues/6753, and you can also check out https://github.com/pytorch/vision/issues/7319 to learn more about the APIs that we suspect might involve future changes. You can silence this warning by calling torchvision.disable_beta_transforms_warning().
+  warnings.warn(_BETA_TRANSFORMS_WARNING)
+/hpc2ssd/softwares/anaconda3/lib/python3.11/site-packages/torchvision/transforms/v2/__init__.py:54: UserWarning: The torchvision.datapoints and torchvision.transforms.v2 namespaces are still Beta. While we do not expect major breaking changes, some APIs may still change according to user feedback. Please submit any feedback you may have in this issue: https://github.com/pytorch/vision/issues/6753, and you can also check out https://github.com/pytorch/vision/issues/7319 to learn more about the APIs that we suspect might involve future changes. You can silence this warning by calling torchvision.disable_beta_transforms_warning().
+  warnings.warn(_BETA_TRANSFORMS_WARNING)
+model: data/raw/cm3p_model_26cc694  device=cpu  dtype=float32  attn=sdpa
+processor snapshot: {"window_length_sec": 16.0, "window_stride_sec": 16.0, "max_length": 2000, "padding": "longest", "truncation": "longest_first", "audio_sampling_rate": 16000, "audio_pad_to_multiple_of": 256000, "audio_hop_length": 160, "audio_length_per_tok": 8, "audio_max_source_positions": 1600, "parser": {"add_hitsounds": true, "add_kiai": true, "add_mania_sv": true, "add_snapping": false, "add_timing": true, "add_timing_points": true, "add_positions": true}, "tokenizer_max_time": 16000, "tokenizer_time_step": 10, "tokenizer_add_cls": true}
+[1/3] 364572 set=147232 cos=0.99823 
+[2/3] 2630355 set=1265691 cos=0.98653 
+[3/3] 3261953 set=724338 cos=0.98129 
+
+=== probe summary ===
+{
+  "generated": "2026-11-10T13:44:02+0800",
+  "n_sample": 3,
+  "n_ok": 3,
+  "n_error": 0,
+  "cos": {
+    "mean": 0.9886821707089742,
+    "median": 0.9865285754203796,
+    "min": 0.9812861680984497,
+    "p05": 0.9818104088306427,
+    "p10": 0.9823346495628357,
+    "n_ge_0_99": 1,
+    "n_ge_0_999": 0
+  },
+  "config": {
+    "audio": "on",
+    "audio_loader": "librosa",
+    "crop": "legacy",
+    "dtype": "float32",
+    "pad_mode": "max_length",
+    "max_length": 2000,
+    "win_batch": 4,
+    "device": "cpu",
+    "model_dir": "data/raw/cm3p_model_26cc694",
+    "attn": "sdpa",
+    "official_table": "data/processed/chart_content_cm3p.parquet"
+  },
+  "processor": {
+    "window_length_sec": 16.0,
+    "window_stride_sec": 16.0,
+    "max_length": 2000,
+    "padding": "longest",
+    "truncation": "longest_first",
+    "audio_sampling_rate": 16000,
+    "audio_pad_to_multiple_of": 256000,
+    "audio_hop_length": 160,
+    "audio_length_per_tok": 8,
+    "audio_max_source_positions": 1600,
+    "parser": {
+      "add_hitsounds": true,
+      "add_kiai": true,
+      "add_mania_sv": true,
+      "add_snapping": false,
+      "add_timing": true,
+      "add_timing_points": true,
+      "add_positions": true
+    },
+    "tokenizer_max_time": 16000,
+    "tokenizer_time_step": 10,
+    "tokenizer_add_cls": true
+  },
+  "processor_mismatches": [],
+  "elapsed_sec": 18.3,
+  "out": "results/cm3p_probe_official/lowdiag/G_padmax_ml2000.jsonl"
+}
+summary written: results/cm3p_probe_official/lowdiag/G_padmax_ml2000.json

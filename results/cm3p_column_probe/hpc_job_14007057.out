@@ -1,0 +1,230 @@
+job starts in: /hpc2hdd/home/aiaa3111_l01_008/DCR
+=== job 14007057 on gpu1-12 ===
+2026-11-18T23:53:57 CST
+repo          /hpc2hdd/home/aiaa3111_l01_008/DCR
+python        Python 3.12.15
+HF_HOME       /hpc2hdd/home/aiaa3111_l01_008/.cache/huggingface (offline=1)
+CM3P_ROOT     /hpc2hdd/home/aiaa3111_l01_008/DCR/external/cm3p   attn=sdpa
+encode        data/processed/cm3p_ids_step1_6828.csv  ->  data/processed/chart_content_cm3p_local_canon_columns_on.parquet  (crop=canon windows=on)
+osu cache     /hpc2hdd/home/aiaa3111_l01_008/DCR/data/osu_cache
+name, memory.total [MiB], driver_version
+NVIDIA A800-SXM4-80GB, 81920 MiB, 590.48.01
+torch 2.11.0+cu128 cuda True
+dynamo        disable = True | TORCHDYNAMO_DISABLE = 1
+transformers 4.55.0 /hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.12/site-packages/transformers/__init__.py
+imports OK (cm3p + hydra + slider reachable)
+targets       6,828 charts; 21,949 .osu in the cache; 0 of the targets missing
+preflight OK: corpus, weights and probe inputs are in place
+scope         subset -> merged with the published rows, GATE_STOP=1
+SKIP_PROBE=1 -- skipping the mix gate (not recommended)
+
+=== stage 2/3: FULL RUN (data/processed/cm3p_ids_step1_6828.csv) -> data/processed/chart_content_cm3p_local_canon_columns_on.parquet ===
+[ids-file] osu_cached: keeping 6828 of 6828 rows
+[ids-file] data/processed/cm3p_ids_step1_6828.csv: 6,828 beatmaps
+target set: 6,828 beatmaps (source: data/processed/cm3p_ids_step1_6828.csv)
+to fetch: 6,828  (already present: 0)
+[osu] device=cuda  audio=False  dirs=['/hpc2hdd/home/aiaa3111_l01_008/DCR/data/osu_cache']
+[core] installed the opt-in mania-column patch (1-based column, Group.mania_column). The published checkpoint never saw these tokens: validate the embeddings before trusting a comparison.
+[crop] NOTE: the checkpoint has add_snapping=False; the model input has no [SNAPPING_*] tokens. T1 does not force them on (OOD).
+[T0] NOTE: max_length=2000 in the checkpoint config (the plan's section-2 table assumed 4000); the real value is used for truncation and the budget must be recomputed.
+[T0] beatmap kwargs: window=16s stride=16s max_length=2000 truncation=longest_first tokenizer.max_time=16000ms time_step=10ms add_cls=True
+[T1] crop=canon: hitsounds=False kiai=False mania_sv=False timing=True timing_points=True snapping=False
+[osu] model dtype torch.bfloat16, attn=sdpa
+[osu] hashing 6,828 .osu files for content_md5
+[osu] hashed in 129.5s
+[core] 64 charts: note/timing stream identical after the crop; removed tokens hitsound=137,654 kiai=426 sv=3,270; 68,871 notes, 74,858 column tokens
+[core] 193127: [MANIA_COLUMN_*] tokens are PRESENT (454 in 7 windows)
+[win] 50 charts, 745 windows (11s, 4.75 charts/s, pad_eff=0.951)
+[win] 100 charts, 1,217 windows (15s, 6.46 charts/s, pad_eff=0.953)
+[win] tokenized 200/6,828 charts (21s, 9.6 charts/s)
+[win] 150 charts, 1,795 windows (21s, 7.03 charts/s, pad_eff=0.954)
+[win] 200 charts, 2,245 windows (26s, 7.62 charts/s, pad_eff=0.955)
+[win] 250 charts, 2,770 windows (32s, 7.72 charts/s, pad_eff=0.955)
+[win] 300 charts, 3,257 windows (38s, 7.96 charts/s, pad_eff=0.956)
+[win] tokenized 400/6,828 charts (43s, 9.3 charts/s)
+[win] 350 charts, 3,891 windows (45s, 7.79 charts/s, pad_eff=0.956)
+[win] 400 charts, 4,277 windows (48s, 8.28 charts/s, pad_eff=0.956)
+[win] 450 charts, 4,675 windows (53s, 8.49 charts/s, pad_eff=0.957)
+[win] 500 charts, 5,217 windows (59s, 8.43 charts/s, pad_eff=0.957)
+[win] tokenized 600/6,828 charts (64s, 9.3 charts/s)
+[win] 550 charts, 5,747 windows (65s, 8.46 charts/s, pad_eff=0.957)
+[win] 600 charts, 6,214 windows (70s, 8.56 charts/s, pad_eff=0.958)
+[win] 650 charts, 6,882 windows (78s, 8.35 charts/s, pad_eff=0.958)
+[win] 700 charts, 7,491 windows (86s, 8.16 charts/s, pad_eff=0.959)
+[win] tokenized 800/6,828 charts (89s, 9.0 charts/s)
+[win] 750 charts, 7,971 windows (91s, 8.26 charts/s, pad_eff=0.959)
+[win] 800 charts, 8,321 windows (95s, 8.41 charts/s, pad_eff=0.959)
+[win] 850 charts, 9,267 windows (107s, 7.94 charts/s, pad_eff=0.959)
+[win] 900 charts, 9,729 windows (113s, 7.96 charts/s, pad_eff=0.960)
+[win] tokenized 1,000/6,828 charts (117s, 8.5 charts/s)
+[win] 950 charts, 10,148 windows (117s, 8.09 charts/s, pad_eff=0.959)
+[win] 1,000 charts, 10,729 windows (124s, 8.07 charts/s, pad_eff=0.959)
+[win] 1,050 charts, 11,313 windows (132s, 7.95 charts/s, pad_eff=0.960)
+[win] 1,100 charts, 11,906 windows (139s, 7.91 charts/s, pad_eff=0.960)
+[win] tokenized 1,200/6,828 charts (142s, 8.4 charts/s)
+[win] 1,150 charts, 12,599 windows (147s, 7.80 charts/s, pad_eff=0.960)
+[win] 1,200 charts, 13,076 windows (153s, 7.85 charts/s, pad_eff=0.960)
+[win] 1,250 charts, 13,473 windows (158s, 7.92 charts/s, pad_eff=0.960)
+[win] WARNING: chart 1316677 exceeds max_length=2000 and loses 33 core note token(s); every affected chart is flagged in the index (n_core_tokens_dropped, n_truncated_windows)
+[win] 1,300 charts, 14,056 windows (165s, 7.90 charts/s, pad_eff=0.960)
+[win] tokenized 1,400/6,828 charts (171s, 8.2 charts/s)
+[win] 1,350 charts, 14,696 windows (174s, 7.77 charts/s, pad_eff=0.961)
+[win] 1,400 charts, 15,318 windows (181s, 7.72 charts/s, pad_eff=0.961)
+[win] 1,450 charts, 15,810 windows (188s, 7.72 charts/s, pad_eff=0.961)
+[win] 1,500 charts, 16,392 windows (194s, 7.72 charts/s, pad_eff=0.961)
+[win] tokenized 1,600/6,828 charts (199s, 8.0 charts/s)
+[win] 1,550 charts, 17,077 windows (203s, 7.64 charts/s, pad_eff=0.961)
+[win] 1,600 charts, 17,442 windows (208s, 7.67 charts/s, pad_eff=0.961)
+[win] 1,650 charts, 18,305 windows (219s, 7.55 charts/s, pad_eff=0.961)
+[win] 1,700 charts, 18,849 windows (226s, 7.51 charts/s, pad_eff=0.962)
+[win] tokenized 1,800/6,828 charts (227s, 7.9 charts/s)
+[win] 1,750 charts, 19,281 windows (232s, 7.56 charts/s, pad_eff=0.962)
+[win] 1,800 charts, 19,767 windows (237s, 7.59 charts/s, pad_eff=0.962)
+[win] 1,850 charts, 20,324 windows (245s, 7.55 charts/s, pad_eff=0.962)
+[win] 1,900 charts, 20,964 windows (253s, 7.51 charts/s, pad_eff=0.962)
+[win] tokenized 2,000/6,828 charts (256s, 7.8 charts/s)
+[win] 1,950 charts, 21,426 windows (259s, 7.54 charts/s, pad_eff=0.962)
+[win] 2,000 charts, 22,050 windows (267s, 7.50 charts/s, pad_eff=0.962)
+[win] 2,050 charts, 22,677 windows (274s, 7.47 charts/s, pad_eff=0.962)
+[win] 2,100 charts, 23,361 windows (283s, 7.41 charts/s, pad_eff=0.962)
+[win] tokenized 2,200/6,828 charts (286s, 7.7 charts/s)
+[win] 2,150 charts, 24,003 windows (292s, 7.36 charts/s, pad_eff=0.962)
+[win] 2,200 charts, 24,500 windows (298s, 7.38 charts/s, pad_eff=0.962)
+[win] 2,250 charts, 25,129 windows (307s, 7.34 charts/s, pad_eff=0.962)
+[win] 2,300 charts, 25,762 windows (315s, 7.30 charts/s, pad_eff=0.962)
+[win] tokenized 2,400/6,828 charts (316s, 7.6 charts/s)
+[win] 2,350 charts, 26,228 windows (321s, 7.31 charts/s, pad_eff=0.963)
+[win] 2,400 charts, 26,787 windows (330s, 7.28 charts/s, pad_eff=0.963)
+[win] 2,450 charts, 27,075 windows (334s, 7.34 charts/s, pad_eff=0.963)
+[win] 2,500 charts, 27,654 windows (342s, 7.31 charts/s, pad_eff=0.963)
+[win] tokenized 2,600/6,828 charts (346s, 7.5 charts/s)
+[win] 2,550 charts, 28,036 windows (347s, 7.35 charts/s, pad_eff=0.963)
+[win] 2,600 charts, 28,613 windows (354s, 7.34 charts/s, pad_eff=0.963)
+[win] 2,650 charts, 29,153 windows (363s, 7.30 charts/s, pad_eff=0.963)
+[win] 2,700 charts, 29,889 windows (373s, 7.23 charts/s, pad_eff=0.963)
+[win] tokenized 2,800/6,828 charts (380s, 7.4 charts/s)
+[win] 2,750 charts, 30,523 windows (382s, 7.20 charts/s, pad_eff=0.963)
+[win] 2,800 charts, 31,126 windows (391s, 7.16 charts/s, pad_eff=0.963)
+[win] 2,850 charts, 31,745 windows (400s, 7.13 charts/s, pad_eff=0.963)
+[win] 2,900 charts, 32,129 windows (405s, 7.16 charts/s, pad_eff=0.963)
+[win] tokenized 3,000/6,828 charts (411s, 7.3 charts/s)
+[win] 2,950 charts, 33,011 windows (418s, 7.06 charts/s, pad_eff=0.964)
+[win] 3,000 charts, 33,563 windows (426s, 7.05 charts/s, pad_eff=0.964)
+[win] 3,050 charts, 34,196 windows (434s, 7.03 charts/s, pad_eff=0.964)
+[win] 3,100 charts, 34,867 windows (443s, 7.00 charts/s, pad_eff=0.964)
+[win] tokenized 3,200/6,828 charts (445s, 7.2 charts/s)
+[win] 3,150 charts, 35,425 windows (450s, 6.99 charts/s, pad_eff=0.964)
+[win] 3,200 charts, 35,875 windows (456s, 7.01 charts/s, pad_eff=0.964)
+[win] 3,250 charts, 36,582 windows (469s, 6.93 charts/s, pad_eff=0.964)
+[win] 3,300 charts, 36,973 windows (474s, 6.96 charts/s, pad_eff=0.964)
+[win] tokenized 3,400/6,828 charts (478s, 7.1 charts/s)
+[win] 3,350 charts, 37,617 windows (483s, 6.93 charts/s, pad_eff=0.964)
+[win] 3,400 charts, 38,353 windows (494s, 6.88 charts/s, pad_eff=0.964)
+[win] 3,450 charts, 38,834 windows (500s, 6.89 charts/s, pad_eff=0.964)
+[win] 3,500 charts, 39,489 windows (511s, 6.85 charts/s, pad_eff=0.964)
+[win] tokenized 3,600/6,828 charts (511s, 7.0 charts/s)
+[win] 3,550 charts, 39,993 windows (518s, 6.85 charts/s, pad_eff=0.965)
+[win] 3,600 charts, 40,513 windows (526s, 6.84 charts/s, pad_eff=0.965)
+[win] 3,650 charts, 41,265 windows (539s, 6.77 charts/s, pad_eff=0.965)
+[win] 3,700 charts, 41,921 windows (549s, 6.74 charts/s, pad_eff=0.965)
+[win] tokenized 3,800/6,828 charts (549s, 6.9 charts/s)
+[win] 3,750 charts, 42,603 windows (560s, 6.70 charts/s, pad_eff=0.965)
+[win] 3,800 charts, 42,995 windows (566s, 6.72 charts/s, pad_eff=0.965)
+[win] 3,850 charts, 43,647 windows (575s, 6.69 charts/s, pad_eff=0.965)
+[win] 3,900 charts, 44,154 windows (583s, 6.69 charts/s, pad_eff=0.965)
+[win] tokenized 4,000/6,828 charts (587s, 6.8 charts/s)
+[win] 3,950 charts, 44,824 windows (594s, 6.65 charts/s, pad_eff=0.965)
+[win] 4,000 charts, 45,302 windows (601s, 6.66 charts/s, pad_eff=0.965)
+[win] 4,050 charts, 45,747 windows (608s, 6.66 charts/s, pad_eff=0.965)
+[win] 4,100 charts, 46,353 windows (617s, 6.64 charts/s, pad_eff=0.965)
+[win] tokenized 4,200/6,828 charts (621s, 6.8 charts/s)
+[win] 4,150 charts, 46,994 windows (626s, 6.63 charts/s, pad_eff=0.965)
+[win] 4,200 charts, 47,607 windows (636s, 6.60 charts/s, pad_eff=0.965)
+[win] 4,250 charts, 48,102 windows (644s, 6.60 charts/s, pad_eff=0.965)
+[win] 4,300 charts, 48,631 windows (652s, 6.60 charts/s, pad_eff=0.966)
+[win] tokenized 4,400/6,828 charts (660s, 6.7 charts/s)
+[win] 4,350 charts, 49,394 windows (664s, 6.55 charts/s, pad_eff=0.966)
+[win] 4,400 charts, 49,912 windows (672s, 6.55 charts/s, pad_eff=0.966)
+[win] 4,450 charts, 50,289 windows (678s, 6.57 charts/s, pad_eff=0.966)
+[win] 4,500 charts, 51,122 windows (691s, 6.51 charts/s, pad_eff=0.966)
+[win] tokenized 4,600/6,828 charts (696s, 6.6 charts/s)
+[win] 4,550 charts, 51,623 windows (698s, 6.52 charts/s, pad_eff=0.966)
+[win] 4,600 charts, 52,291 windows (709s, 6.49 charts/s, pad_eff=0.966)
+[win] 4,650 charts, 52,995 windows (720s, 6.45 charts/s, pad_eff=0.966)
+[win] 4,700 charts, 53,539 windows (731s, 6.43 charts/s, pad_eff=0.966)
+[win] tokenized 4,800/6,828 charts (736s, 6.5 charts/s)
+[win] 4,750 charts, 54,193 windows (740s, 6.42 charts/s, pad_eff=0.966)
+[win] 4,800 charts, 54,773 windows (749s, 6.41 charts/s, pad_eff=0.966)
+[win] 4,850 charts, 55,252 windows (756s, 6.41 charts/s, pad_eff=0.966)
+[win] 4,900 charts, 55,901 windows (767s, 6.39 charts/s, pad_eff=0.966)
+[win] tokenized 5,000/6,828 charts (774s, 6.5 charts/s)
+[win] 4,950 charts, 56,546 windows (776s, 6.38 charts/s, pad_eff=0.966)
+[win] 5,000 charts, 57,057 windows (784s, 6.38 charts/s, pad_eff=0.966)
+[win] 5,050 charts, 57,569 windows (791s, 6.39 charts/s, pad_eff=0.966)
+[win] 5,100 charts, 58,150 windows (800s, 6.38 charts/s, pad_eff=0.966)
+[win] tokenized 5,200/6,828 charts (804s, 6.5 charts/s)
+[win] 5,150 charts, 58,732 windows (808s, 6.37 charts/s, pad_eff=0.966)
+[win] 5,200 charts, 59,015 windows (814s, 6.39 charts/s, pad_eff=0.966)
+[win] 5,250 charts, 59,716 windows (825s, 6.36 charts/s, pad_eff=0.967)
+[win] 5,300 charts, 60,394 windows (835s, 6.35 charts/s, pad_eff=0.967)
+[win] tokenized 5,400/6,828 charts (840s, 6.4 charts/s)
+[win] 5,350 charts, 60,937 windows (843s, 6.35 charts/s, pad_eff=0.967)
+[win] 5,400 charts, 61,317 windows (850s, 6.36 charts/s, pad_eff=0.967)
+[win] 5,450 charts, 62,179 windows (864s, 6.31 charts/s, pad_eff=0.967)
+[win] 5,500 charts, 62,629 windows (870s, 6.32 charts/s, pad_eff=0.967)
+[win] tokenized 5,600/6,828 charts (874s, 6.4 charts/s)
+[win] 5,550 charts, 63,076 windows (876s, 6.33 charts/s, pad_eff=0.967)
+[win] 5,600 charts, 63,737 windows (887s, 6.32 charts/s, pad_eff=0.967)
+[win] 5,650 charts, 64,371 windows (896s, 6.31 charts/s, pad_eff=0.967)
+[win] 5,700 charts, 64,802 windows (902s, 6.32 charts/s, pad_eff=0.967)
+[win] tokenized 5,800/6,828 charts (911s, 6.4 charts/s)
+[win] 5,750 charts, 65,554 windows (915s, 6.28 charts/s, pad_eff=0.967)
+[win] 5,800 charts, 66,276 windows (926s, 6.26 charts/s, pad_eff=0.967)
+[win] 5,850 charts, 66,834 windows (934s, 6.26 charts/s, pad_eff=0.967)
+[win] 5,900 charts, 67,454 windows (944s, 6.25 charts/s, pad_eff=0.967)
+[win] tokenized 6,000/6,828 charts (947s, 6.3 charts/s)
+[win] 5,950 charts, 68,058 windows (953s, 6.25 charts/s, pad_eff=0.967)
+[win] 6,000 charts, 68,402 windows (959s, 6.25 charts/s, pad_eff=0.967)
+[win] 6,050 charts, 69,265 windows (973s, 6.22 charts/s, pad_eff=0.967)
+[win] 6,100 charts, 69,778 windows (981s, 6.22 charts/s, pad_eff=0.967)
+[win] tokenized 6,200/6,828 charts (991s, 6.3 charts/s)
+[win] 6,150 charts, 70,568 windows (994s, 6.19 charts/s, pad_eff=0.967)
+[win] 6,200 charts, 71,091 windows (1002s, 6.19 charts/s, pad_eff=0.967)
+[win] 6,250 charts, 71,890 windows (1015s, 6.16 charts/s, pad_eff=0.967)
+[win] 6,300 charts, 72,562 windows (1026s, 6.14 charts/s, pad_eff=0.967)
+[win] tokenized 6,400/6,828 charts (1033s, 6.2 charts/s)
+[win] 6,350 charts, 73,123 windows (1036s, 6.13 charts/s, pad_eff=0.967)
+[win] 6,400 charts, 73,586 windows (1042s, 6.14 charts/s, pad_eff=0.967)
+[win] 6,450 charts, 74,484 windows (1058s, 6.10 charts/s, pad_eff=0.967)
+[win] 6,500 charts, 75,074 windows (1069s, 6.08 charts/s, pad_eff=0.967)
+[win] tokenized 6,600/6,828 charts (1081s, 6.1 charts/s)
+[win] 6,550 charts, 75,955 windows (1083s, 6.05 charts/s, pad_eff=0.968)
+[win] 6,600 charts, 76,566 windows (1094s, 6.03 charts/s, pad_eff=0.968)
+[win] 6,650 charts, 77,249 windows (1105s, 6.02 charts/s, pad_eff=0.968)
+[win] 6,700 charts, 77,857 windows (1116s, 6.00 charts/s, pad_eff=0.968)
+[win] tokenized 6,800/6,828 charts (1131s, 6.0 charts/s)
+[win] 6,750 charts, 78,689 windows (1132s, 5.96 charts/s, pad_eff=0.968)
+[win] 6,800 charts, 79,236 windows (1139s, 5.97 charts/s, pad_eff=0.968)
+[win] exported 6,828 charts / 79,274 windows in 1139s (5.99 charts/s); pad_efficiency=0.968; parity cosine >= 0.999999881
+[win] WARNING: 434 window(s) exceeded max_length=2000; 27919 core note token(s) were dropped. The affected charts are flagged in the index (n_core_tokens_dropped) and excluded from nothing by default.
+[win] index: .cache/cm3p/index_canon_columns_on.parquet  windows: .cache/cm3p/win_canon_columns_on
+[cfg] 6c7a10854a8e2bed crop={'add_hitsounds': False, 'add_kiai': False, 'add_mania_sv': False, 'add_timing': True, 'add_timing_points': True, 'add_snapping': False} windows={'dir': '.cache/cm3p/win_canon_columns_on', 'index': '.cache/cm3p/index_canon_columns_on.parquet', 'batch': 16, 'buffer': 4096, 'dtype': 'float16', 'seed': 0, 'on_truncate': 'warn'}
+
+wrote data/processed/chart_content_cm3p_local_canon_columns_on.parquet  (6,828 rows, 14.7 MB)
+coverage of the target set: 6,828/6,828 = 100.00%
+  source 1 (local-noaudio): 6,828
+done in 1287.9s
+
+MERGE=0 -- the canonical table was left alone.  To fold it in later:
+    python scripts/step0c_chart_content.py --source table --in data/processed/chart_content_cm3p_local_canon_columns_on.parquet --tag 1k
+
+=== done ===
+2026-11-19T00:16:29 CST
+data/processed/chart_content_cm3p_local_canon_columns_on.parquet: 6,828 rows, 6,828 unique charts
+coverage of data/processed/cm3p_ids_step1_6828.csv: 6,828/6,828 = 100.00%
+source counts: {1: 6828}
+
+next steps:
+  * bring back data/processed/chart_content_cm3p_local_canon_columns_on.parquet and data/processed/cm3p_mix_report.json
+  * use it directly:  step2 --chart-content cm3p --content-path data/processed/chart_content_cm3p_local_canon_columns_on.parquet
+  * or fold it in:    python scripts/step0c_chart_content.py --source table --in data/processed/chart_content_cm3p_local_canon_columns_on.parquet --tag 1k

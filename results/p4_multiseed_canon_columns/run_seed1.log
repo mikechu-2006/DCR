@@ -1,0 +1,27 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[00:17:58] === p4 seed 1 (6,828 charts) ===
+[00:17:58] p4 s1 linear_extra: train
+[00:19:24] p4 s1 mlp_extra: train
+[00:20:07] p4 s1 linear: train
+[00:21:37] p4 s1 mlp: train
+[00:22:24] p4 s1: signals 6828 charts -> results/p4_multiseed_canon_columns/p4/s1/signals.parquet
+[00:22:24] p4 s1: eval
+[00:22:35] aggregate -> results/p4_multiseed_canon_columns/summary.csv / summary_mean_std.csv / summary.md
+# P2 / P4 multi-seed summary
+
+Seeds are train/test split seeds; model seed is fixed at 0.
+
+## P4（新玩家 + 新 chart，6×6 / 4×4）
+
+ceiling NLL = 0.55435 ± 0.00000 （1 seeds）
+
+| 方法 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|
+| CM3P + external 线性 | 0.60158 ± 0.00000 | 0.5105 ± 0.0000 | 0.4278 ± 0.0000 |
+| CM3P + external MLP | 0.59668 ± 0.00000 | 0.5410 ± 0.0000 | 0.4616 ± 0.0000 |
+| CM3P 线性 (λ1e-3) | 0.63086 ± 0.00000 | 0.4660 ± 0.0000 | 0.3931 ± 0.0000 |
+| CM3P MLP h64 L2 | 0.63267 ± 0.00000 | 0.4789 ± 0.0000 | 0.4131 ± 0.0000 |
+| Sunny | 0.63168 ± 0.00000 | 0.3299 ± 0.0000 | 0.3351 ± 0.0000 |
+| Daniel | 0.63034 ± 0.00000 | 0.3257 ± 0.0000 | 0.3348 ± 0.0000 |
+| star | 0.66221 ± 0.00000 | 0.2974 ± 0.0000 | 0.2957 ± 0.0000 |
+

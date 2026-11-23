@@ -1,0 +1,213 @@
+{
+  "runs": {
+    "bias+mf_dot_dim8": {
+      "variant": "bias+mf_dot_dim8",
+      "args": {
+        "tag": "randommerge_p2_s1",
+        "target": "loss",
+        "label_shift": 0.0,
+        "models": "bias,mf_dot",
+        "dim": 8,
+        "epochs": 20,
+        "lr": 0.02,
+        "wd": 0.0001,
+        "batch": 8192,
+        "features": "F0",
+        "entity": "player",
+        "seed": 0,
+        "out_prefix": "step2",
+        "proc_dir": "data/processed",
+        "out_dir": "results/randommerge_p2p4/p2loss_s1",
+        "train_path": "data/processed/step1_randommerge_p2_s1.parquet",
+        "split_col": "split",
+        "eval_every": 20,
+        "rank_loss": "none",
+        "rank_weight": 0.1,
+        "rank_beta": 1.0,
+        "rank_ties": "skip",
+        "p_drift": "none",
+        "chart_content": "none",
+        "restrict_to_content": "off",
+        "content_path": "data/processed/chart_content_cm3p.parquet",
+        "content_dim": 64,
+        "content_reduce": "pca",
+        "content_eval_heldout": false,
+        "d_constraint": "none",
+        "d_logit_wd": null,
+        "c_logit_wd": null,
+        "c_init_std": null,
+        "drop_bias": "none",
+        "d_init_std": null,
+        "device": "cpu",
+        "threads": 4,
+        "save_preds": false
+      },
+      "mechanism": {
+        "p_drift": "none",
+        "d_constraint": "none",
+        "d_init_std": 0.05,
+        "by_model": {
+          "bias": {
+            "d_constraint": "none",
+            "c_constraint": "none",
+            "c_eff_wd": 0.0,
+            "d_logit_wd": 0.0001,
+            "c_logit_wd": 0.0001,
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "bm": 0.0001
+            },
+            "no_decay": []
+          },
+          "mf_dot": {
+            "d_constraint": "none",
+            "c_constraint": "none",
+            "c_eff_wd": 0.0,
+            "d_logit_wd": 0.0001,
+            "c_logit_wd": 0.0001,
+            "weight_decay": {
+              "b0": 0.0001,
+              "bu": 0.0001,
+              "bm": 0.0001,
+              "P": 0.0001,
+              "C": 0.0001
+            },
+            "no_decay": []
+          }
+        }
+      },
+      "engine": {
+        "name": "torch",
+        "version": "2.13.0+cpu",
+        "device": "cpu",
+        "threads": 4,
+        "deterministic_algorithms": true
+      },
+      "split": {
+        "from": "step1",
+        "col": "split",
+        "spec": null,
+        "unit": "pair",
+        "n_units": 453601,
+        "n_test_units": 136350,
+        "observed_test_frac": 0.30059457540878437,
+        "rows": {
+          "train": 317251,
+          "test": 136350,
+          "dropped": 0
+        }
+      },
+      "sizes": {
+        "train_plays": 317251,
+        "test_plays": 136350,
+        "dropped_rows": 0,
+        "n_entities": 12089,
+        "n_items": 19678,
+        "train_rows_in_vocab": 317251,
+        "test_rows_covered": 134422
+      },
+      "label": {
+        "shift": 0.0,
+        "definition": "log(shift + exp(step0_loss)) = log(1+shift-ACC)"
+      },
+      "content": null,
+      "time_drift": null,
+      "results": {
+        "bias": {
+          "n_scored": 134422,
+          "coverage": 0.98586,
+          "rmse": 0.665795,
+          "mae": 0.517832,
+          "spearman": 0.681055,
+          "pp_p50": 0.937779,
+          "pp_p90": 3.070681,
+          "pp_mean": 1.331047,
+          "pp_gt1_frac": 0.47394,
+          "pp_gt5_frac": 0.024066
+        },
+        "mf_dot": {
+          "n_scored": 134422,
+          "coverage": 0.98586,
+          "rmse": 0.643811,
+          "mae": 0.498826,
+          "spearman": 0.708972,
+          "pp_p50": 0.89937,
+          "pp_p90": 3.022919,
+          "pp_mean": 1.294844,
+          "pp_gt1_frac": 0.456748,
+          "pp_gt5_frac": 0.023166
+        }
+      },
+      "degeneracy": {
+        "bias": {
+          "C_neg_count": 78559,
+          "C_numel": 157424,
+          "C_neg_frac": 0.499028,
+          "charts_with_neg_C": 19600,
+          "charts_total": 19678,
+          "C_min": -0.2297,
+          "C_max": 0.213367
+        },
+        "mf_dot": {
+          "C_neg_count": 79170,
+          "C_numel": 157424,
+          "C_neg_frac": 0.502909,
+          "charts_with_neg_C": 19660,
+          "charts_total": 19678,
+          "C_min": -0.932526,
+          "C_max": 0.902822
+        }
+      },
+      "preds_path": null,
+      "checks": [
+        {
+          "name": "pair_never_crosses_split",
+          "ok": true,
+          "detail": "0 个划分单位同时出现在两侧 (train 侧 317,251 / test 侧 136,350)"
+        },
+        {
+          "name": "train_and_test_disjoint",
+          "ok": true,
+          "detail": "train rows on a held-out pair = 0; test rows on a held-out pair = 136,350/136,350"
+        },
+        {
+          "name": "test_pair_frac",
+          "ok": true,
+          "detail": "未找到 step1 报告 json：只记录观测 test 单位占比 30.0595%（136,350/453,601）"
+        },
+        {
+          "name": "loss_in_range",
+          "ok": true,
+          "detail": "test(randommerge_p2_s1) loss in [-6.2143, -2.3026] (no per-tag range registered)"
+        },
+        {
+          "name": "vocab_from_train_only",
+          "ok": true,
+          "detail": "12,089 entities / 19,678 items == unique train ids"
+        },
+        {
+          "name": "determinism_selftest",
+          "ok": true,
+          "detail": "same seed -> bitwise identical parameters on a synthetic training path"
+        },
+        {
+          "name": "coverage_reported",
+          "ok": true,
+          "detail": "2 result blocks carry coverage + n_scored"
+        },
+        {
+          "name": "no_test_leak",
+          "ok": true,
+          "detail": "training rows used = 317,251; of those on a held-out pair = 0; test tensors never enter the optimiser"
+        },
+        {
+          "name": "npz_matches_summary",
+          "ok": true,
+          "detail": "bias:ok mf_dot:ok"
+        }
+      ],
+      "seconds": 9.1
+    }
+  }
+}

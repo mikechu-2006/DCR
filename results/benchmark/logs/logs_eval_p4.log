@@ -1,0 +1,25 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+/home/mikechu/anaconda3/lib/python3.13/site-packages/joblib/_multiprocessing_helpers.py:44: UserWarning: [Errno 13] Permission denied.  joblib will operate in serial mode
+  warnings.warn("%s.  joblib will operate in serial mode" % (e,))
+[data] 1382 rows with all 4 run predictions
+[folds] {0: 275, 1: 279, 2: 276, 3: 273, 4: 279}
+# VSRG Dan benchmark — 5-fold chart-group LOCV
+
+Calibration: isotonic (primary), linear (control), out-of-fold.
+All rows use the same 5 chart-group folds.
+
+| method | MAE | RMSE | bias | Spearman | Kendall | MAE 95% CI |
+|---|---:|---:|---:|---:|---:|---|
+| M1_L_isotonic | 0.7348 | 1.4214 | -0.0024 | 0.8432 | 0.6955 | [0.6733, 0.8006] |
+| M1_C_isotonic | 0.8126 | 1.6293 | +0.0065 | 0.8447 | 0.6962 | [0.7444, 0.8861] |
+| M2_L_isotonic | 1.0632 | 1.8089 | +0.0065 | 0.6746 | 0.5190 | [0.9945, 1.1406] |
+| M2_C_isotonic | 0.9963 | 1.7649 | +0.0066 | 0.7103 | 0.5529 | [0.9234, 1.0809] |
+| M1_L_linear | 1.2043 | 1.7936 | +0.0002 | 0.8471 | 0.6980 |  |
+| M1_C_linear | 1.1922 | 1.8746 | +0.0009 | 0.8514 | 0.7029 |  |
+| M2_L_linear | 1.4220 | 2.0603 | -0.0004 | 0.6826 | 0.5247 |  |
+| M2_C_linear | 1.3738 | 2.0490 | +0.0010 | 0.7192 | 0.5594 |  |
+| constant | 1.9195 | 2.8995 | -0.0000 | -0.0094 | -0.0073 | [1.8151, 2.0377] |
+| sunny_iso | 0.3367 | 0.5376 | +0.0001 | 0.9060 | 0.7914 | [0.3155, 0.3587] |
+| msd_iso | 0.6286 | 1.0077 | +0.0012 | 0.7849 | 0.6403 | [0.5882, 0.6697] |
+| external_lin | 0.6568 | 0.8642 | -0.0006 | 0.9021 | 0.7856 | [0.6297, 0.6883] |
+[done] results/benchmark/eval_p4

@@ -1,0 +1,62 @@
+/home/mikechu/anaconda3/bin/python scripts/step2_cm3p_rank.py --in data/processed/step1_1k_pairbest_p2_nogap_s3.parquet --content-path data/processed/chart_content_cm3p_local.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 6 --name cm3p_mlp_extra --out-signals results/p4_multiseed_audio/legacy/p2/s3/signals/cm3p_mlp_extra.parquet --out-json results/p4_multiseed_audio/legacy/p2/s3/signals/cm3p_mlp_extra.json --chart-only --chart-folds 5 --chart-seed 0 --model mlp_extra --lam 1e-2 --hid 64 --depth 2 --dropout 0.1 --lr 3e-3 --epochs 98
+
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=6,819 (content coverage 100.0% of step1 maps) train_rows=76,675 test_rows=32,894
+[pairs] train 2,440,757 (6,095,093 comparisons) | test 757,587 (1,127,439)
+[val] 1026 fit players / 0 val players; fit pairs 2,440,757
+  [mlp ep   1] train=0.57551
+  [mlp ep  10] train=0.58269
+  [mlp ep  20] train=0.57373
+  [mlp ep  30] train=0.56547
+  [mlp ep  40] train=0.55709
+  [mlp ep  50] train=0.54828
+  [mlp ep  60] train=0.54361
+  [mlp ep  70] train=0.53712
+  [mlp ep  80] train=0.53378
+  [mlp ep  90] train=0.53083
+[chart-fold 0] charts=1327 rows=62,996 pairs=1,572,916 train_nll=0.52475
+  [mlp ep   1] train=0.58383
+  [mlp ep  10] train=0.59265
+  [mlp ep  20] train=0.58311
+  [mlp ep  30] train=0.57603
+  [mlp ep  40] train=0.56734
+  [mlp ep  50] train=0.55905
+  [mlp ep  60] train=0.55161
+  [mlp ep  70] train=0.54733
+  [mlp ep  80] train=0.54433
+  [mlp ep  90] train=0.54094
+[chart-fold 1] charts=1417 rows=56,785 pairs=1,460,228 train_nll=0.53422
+  [mlp ep   1] train=0.57733
+  [mlp ep  10] train=0.58399
+  [mlp ep  20] train=0.57643
+  [mlp ep  30] train=0.56964
+  [mlp ep  40] train=0.56108
+  [mlp ep  50] train=0.55430
+  [mlp ep  60] train=0.54655
+  [mlp ep  70] train=0.54208
+  [mlp ep  80] train=0.53725
+  [mlp ep  90] train=0.53475
+[chart-fold 2] charts=1331 rows=61,533 pairs=1,581,627 train_nll=0.52791
+  [mlp ep   1] train=0.57713
+  [mlp ep  10] train=0.58387
+  [mlp ep  20] train=0.57572
+  [mlp ep  30] train=0.56733
+  [mlp ep  40] train=0.55876
+  [mlp ep  50] train=0.55056
+  [mlp ep  60] train=0.54404
+  [mlp ep  70] train=0.53872
+  [mlp ep  80] train=0.53647
+  [mlp ep  90] train=0.53217
+[chart-fold 3] charts=1318 rows=63,433 pairs=1,617,245 train_nll=0.52492
+  [mlp ep   1] train=0.57394
+  [mlp ep  10] train=0.58144
+  [mlp ep  20] train=0.57257
+  [mlp ep  30] train=0.56468
+  [mlp ep  40] train=0.55580
+  [mlp ep  50] train=0.54627
+  [mlp ep  60] train=0.54048
+  [mlp ep  70] train=0.53666
+  [mlp ep  80] train=0.53284
+  [mlp ep  90] train=0.52927
+[chart-fold 4] charts=1426 rows=61,953 pairs=1,579,143 train_nll=0.52300
+[done] test_nll=0.56912 bits=0.1789 beta=0.870 -> cm3p_mlp_extra.parquet / cm3p_mlp_extra.json (213.4s)

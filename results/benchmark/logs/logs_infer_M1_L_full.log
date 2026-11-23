@@ -1,0 +1,5 @@
+/home/mikechu/anaconda3/bin/python scripts/benchmark_infer.py --model results/benchmark/models/M1_L_full.pt --content data/processed/benchmark_content_legacy.parquet --signals data/processed/benchmark_signals.parquet --out results/benchmark/pred/M1_L.parquet
+
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] content=1,382 signals=1,382 common=1,382
+[done] results/benchmark/pred/M1_L.parquet: 1382 rows, n_models=1, d_m mean=+1.9363 sd=1.3499

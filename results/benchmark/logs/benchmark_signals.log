@@ -1,0 +1,6 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[sunny] 1382 charts
+[msd] 1382 charts
+[msd] backend=minacalc-standalone (lib) version=505
+[check-dcr] n=32 sunny max|d|=8.88e-16 msd max|d|=0
+[done] data/processed/benchmark_signals.parquet: sunny_ok=1382/1382 msd_ok=1382/1382

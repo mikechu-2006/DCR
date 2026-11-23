@@ -1,0 +1,11 @@
+/home/mikechu/anaconda3/bin/python3 scripts/step2_cm3p_rank.py --in data/processed/step1_randommerge_p2_s1.parquet --content-path data/processed/chart_content_cm3p_local.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 6 --name cm3p_mlp_extra --out-signals results/randommerge_p2p4_smoke/p2/s1/signals/cm3p_mlp_extra.parquet --out-json results/randommerge_p2p4_smoke/p2/s1/signals/cm3p_mlp_extra.json --chart-only --chart-folds 2 --chart-seed 0 --model mlp_extra --lam 1e-2 --hid 64 --depth 2 --dropout 0.1 --lr 3e-3 --epochs 2
+
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=20,388 (content coverage 99.4% of step1 maps) train_rows=317,127 test_rows=136,279
+[pairs] train 12,098,595 (19,324,612 comparisons) | test 3,064,761 (3,615,390)
+[val] 12088 fit players / 0 val players; fit pairs 12,098,595
+  [mlp ep   1] train=0.59647
+[chart-fold 0] charts=10210 rows=160,495 pairs=3,029,361 train_nll=0.59802
+  [mlp ep   1] train=0.59829
+[chart-fold 1] charts=10178 rows=156,632 pairs=3,016,634 train_nll=0.59952
+[done] test_nll=0.59963 bits=0.1349 beta=1.266 -> cm3p_mlp_extra.parquet / cm3p_mlp_extra.json (101.1s)

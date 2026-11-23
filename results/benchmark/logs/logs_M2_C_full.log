@@ -1,0 +1,16 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=6,819 (content coverage 100.0% of step1 maps) train_rows=109,569 test_rows=0
+[pairs] train 3,753,516 (12,455,685 comparisons) | test skipped (--fit-all)
+[val] 1039 fit players / 0 val players; fit pairs 3,753,516
+  [mlp ep   1] train=0.62913
+  [mlp ep  10] train=0.64429
+  [mlp ep  20] train=0.62820
+  [mlp ep  30] train=0.62087
+  [mlp ep  40] train=0.61305
+  [mlp ep  50] train=0.60701
+  [mlp ep  60] train=0.59797
+  [mlp ep  70] train=0.58967
+  [mlp ep  80] train=0.58317
+  [mlp ep  90] train=0.58114
+[save-model] results/benchmark/models/M2_C_full.pt (mlp, fit_all=True, train_rows=109,569)
+[done] train_nll=0.56944 (fit_all) -> M2_C_full.parquet / M2_C_full.json (71.9s)

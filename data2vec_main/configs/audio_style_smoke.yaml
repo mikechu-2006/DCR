@@ -1,0 +1,39 @@
+seed: 1
+
+data:
+  osu_dir: data/osu_cache
+  window_sec: 4.0
+  frame_hz: 100
+  gaussian_sigma_ms: 8.0
+  min_valid_sec: 0.5
+
+model:
+  in_channels: 8
+  conv_hidden: 32
+  dim: 64
+  layers: 2
+  heads: 4
+  ff_mult: 2
+  dropout: 0.0
+  top_k: 2
+  mask_prob: 0.10
+  mask_length: 8
+  loss_beta: 1.0
+  max_frames: 512
+
+train:
+  batch_size: 1
+  lr: 3.0e-4
+  weight_decay: 0.0
+  warmup_ratio: 0.1
+  epochs: 1
+  grad_clip: 1.0
+  ema_start: 0.9
+  ema_end: 0.99
+  ema_anneal_steps: 10
+  ema_fp32: true
+  log_every: 1
+  save_every: 0
+  num_workers: 0
+  amp: false
+  device: cpu

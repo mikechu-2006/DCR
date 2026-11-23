@@ -1,0 +1,12 @@
+/home/mikechu/anaconda3/bin/python scripts/step2_cm3p_rank.py --in data/processed/step1_1k_pairbest_p2_nogap_s3.parquet --content-path data/processed/chart_content_cm3p_audio_on.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 6 --name cm3p_linear_extra --out-signals results/p4_multiseed_audio/audio/p2/s3/signals/cm3p_linear_extra.parquet --out-json results/p4_multiseed_audio/audio/p2/s3/signals/cm3p_linear_extra.json --chart-only --chart-folds 5 --chart-seed 0 --model linear_extra --lam 1e-3
+
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=6,819 (content coverage 100.0% of step1 maps) train_rows=76,675 test_rows=32,894
+[pairs] train 2,440,757 (6,095,093 comparisons) | test 757,587 (1,127,439)
+[val] 1026 fit players / 0 val players; fit pairs 2,440,757
+[chart-fold 0] charts=1327 rows=62,996 pairs=1,572,916 train_nll=0.55657
+[chart-fold 1] charts=1417 rows=56,785 pairs=1,460,228 train_nll=0.56549
+[chart-fold 2] charts=1331 rows=61,533 pairs=1,581,627 train_nll=0.55934
+[chart-fold 3] charts=1318 rows=63,433 pairs=1,617,245 train_nll=0.55753
+[chart-fold 4] charts=1426 rows=61,953 pairs=1,579,143 train_nll=0.55536
+[done] test_nll=0.57121 bits=0.1759 beta=0.903 -> cm3p_linear_extra.parquet / cm3p_linear_extra.json (263.4s)

@@ -1,0 +1,118 @@
+/hpc2ssd/softwares/anaconda3/bin/python3 scripts/cm3p_pool.py --variants a2,a2b,a2c,a3 --heads /hpc2hdd/home/aiaa3111_l01_008/DCR/results/randommerge_pool/heads/a0_heads_p4_s2.npz --head-mode full --index /hpc2hdd/home/aiaa3111_l01_008/DCR/.cache/cm3p/index.parquet --win-dir /hpc2hdd/home/aiaa3111_l01_008/DCR/.cache/cm3p/win --out-dir /hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed/chart_pool_features_randommerge/p4/s2 --threads 8
+
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.3.5 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/hpc2hdd/home/aiaa3111_l01_008/DCR/scripts/cm3p_pool.py", line 39, in <module>
+    import pandas as pd
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/__init__.py", line 49, in <module>
+    from pandas.core.api import (
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/api.py", line 28, in <module>
+    from pandas.core.arrays import Categorical
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/arrays/__init__.py", line 1, in <module>
+    from pandas.core.arrays.arrow import ArrowExtensionArray
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/arrays/arrow/__init__.py", line 5, in <module>
+    from pandas.core.arrays.arrow.array import ArrowExtensionArray
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/arrays/arrow/array.py", line 53, in <module>
+    from pandas.core import (
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/ops/__init__.py", line 8, in <module>
+    from pandas.core.ops.array_ops import (
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/ops/array_ops.py", line 56, in <module>
+    from pandas.core.computation import expressions
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/computation/expressions.py", line 21, in <module>
+    from pandas.core.computation.check import NUMEXPR_INSTALLED
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/computation/check.py", line 5, in <module>
+    ne = import_optional_dependency("numexpr", errors="warn")
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/compat/_optional.py", line 135, in import_optional_dependency
+    module = importlib.import_module(name)
+  File "/hpc2ssd/softwares/anaconda3/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/hpc2ssd/softwares/anaconda3/lib/python3.11/site-packages/numexpr/__init__.py", line 24, in <module>
+    from numexpr.interpreter import MAX_THREADS, use_vml, __BLOCK_SIZE1__
+AttributeError: _ARRAY_API not found
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.3.5 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/hpc2hdd/home/aiaa3111_l01_008/DCR/scripts/cm3p_pool.py", line 39, in <module>
+    import pandas as pd
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/__init__.py", line 49, in <module>
+    from pandas.core.api import (
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/api.py", line 28, in <module>
+    from pandas.core.arrays import Categorical
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/arrays/__init__.py", line 1, in <module>
+    from pandas.core.arrays.arrow import ArrowExtensionArray
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/arrays/arrow/__init__.py", line 5, in <module>
+    from pandas.core.arrays.arrow.array import ArrowExtensionArray
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/arrays/arrow/array.py", line 67, in <module>
+    from pandas.core.arrays.masked import BaseMaskedArray
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/arrays/masked.py", line 61, in <module>
+    from pandas.core import (
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/core/nanops.py", line 52, in <module>
+    bn = import_optional_dependency("bottleneck", errors="warn")
+  File "/hpc2hdd/home/aiaa3111_l01_008/.local/lib/python3.11/site-packages/pandas/compat/_optional.py", line 135, in import_optional_dependency
+    module = importlib.import_module(name)
+  File "/hpc2ssd/softwares/anaconda3/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "/hpc2ssd/softwares/anaconda3/lib/python3.11/site-packages/bottleneck/__init__.py", line 7, in <module>
+    from .move import (move_argmax, move_argmin, move_max, move_mean, move_median,
+AttributeError: _ARRAY_API not found
+[01:08:01] window index: 21,949 charts; variants=['a2', 'a2b', 'a2c', 'a3']
+[01:08:01] heads: 5 fold head(s) x 512 dims
+[01:08:08] [pool] a2: 2,000/21,949 (7s)
+[01:08:29] [pool] a2: 4,000/21,949 (28s)
+[01:08:44] [pool] a2: 6,000/21,949 (43s)
+[01:08:58] [pool] a2: 8,000/21,949 (57s)
+[01:09:12] [pool] a2: 10,000/21,949 (71s)
+[01:09:22] [pool] a2: 12,000/21,949 (81s)
+[01:09:32] [pool] a2: 14,000/21,949 (91s)
+[01:09:44] [pool] a2: 16,000/21,949 (102s)
+[01:09:56] [pool] a2: 18,000/21,949 (115s)
+[01:10:05] [pool] a2: 20,000/21,949 (124s)
+[01:10:15] a2: 21,949 charts x 519 dims -> /hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed/chart_pool_features_randommerge/p4/s2/a2.parquet (134s)
+[01:10:16] [pool] a2b: 2,000/21,949 (1s)
+[01:10:17] [pool] a2b: 4,000/21,949 (2s)
+[01:10:18] [pool] a2b: 6,000/21,949 (3s)
+[01:10:19] [pool] a2b: 8,000/21,949 (4s)
+[01:10:20] [pool] a2b: 10,000/21,949 (5s)
+[01:10:21] [pool] a2b: 12,000/21,949 (6s)
+[01:10:22] [pool] a2b: 14,000/21,949 (7s)
+[01:10:24] [pool] a2b: 16,000/21,949 (8s)
+[01:10:25] [pool] a2b: 18,000/21,949 (9s)
+[01:10:26] [pool] a2b: 20,000/21,949 (10s)
+[01:10:28] a2b: 21,949 charts x 519 dims -> /hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed/chart_pool_features_randommerge/p4/s2/a2b.parquet (12s)
+[01:10:29] [pool] a2c: 2,000/21,949 (1s)
+[01:10:30] [pool] a2c: 4,000/21,949 (2s)
+[01:10:31] [pool] a2c: 6,000/21,949 (3s)
+[01:10:32] [pool] a2c: 8,000/21,949 (4s)
+[01:10:33] [pool] a2c: 10,000/21,949 (5s)
+[01:10:34] [pool] a2c: 12,000/21,949 (6s)
+[01:10:35] [pool] a2c: 14,000/21,949 (7s)
+[01:10:36] [pool] a2c: 16,000/21,949 (8s)
+[01:10:37] [pool] a2c: 18,000/21,949 (9s)
+[01:10:38] [pool] a2c: 20,000/21,949 (10s)
+[01:10:39] a2c: 21,949 charts x 521 dims -> /hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed/chart_pool_features_randommerge/p4/s2/a2c.parquet (12s)
+[01:10:40] [pool] a3: 2,000/21,949 (1s)
+[01:10:42] [pool] a3: 4,000/21,949 (2s)
+[01:10:43] [pool] a3: 6,000/21,949 (3s)
+[01:10:44] [pool] a3: 8,000/21,949 (4s)
+[01:10:45] [pool] a3: 10,000/21,949 (5s)
+[01:10:46] [pool] a3: 12,000/21,949 (6s)
+[01:10:47] [pool] a3: 14,000/21,949 (7s)
+[01:10:48] [pool] a3: 16,000/21,949 (8s)
+[01:10:49] [pool] a3: 18,000/21,949 (9s)
+[01:10:50] [pool] a3: 20,000/21,949 (10s)
+[01:10:51] a3: 21,949 charts x 521 dims -> /hpc2hdd/home/aiaa3111_l01_008/DCR/data/processed/chart_pool_features_randommerge/p4/s2/a3.parquet (12s)

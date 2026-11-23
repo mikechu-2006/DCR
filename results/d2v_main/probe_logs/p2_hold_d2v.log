@@ -1,0 +1,13 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=1,365 (content coverage 100.0% of step1 maps) train_rows=16,629 test_rows=7,276
+[pairs] train 104,561 (282,639 comparisons) | test 35,302 (54,721)
+[val] 727 fit players / 179 val players; fit pairs 88,160, val pairs 41,503
+[linear] lam=0.001 fit_nll=0.53616 val_nll=0.57048
+[linear] lam=0.01 fit_nll=0.55877 val_nll=0.58314
+[linear] lam=0.1 fit_nll=0.58413 val_nll=0.59808
+[chart-fold 0] charts=322 rows=11,993 pairs=55,380 train_nll=0.53716
+[chart-fold 1] charts=247 rows=13,581 pairs=73,381 train_nll=0.53924
+[chart-fold 2] charts=303 rows=12,653 pairs=60,618 train_nll=0.54126
+[chart-fold 3] charts=261 rows=14,230 pairs=73,604 train_nll=0.53967
+[chart-fold 4] charts=232 rows=14,059 pairs=72,732 train_nll=0.53954
+[done] test_nll=0.59715 bits=0.1385 beta=0.667 -> p2_hold_d2v_signals.parquet / p2_hold_d2v_rank.json (24.9s)

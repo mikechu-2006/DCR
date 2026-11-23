@@ -1,0 +1,13 @@
+/home/mikechu/anaconda3/bin/python scripts/step2_rank_eval.py --in data/processed/step1_1k_pairbest_p2_nogap_s4.parquet --signal-table results/p4_multiseed_audio/audio/p2/s4/signals.parquet --signals cm3p_linear_extra,cm3p_mlp_extra,cm3p_linear,cm3p_mlp_h64_L2,sunny_star,daniel_star,star --split test --ceiling-fit all --common-maps --strict-pairs --folds 2 --bootstrap 0 --seed 0 --cache-dir data/processed/rank_eval_cache --out results/p4_multiseed_audio/audio/p2/s4/rank_eval.json
+
+OMP: Warning #179: Function Can't set size of SHM failed:
+[common-maps] 6,819 charts shared by 7 signals (signal table 6,819 -> 6,819 rows)
+[ceiling] fit b on all 109,569 rows / 6,819 charts; evaluate on test rows (32,895 rows)
+[  167.4s] cm3p_linear_extra        nll=0.56905 ceil=0.55633 captured=0.9070 n=1,046,778/1,122,101 lw=+0.5515 macro=+0.5335 beta=0.9525
+[  169.4s] cm3p_mlp_extra           nll=0.55972 ceil=0.55633 captured=0.9752 n=1,046,778/1,122,101 lw=+0.5595 macro=+0.5373 beta=0.9697
+[  171.2s] cm3p_linear              nll=0.60886 ceil=0.55633 captured=0.6161 n=1,046,778/1,122,101 lw=+0.4615 macro=+0.4397 beta=0.7399
+[  173.0s] cm3p_mlp_h64_L2          nll=0.60049 ceil=0.55633 captured=0.6772 n=1,046,778/1,122,101 lw=+0.4700 macro=+0.4471 beta=0.7599
+[  174.8s] sunny_star               nll=0.62774 ceil=0.55633 captured=0.4780 n=1,046,778/1,122,101 lw=+0.5102 macro=+0.5064 beta=0.7536
+[  176.6s] daniel_star              nll=0.62803 ceil=0.55633 captured=0.4759 n=1,046,778/1,122,101 lw=+0.5027 macro=+0.5004 beta=0.7651
+[  178.5s] star                     nll=0.66100 ceil=0.55633 captured=0.2350 n=1,046,778/1,122,101 lw=+0.3277 macro=+0.3183 beta=0.4307
+wrote results/p4_multiseed_audio/audio/p2/s4/rank_eval.json (178.5s)

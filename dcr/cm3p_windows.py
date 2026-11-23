@@ -509,6 +509,7 @@ EVENT_TOKENS = frozenset({
 })
 REMOVED_GROUP_EVENTS = frozenset({"[KIAI_ON]", "[KIAI_OFF]",
                                   "[SCROLL_SPEED_CHANGE]"})
+SPECIAL_TOKENS = frozenset({"[CLS]", "[BOS]", "[EOS]"})
 
 
 def _is_event_token(t: str) -> bool:
@@ -534,6 +535,13 @@ def strip_removed(tokens: Sequence[str]) -> list[str]:
     out = []
     drop: Optional[str] = None
     for t in tokens:
+        if t in SPECIAL_TOKENS:
+            # [CLS]/[BOS]/[EOS] are window delimiters, not part of a kiai/SV
+            # group.  A group may be the last thing before [EOS]; without this
+            # the EOS would be swallowed and a correct crop would fail the audit.
+            drop = None
+            out.append(t)
+            continue
         if _is_event_token(t):
             kind = _group_kind(t)
             if kind is not None:
@@ -555,6 +563,9 @@ def removed_counts(tokens: Sequence[str]) -> dict[str, int]:
     out = {"hitsound": 0, "kiai": 0, "sv": 0}
     drop: Optional[str] = None
     for t in tokens:
+        if t in SPECIAL_TOKENS:
+            drop = None
+            continue
         if _is_event_token(t):
             kind = _group_kind(t)
             if kind is not None:

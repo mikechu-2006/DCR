@@ -1,0 +1,49 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+truncated charts on/off/union 147 2 147
+running seed 1 ...
+seed 1: maps None test_rows None pairs None
+  cm3p_linear          off 0.63097 on 0.63647 d +0.00550
+  cm3p_mlp_h64_L2      off 0.63577 on 0.63854 d +0.00277
+  cm3p_linear_extra    off 0.60735 on 0.61247 d +0.00511
+  cm3p_mlp_extra       off 0.59772 on 0.60617 d +0.00845
+running seed 2 ...
+seed 2: maps None test_rows None pairs None
+  cm3p_linear          off 0.63837 on 0.64120 d +0.00284
+  cm3p_mlp_h64_L2      off 0.63692 on 0.64428 d +0.00736
+  cm3p_linear_extra    off 0.61647 on 0.62066 d +0.00419
+  cm3p_mlp_extra       off 0.60979 on 0.61026 d +0.00048
+running seed 3 ...
+seed 3: maps None test_rows None pairs None
+  cm3p_linear          off 0.63638 on 0.63954 d +0.00316
+  cm3p_mlp_h64_L2      off 0.63152 on 0.63257 d +0.00105
+  cm3p_linear_extra    off 0.61751 on 0.62052 d +0.00302
+  cm3p_mlp_extra       off 0.60407 on 0.60481 d +0.00074
+running seed 4 ...
+seed 4: maps None test_rows None pairs None
+  cm3p_linear          off 0.63387 on 0.63740 d +0.00353
+  cm3p_mlp_h64_L2      off 0.62753 on 0.63206 d +0.00454
+  cm3p_linear_extra    off 0.60627 on 0.60976 d +0.00349
+  cm3p_mlp_extra       off 0.59395 on 0.59495 d +0.00100
+running seed 5 ...
+seed 5: maps None test_rows None pairs None
+  cm3p_linear          off 0.63318 on 0.63564 d +0.00246
+  cm3p_mlp_h64_L2      off 0.63340 on 0.64576 d +0.01235
+  cm3p_linear_extra    off 0.60985 on 0.61271 d +0.00286
+  cm3p_mlp_extra       off 0.60552 on 0.61093 d +0.00541
+
+=== sensitivity: exclude charts with core tokens dropped (union) ===
+cm3p_linear          off 0.63455 on 0.63805 delta +0.00350 +/- 0.00119 better 0/5
+cm3p_mlp_h64_L2      off 0.63303 on 0.63864 delta +0.00562 +/- 0.00443 better 0/5
+cm3p_linear_extra    off 0.61149 on 0.61522 delta +0.00373 +/- 0.00093 better 0/5
+cm3p_mlp_extra       off 0.60221 on 0.60542 delta +0.00322 +/- 0.00356 better 0/5
+
+per-seed delta:
+method  cm3p_linear  cm3p_linear_extra  cm3p_mlp_extra  cm3p_mlp_h64_L2
+seed                                                                   
+1          0.005496           0.005114        0.008451         0.002774
+2          0.002838           0.004188        0.000477         0.007361
+3          0.003164           0.003016        0.000743         0.001051
+4          0.003530           0.003491        0.001001         0.004535
+5          0.002457           0.002863        0.005407         0.012355
+
+wrote results/p4_multiseed_canon_columns/sensitivity/truncation_sensitivity.csv

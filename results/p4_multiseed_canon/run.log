@@ -1,0 +1,104 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[14:30:46] === p2 seed 1 ===
+[14:30:46] p2 s1 linear_extra: train
+[14:35:51] p2 s1 mlp_extra: train
+[14:38:48] p2 s1 linear: train
+[14:42:29] p2 s1 mlp: train
+[14:45:05] p2 s1: signals 6828 charts -> results/p4_multiseed_canon/p2/s1/signals.parquet
+[14:45:05] p2 s1: eval
+[14:45:17] === p2 seed 2 ===
+[14:45:17] p2 s2 linear_extra: train
+[14:48:59] p2 s2 mlp_extra: train
+[14:51:22] p2 s2 linear: train
+[14:55:13] p2 s2 mlp: train
+[14:58:00] p2 s2: signals 6828 charts -> results/p4_multiseed_canon/p2/s2/signals.parquet
+[14:58:00] p2 s2: eval
+[14:58:18] === p2 seed 3 ===
+[14:58:18] p2 s3 linear_extra: train
+[15:02:35] p2 s3 mlp_extra: train
+[15:05:47] p2 s3 linear: train
+[15:10:33] p2 s3 mlp: train
+[15:14:03] p2 s3: signals 6828 charts -> results/p4_multiseed_canon/p2/s3/signals.parquet
+[15:14:03] p2 s3: eval
+[15:14:22] === p2 seed 4 ===
+[15:14:22] p2 s4 linear_extra: train
+[15:18:59] p2 s4 mlp_extra: train
+[15:22:11] p2 s4 linear: train
+[15:26:48] p2 s4 mlp: train
+[15:30:06] p2 s4: signals 6828 charts -> results/p4_multiseed_canon/p2/s4/signals.parquet
+[15:30:06] p2 s4: eval
+[15:30:26] === p2 seed 5 ===
+[15:30:26] p2 s5 linear_extra: train
+[15:35:02] p2 s5 mlp_extra: train
+[15:38:14] p2 s5 linear: train
+[15:42:56] p2 s5 mlp: train
+[15:46:14] p2 s5: signals 6828 charts -> results/p4_multiseed_canon/p2/s5/signals.parquet
+[15:46:14] p2 s5: eval
+[15:46:34] === p4 seed 1 ===
+[15:46:34] p4 s1 linear_extra: train
+[15:47:57] p4 s1 mlp_extra: train
+[15:48:31] p4 s1 linear: train
+[15:49:44] p4 s1 mlp: train
+[15:50:18] p4 s1: signals 6828 charts -> results/p4_multiseed_canon/p4/s1/signals.parquet
+[15:50:18] p4 s1: eval
+[15:50:29] === p4 seed 2 ===
+[15:50:29] p4 s2 linear_extra: train
+[15:51:50] p4 s2 mlp_extra: train
+[15:52:31] p4 s2 linear: train
+[15:53:52] p4 s2 mlp: train
+[15:54:27] p4 s2: signals 6828 charts -> results/p4_multiseed_canon/p4/s2/signals.parquet
+[15:54:27] p4 s2: eval
+[15:54:37] === p4 seed 3 ===
+[15:54:37] p4 s3 linear_extra: train
+[15:55:44] p4 s3 mlp_extra: train
+[15:56:17] p4 s3 linear: train
+[15:57:26] p4 s3 mlp: train
+[15:57:56] p4 s3: signals 6828 charts -> results/p4_multiseed_canon/p4/s3/signals.parquet
+[15:57:56] p4 s3: eval
+[15:58:05] === p4 seed 4 ===
+[15:58:05] p4 s4 linear_extra: train
+[15:59:07] p4 s4 mlp_extra: train
+[15:59:37] p4 s4 linear: train
+[16:00:43] p4 s4 mlp: train
+[16:01:14] p4 s4: signals 6828 charts -> results/p4_multiseed_canon/p4/s4/signals.parquet
+[16:01:14] p4 s4: eval
+[16:01:23] === p4 seed 5 ===
+[16:01:23] p4 s5 linear_extra: train
+[16:02:34] p4 s5 mlp_extra: train
+[16:03:06] p4 s5 linear: train
+[16:04:14] p4 s5 mlp: train
+[16:33:23] p4 s5: signals 6828 charts -> results/p4_multiseed_canon/p4/s5/signals.parquet
+[16:33:23] p4 s5: eval
+[16:33:33] aggregate -> results/p4_multiseed_canon/summary.csv / summary_mean_std.csv / summary.md
+# P2 / P4 multi-seed summary
+
+Seeds are train/test split seeds; model seed is fixed at 0.
+
+## P2（新 chart）
+
+ceiling NLL = 0.56126 ± 0.00348 （5 seeds）
+
+| 方法 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|
+| CM3P + external 线性 | 0.59758 ± 0.00171 | 0.5288 ± 0.0094 | 0.4857 ± 0.0108 |
+| CM3P + external MLP | 0.58574 ± 0.00153 | 0.5528 ± 0.0143 | 0.5074 ± 0.0097 |
+| CM3P 线性 (λ1e-3) | 0.62399 ± 0.00184 | 0.4853 ± 0.0085 | 0.4383 ± 0.0101 |
+| CM3P MLP h64 L2 | 0.62213 ± 0.00307 | 0.4855 ± 0.0129 | 0.4467 ± 0.0113 |
+| Sunny | 0.62868 ± 0.00207 | 0.3455 ± 0.0081 | 0.3834 ± 0.0019 |
+| Daniel | 0.62768 ± 0.00212 | 0.3454 ± 0.0080 | 0.3837 ± 0.0031 |
+| star | 0.66153 ± 0.00137 | 0.3088 ± 0.0074 | 0.3369 ± 0.0021 |
+
+## P4（新玩家 + 新 chart，6×6 / 4×4）
+
+ceiling NLL = 0.56540 ± 0.00859 （5 seeds）
+
+| 方法 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|
+| CM3P + external 线性 | 0.60335 ± 0.00515 | 0.4892 ± 0.0247 | 0.4464 ± 0.0215 |
+| CM3P + external MLP | 0.59425 ± 0.00413 | 0.5201 ± 0.0272 | 0.4701 ± 0.0282 |
+| CM3P 线性 (λ1e-3) | 0.63050 ± 0.00270 | 0.4520 ± 0.0219 | 0.4084 ± 0.0174 |
+| CM3P MLP h64 L2 | 0.63013 ± 0.00266 | 0.4527 ± 0.0268 | 0.4105 ± 0.0209 |
+| Sunny | 0.63111 ± 0.00777 | 0.3098 ± 0.0608 | 0.3480 ± 0.0492 |
+| Daniel | 0.63102 ± 0.00601 | 0.3077 ± 0.0614 | 0.3440 ± 0.0497 |
+| star | 0.66021 ± 0.00779 | 0.2813 ± 0.0626 | 0.3090 ± 0.0509 |
+

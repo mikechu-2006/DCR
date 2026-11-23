@@ -1,0 +1,9 @@
+[full] M1_L <- M1_L_full.pt
+[p4]   M1_L <- 5 seeds
+[full] M1_C <- M1_C_full.pt
+[p4]   M1_C <- 5 seeds
+[full] M2_L <- M2_L_full.pt
+[p4]   M2_L <- 5 seeds
+[full] M2_C <- M2_C_full.pt
+[p4]   M2_C <- 5 seeds
+PRED_DONE

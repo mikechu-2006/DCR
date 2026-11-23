@@ -1,0 +1,103 @@
+{
+ "meta": {
+  "bootstrap": 300,
+  "ceiling_fit": "all",
+  "ceiling_fit_maps": 6828,
+  "ceiling_fit_rows": 109706,
+  "common_maps": false,
+  "folds": 2,
+  "generated_at": "2026-11-23 19:07:54",
+  "in": "data/processed/step1_1k_pairbest.parquet",
+  "knots": 8,
+  "link": "linear",
+  "metric": "pairwise Bradley-Terry NLL, cross-fitted ceiling",
+  "min_l": 10,
+  "n_maps_total": 6828,
+  "n_players_total": 1039,
+  "n_rows_total": 109706,
+  "seed": 0,
+  "signal_table": "results/d2v_main/p2_all_cm3p_signals.parquet",
+  "signals": [
+   "cm3p_rank"
+  ],
+  "split": "test",
+  "strict_pairs": false,
+  "tag": ""
+ },
+ "signals": {
+  "cm3p_rank": {
+   "bits_saved": 0.09969777026880589,
+   "bits_saved_all": 0.09969777026880589,
+   "bits_saved_strict": null,
+   "bootstrap": {
+    "captured": [
+     0.49088857547051956,
+     0.5777555606643354
+    ],
+    "lw": [
+     0.3908534859765804,
+     0.41911445909497397
+    ],
+    "macro": [
+     0.35327407276726736,
+     0.3854971746414063
+    ],
+    "nll": [
+     0.6181923316199252,
+     0.6294203217192009
+    ]
+   },
+   "captured": 0.530002776531875,
+   "captured_all": 0.530002776531875,
+   "captured_strict": null,
+   "ceiling_coverage": 0.9395911470823866,
+   "ceiling_eval_rows": 33139,
+   "ceiling_fit": "all",
+   "ceiling_fit_maps": 6828,
+   "ceiling_fit_rows": 109706,
+   "ceiling_n": 1075472,
+   "ceiling_nll": 0.5627606402815476,
+   "ceiling_per_player": {
+    "fisher_l3": 0.640830399799124,
+    "lw": 0.610063938791584,
+    "macro": 0.5811886165719171,
+    "median": 0.6312342111911078,
+    "n": 666
+   },
+   "coverage_maps": 0.6685705916813123,
+   "coverage_rows": 0.30207098973620405,
+   "link": {
+    "beta": 0.6329928595669742,
+    "kind": "linear"
+   },
+   "n_instances": 1144617,
+   "n_instances_used": 1144617,
+   "n_maps": 4565,
+   "n_pairs": 766369,
+   "n_players": 978,
+   "n_rows": 33139,
+   "n_strict": null,
+   "n_ties": 11,
+   "nll": 714289.027189872,
+   "nll_all": 714289.027189872,
+   "nll_all_per_instance": 0.6240419521900094,
+   "nll_per_instance": 0.6240419521900094,
+   "nll_strict": null,
+   "nll_strict_per_instance": null,
+   "norm_rho_lw": 0.6639296235393523,
+   "norm_rho_macro": 0.6395102182342992,
+   "pearson_bhat": 0.4901519556564347,
+   "per_player": {
+    "fisher_l3": 0.42148291235852214,
+    "lw": 0.40375145220642444,
+    "macro": 0.3702943968764319,
+    "median": 0.40588235294117647,
+    "n": 675
+   },
+   "random_lw": -0.0038327359405245184,
+   "rho_bhat": 0.444815231429336,
+   "strict_pairs": false,
+   "tau_bhat": 0.31048573007533886
+  }
+ }
+}

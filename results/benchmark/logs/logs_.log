@@ -1,0 +1,34 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=6,819 (content coverage 100.0% of step1 maps) train_rows=109,569 test_rows=0
+[pairs] train 3,753,516 (12,455,685 comparisons) | test skipped (--fit-all)
+[val] 1039 fit players / 0 val players; fit pairs 3,753,516
+  [mlp ep   1] train=0.60071
+  [mlp ep  10] train=0.60892
+  [mlp ep  20] train=0.59617
+  [mlp ep  30] train=0.58970
+  [mlp ep  40] train=0.58345
+  [mlp ep  50] train=0.57700
+  [mlp ep  60] train=0.56924
+  [mlp ep  70] train=0.56198
+  [mlp ep  80] train=0.55809
+  [mlp ep  90] train=0.55267
+Traceback (most recent call last):
+  File "/home/mikechu/Documents/Projects/DCR/scripts/step2_cm3p_rank.py", line 745, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/home/mikechu/Documents/Projects/DCR/scripts/step2_cm3p_rank.py", line 634, in main
+    torch.save(payload, save_path)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/home/mikechu/anaconda3/lib/python3.13/site-packages/torch/serialization.py", line 1002, in save
+    with _open_zipfile_writer(f) as opened_zipfile:
+         ~~~~~~~~~~~~~~~~~~~~^^^
+  File "/home/mikechu/anaconda3/lib/python3.13/site-packages/torch/serialization.py", line 864, in _open_zipfile_writer
+    return container(name_or_buffer)  # type: ignore[arg-type]
+  File "/home/mikechu/anaconda3/lib/python3.13/site-packages/torch/serialization.py", line 828, in __init__
+    torch._C.PyTorchFileWriter(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.name, get_crc32_options(), _get_storage_alignment()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+RuntimeError: [enforce fail at inline_container.cc:720] . invalid file name: results/benchmark/models/.pt

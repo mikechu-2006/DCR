@@ -409,6 +409,11 @@ chart-disjoint 后 **0.6152 vs 0.6148，没有增益**；它的非线性主要�
 **音频版 CM3P 在同一个 4,042 图上确实比 audio-off 本地表好 0.019 nats**（0.5931 vs 0.6122），
 但本地 MLP+external 在同子集仍有 0.5714（all-pair）。
 
+> 2026-11-09 在**同一子集**上按 P2/P4 协议补了 5 个划分种子的配对复测
+> （[p4_multiseed_pub.md](p4_multiseed_pub.md)）：published 对 local audio-off 在
+> 4 个 embedding 方法上 **40/40 个 seed×方法组合全部更好**（ΔNLL −0.011…−0.029），
+> CM3P-only 的增益最大、叠 external 后收窄；canon 的代价在子集上同样复现。
+
 ### 5.5 Content ceiling、ablation、paired Δ
 
 | family | in-sample test NLL（oracle） | captured_content |

@@ -1,0 +1,8 @@
+/home/mikechu/anaconda3/bin/python3 scripts/step2_cm3p_rank.py --in data/processed/step1_randommerge_c_p4_s1.parquet --content-path data/processed/chart_content_cm3p_local.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 6 --name cm3p_mlp_h64_L2 --out-signals results/randommerge_p2p4_smoke2/p4/s1/signals/cm3p_mlp_h64_L2.parquet --out-json results/randommerge_p2p4_smoke2/p4/s1/signals/cm3p_mlp_h64_L2.json --model mlp --lam 1e-2 --hid 64 --depth 2 --dropout 0.1 --lr 3e-3 --epochs 2
+
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=20,388 (content coverage 100.0% of step1 maps) train_rows=166,378 test_rows=71,210
+[pairs] train 5,564,112 (9,443,464 comparisons) | test 1,452,775 (2,207,081)
+[val] 7073 fit players / 0 val players; fit pairs 5,564,112
+  [mlp ep   1] train=0.62060
+[done] test_nll=0.63582 bits=0.0827 beta=0.881 -> cm3p_mlp_h64_L2.parquet / cm3p_mlp_h64_L2.json (133.6s)
