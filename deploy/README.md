@@ -7,6 +7,7 @@
 > 权重：[deploy/models/](models/)
 > 校准：与权重在同一个 JSON 里
 > 一致性测试：[deploy/test_parity.py](test_parity.py)
+> 分布/MAE 检查：[deploy/check_benchmark.py](check_benchmark.py)
 
 ## 1. 快速使用
 
@@ -84,6 +85,32 @@ D2V 的对应数字：
 
 D2V benchmark 细节见 [docs/benchmark_d2v.md](../docs/benchmark_d2v.md)；
 JSON 的 calibration.mae_in_sample / mae_oof 是权威值。
+
+### 3.1 输出分布：为什么全表看起来像 star
+
+函数输出的是 **Dan**，不是 star；但分位数会随**输入图集**变化：
+
+| 输入 | n | min | p25 | p50 | p75 | p99 | max |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| benchmark 1,382 行（CM3P） | 1,382 | 1.00 | 13.29 | 14.03 | 14.26 | 17.38 | 17.58 |
+| 全 21,949 图表（CM3P） | 21,949 | 1.00 | 1.73 | 2.76 | 5.20 | 14.09 | 16.36 |
+| benchmark 1,382 行（D2V） | 1,382 | 1.50 | 13.37 | 14.03 | 14.32 | 16.85 | 18.00 |
+| 全 21,949 图表（D2V） | 21,949 | 1.50 | 1.50 | 2.76 | 5.31 | 14.12 | 16.85 |
+
+你看到的 **min 1.00、p25 1.7252、p50 2.76、p75 5.20、p99 14.0878、max 16.36**
+正好是 **CM3P 在全部 21,949 张图表上的分布**，不是 benchmark 的 1,382 行。
+
+原因：benchmark 是社区高段图，expected 以 13–14 为主；而内容表里大多数图是低难图。
+同一个单调 isotonic 映射作用在低难图上，分位数自然低。min=1.00 是 isotonic 的第一个
+knot（benchmark expected 的最小值）；max=16.36 只是全表里最大 d_m 落到的 y 值，
+模型的 y 上限是 17.58（CM3P）/18.0（D2V），benchmark 上才碰到上限。
+它们不是 star 的 0–10 尺度。
+
+**VSRG MAE 必须在 benchmark 的 1,382 行上算**。在这 1,382 行上，函数输出与
+isotonic got 一致：CM3P in-sample MAE 0.3795、D2V 0.4132；OOF 分别是 0.4216 / 0.4527。
+可以直接跑 python deploy/test_parity.py 复现（它会打印 mae_vs_expected）；
+也可以只跑 python deploy/check_benchmark.py（只用 pandas/numpy，不需要 sklearn，
+会打印 min/p25/p50/p75/p99/max 与 MAE）。
 
 ## 4. 前向公式（TS/JS 照抄）
 

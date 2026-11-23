@@ -1,0 +1,45 @@
+{
+  "format": "dcr-content",
+  "format_version": 1,
+  "record_size": 28,
+  "count": 21945,
+  "table_bytes": 614476,
+  "sha256": "913913f42b51a2960394bfcb8147b60cb5751c07f7b2ba2c2452f37ce395c618",
+  "built_at": "2026-11-23T23:19:14+08:00",
+  "stub": false,
+  "reform_version": "2026-11-23",
+  "model": {
+    "content_type": "cm3p",
+    "model_id": "fc6a9cfee81a8e2e",
+    "content_md5": "0c2d5da5191da6976601026cd38371d1",
+    "created": "2026-11-23",
+    "train_git_commit": "c29431f6d65313d7310729fe6d5cfa1a68baca5b"
+  },
+  "source": {
+    "content": "chart_content_cm3p_local.parquet",
+    "signals": "rank_signals_1k.parquet",
+    "whitelist": "whitelist_1k.csv"
+  },
+  "whitelist_count": 21945,
+  "coverage_of_whitelist": 1.0,
+  "dropped": {
+    "no_content": 0,
+    "not_in_whitelist": 4,
+    "no_signals": 0
+  },
+  "distribution": {
+    "dan_min": 1.0,
+    "dan_p01": 1.0,
+    "dan_p25": 1.7252,
+    "dan_p50": 2.76,
+    "dan_p75": 5.2,
+    "dan_p99": 14.0878,
+    "dan_max": 16.36,
+    "count_ge_18_5": 0
+  },
+  "fields": {
+    "dan": "Reform Dan, isotonic-calibrated (integer = mid of that dan)",
+    "d": "raw Bradley-Terry latent (diagnostics only)",
+    "sunny": "training-era sunny_star (diagnostics only)"
+  }
+}

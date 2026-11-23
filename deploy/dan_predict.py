@@ -22,6 +22,11 @@ external signals with extra_mu/extra_sd, computes the Bradley-Terry latent
 d = w'[C, S], and applies the fixed isotonic calibration fitted on all 1,382
 VSRG benchmark rows.  The returned float is the calibrated Dan estimate.
 
+Output scale depends on the input chart population.  On the 1,382 benchmark rows the
+median is about 14.0; on all 21,949 charts the median is about 2.76 because most charts
+are easy.  The full-table histogram is NOT a star scale and does not mean the function
+is broken; validate MAE only on the benchmark rows.
+
 No third-party dependency is needed: only json, math, bisect.  This is the
 reference for the TypeScript/JS port in the packaging repo.
 """
