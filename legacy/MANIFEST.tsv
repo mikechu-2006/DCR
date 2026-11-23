@@ -288,3 +288,15 @@ scratch_rank_metric/train_rank/step2_1k_bias_F0_loss.npz	legacy/scratch_rank_met
 scratch_rank_metric/train_rank/step2_1k_summary_loss.json	legacy/scratch_rank_metric/train_rank/step2_1k_summary_loss.json
 scratch_rank_metric/train_rank_only/step2_1k_bias_F0_loss.npz	legacy/scratch_rank_metric/train_rank_only/step2_1k_bias_F0_loss.npz
 scratch_rank_metric/train_rank_only/step2_1k_summary_loss.json	legacy/scratch_rank_metric/train_rank_only/step2_1k_summary_loss.json
+docs/benchmark_plan.md	legacy/docs/plans/benchmark_plan.md
+docs/benchmark_linear_extra_plan.md	legacy/docs/plans/benchmark_linear_extra_plan.md
+docs/method_overfit_plan.md	legacy/docs/plans/method_overfit_plan.md
+docs/random_merge_plan.md	legacy/docs/plans/random_merge_plan.md
+docs/randommerge_mlp_pooling_plan.md	legacy/docs/plans/randommerge_mlp_pooling_plan.md
+docs/randommerge_a2b_log_od_plan.md	legacy/docs/plans/randommerge_a2b_log_od_plan.md
+docs/p4_multiseed_audio_plan.md	legacy/docs/plans/p4_multiseed_audio_plan.md
+docs/data2vec_pretrain_plan.md	legacy/docs/plans/data2vec_pretrain_plan.md
+docs/# CM3P 输入裁剪与窗口导出：实现计划（v4）.md	legacy/docs/plans/cm3p_crop_windows_v4_plan.md
+docs/mlm_continued_pretraining_review.md	legacy/docs/reviews/mlm_continued_pretraining_review.md
+docs/hpc_queue_probe.md	legacy/docs/ops/hpc_queue_probe.md
+docs/plugin_packaging.md	legacy/docs/research/plugin_packaging.md

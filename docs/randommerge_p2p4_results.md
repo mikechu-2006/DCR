@@ -117,4 +117,4 @@ ceiling NLL = 0.59769 ± 0.00743；test 7,216–7,334 图 / 2.15–2.89M pairwis
 2. 若要 audio-on 臂：需为合并集的另外 13.7k 张图补编码（HPC GPU 任务线），
    1k 上 audio-on 一致更好（ΔNLL −0.008…−0.022）。
 3. CM3P 分段聚合（A0–A3）已移交另一个 session，规格见
-   [randommerge_mlp_pooling_plan.md](randommerge_mlp_pooling_plan.md) §2。
+   [randommerge_mlp_pooling_plan.md](../legacy/docs/plans/randommerge_mlp_pooling_plan.md)（已归档）§2。

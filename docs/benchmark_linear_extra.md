@@ -1,9 +1,9 @@
 # randommerge linear_extra 的 VSRG Dan Benchmark 评测（2026-11-20）
 
 > **状态：已完成。** 训练在 HPC CPU（job 14030754）完成；benchmark 推理、5 折校准和分层诊断在本机完成。
-> 前序：[benchmark_plan.md](benchmark_plan.md)、[benchmark_vsrg.md](benchmark_vsrg.md)。
+> 前序：[benchmark_plan.md](../legacy/docs/plans/benchmark_plan.md)（已归档）、[benchmark_vsrg.md](benchmark_vsrg.md)。
 > 新数据集结果：[randommerge_p2p4_results.md](randommerge_p2p4_results.md)。
-> 执行计划（含预注册读法）：[benchmark_linear_extra_plan.md](benchmark_linear_extra_plan.md)。
+> 执行计划（含预注册读法）：[benchmark_linear_extra_plan.md](../legacy/docs/plans/benchmark_linear_extra_plan.md)（已归档）。
 > Benchmark 快照：VSRG-DanEstimation-Benchmark@e15f89b，samples/data.csv sha256 2b43165a…；
 > samples 未更新，1,382 行不变。
 

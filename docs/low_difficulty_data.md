@@ -9,7 +9,7 @@
 >
 > **勘误（2026-11-19 晚）**：本文第 1 节的 star 分桶只是**描述性统计**。
 > star 是差预测，不能作为分层/加权/评测口径；后续以
-> [random_merge_plan.md](random_merge_plan.md) 的 `bm`（每图截距）口径为准。
+> [random_merge_plan.md](../legacy/docs/plans/random_merge_plan.md)（已归档）的 `bm`（每图截距）口径为准。
 
 ---
 

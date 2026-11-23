@@ -1,6 +1,6 @@
 # Koishi / ISOR 在 DCR 10K 与 randommerge 上的 rank-NLL 与相关性
 
-> **状态：结果（2026-11-20）。** 执行口径见 [method_overfit_plan.md](method_overfit_plan.md)。
+> **状态：结果（2026-11-20）。** 执行口径见 [method_overfit_plan.md](../legacy/docs/plans/method_overfit_plan.md)（已归档）。
 > Benchmark 快照 0bdbe23；DCR 数据与 rank 管线同 docs/metrics.md。
 > 本轮没有外部 Dan 留出集，结论只到 DCR 的 ACC 序，不能证明“对 Dan 标签过拟合”。
 

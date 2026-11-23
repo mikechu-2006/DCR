@@ -87,7 +87,7 @@ bash scripts/slurm/randommerge_pool_submit.sh
 ## 6. 后续
 
 下一轮把 A2b + log + OD 应用到 `linear_extra`，在 P2/P4 下同时看 NLL 和
-Pearson/Spearman；计划见 [randommerge_a2b_log_od_plan.md](randommerge_a2b_log_od_plan.md)。
+Pearson/Spearman；计划见 [randommerge_a2b_log_od_plan.md](../legacy/docs/plans/randommerge_a2b_log_od_plan.md)（已归档）。
 注意 A2b 已经包含 log，主臂是 `A2b + OD`；OD 在 1k rank eval 里是 0 信号，
 先验很低。
 

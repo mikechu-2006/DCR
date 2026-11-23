@@ -12,13 +12,13 @@ bias / mf_dot 等 oracle、CM3P 内容向量）以及 [`minacalc/`](../minacalc/
 | 路径 | 文件数 | 内容 |
 |---|---|---|
 | [`scripts/`](scripts/) | 124 | 退役脚本：MinaCalc MSD/fit-skills、旧 v2 管线、学习曲线/遗忘/玩家分析、PCA、step2 容量诊断、map_analyser、fetch_tags、`_tmp_*` |
-| [`docs/`](docs/) | 61 | 归档文档：step0/step1 长文与清洗分析、CM3P 设计/结果/MLP/远程与 HPC runbook、MinaCalc、map_analyser、[archive/](docs/archive/)、[figs/](docs/figs/) |
+| [`docs/`](docs/) | 73 | 归档文档：step0/step1 长文与清洗分析、CM3P 设计/结果/MLP/远程与 HPC runbook、MinaCalc、map_analyser、[archive/](docs/archive/)、[figs/](docs/figs/)、[plans/](docs/plans/)、[reviews/](docs/reviews/)、[ops/](docs/ops/)、[research/](docs/research/) |
 | [`configs/`](configs/) | 4 | 旧维度扫描、map_analyser、MinaCalc L1/L2 配置 |
 | [`logs/`](logs/) | 32 | 2026-09 ~ 2026-10 的历史运行日志（新日志在各实验目录的 `logs/`） |
 | [`results/`](results/) | 6 | 已退役分析（PCA）的旧结果目录 |
 | [`scratch_rank_metric/`](scratch_rank_metric/) | 30 | 2026-10-31 开发 rank-NLL 时的临时探针、小样本烟测与中间结果（含 [说明](scratch_rank_metric/README.md)） |
 | `local/`（仅本机） | 2 | `DCR.bundle`、`upload_to_github.sh`（被 .gitignore 忽略，不随仓库分发） |
-| [`MANIFEST.tsv`](MANIFEST.tsv) | — | 三轮整理的全部 `old → new` 路径（289 条，含删除的缓存） |
+| [`MANIFEST.tsv`](MANIFEST.tsv) | — | 四轮整理的全部 `old → new` 路径（301 条，含删除的缓存） |
 
 ## 第一轮：退役分析 + 实验目录（2026-10-20）
 
@@ -62,6 +62,23 @@ bias / mf_dot 等 oracle、CM3P 内容向量）以及 [`minacalc/`](../minacalc/
   `step2_1k/`），索引见 [results/README.md](../results/README.md)。这一步只搬运行产物，
   不改任何数字；legacy 文档里 `results/step2_1k_summary_loss.json` 等旧路径按迁移前
   位置书写。
+
+## 第四轮：docs 精简（2026-11-23）
+
+为了降低后续 agent 的默认阅读量，把**已执行完的计划、方法评审、一次性运维快照与产品调研**
+移出 `docs/`。主线 `docs/` 只保留当前口径、结果和 [总表](../docs/experiments.md)。
+
+| 新位置 | 文件 | 说明 |
+|---|---|---|
+| [plans/](docs/plans/) | `benchmark_plan.md`、`benchmark_linear_extra_plan.md`、`method_overfit_plan.md` | benchmark 执行计划，结果已在 docs/benchmark_*.md |
+| [plans/](docs/plans/) | `random_merge_plan.md`、`randommerge_mlp_pooling_plan.md`、`randommerge_a2b_log_od_plan.md` | randommerge 计划；结果在 docs/randommerge_*_results.md |
+| [plans/](docs/plans/) | `p4_multiseed_audio_plan.md`、`data2vec_pretrain_plan.md`、`cm3p_crop_windows_v4_plan.md` | audio / data2vec / canon 的旧计划；当前口径在对应结果文档 |
+| [reviews/](docs/reviews/) | `mlm_continued_pretraining_review.md` | MLM 继续预训练的方法论反思，非当前结果 |
+| [ops/](docs/ops/) | `hpc_queue_probe.md` | 2026-11-05 的一次性队列快照 |
+| [research/](docs/research/) | `plugin_packaging.md` | 游戏内封装调研，未实现 |
+
+移入后 `docs/` 从 33 个 .md 降到 21 个；被移动文档里的相对链接按迁移前位置书写，
+需要时按 [MANIFEST.tsv](MANIFEST.tsv) 放回。
 
 ## 使用说明
 

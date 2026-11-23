@@ -400,14 +400,14 @@ canon 线性 0.65211、+ext 0.62848，但仍未与 legacy MLP+ext 对照。P2 ML
 | [docs/koishi_isor_report.md](docs/koishi_isor_report.md) | **实验**：Koishi / ISOR 在 10K 与 randommerge 上的 rank-NLL；覆盖率与边界 |
 | [docs/low_difficulty_data.md](docs/low_difficulty_data.md) | **数据**：低难度为何被删、random 快照实测、为什么不用 API 批量爬 |
 | [data2vec_main/README.md](data2vec_main/README.md) | **实验**：route B from-scratch audio-style data2vec；预训练、抽取、P2/P4 probe 与 caveat |
-| [docs/data2vec_pretrain_plan.md](docs/data2vec_pretrain_plan.md) · [MLM review](docs/mlm_continued_pretraining_review.md) | **方案/反思**：data2vec 可行性 2×2 计划；MLM 继续预训练的工程问题 |
-| [docs/plugin_packaging.md](docs/plugin_packaging.md) | **封装**：MMA、客户端隐向量表（20k×512）、性能预算与风险（调研，未实现） |
-| [docs/hpc_queue_probe.md](docs/hpc_queue_probe.md) | **运维**：HPC2 队列等待快照与投递建议（2026-11-05） |
 | [results/README.md](results/README.md) | **结果索引**：每个产物是什么、由哪条命令生成、在哪篇文档里解读 |
 | [scripts/README.md](scripts/README.md) | **脚本索引**：step、rank 训练/评测、分析与运维脚本 |
 | [preprocess/README.md](preprocess/README.md) | step0/step1 精简参考与可运行代码 |
 | [minacalc/README.md](minacalc/README.md) | MinaCalc 包与 C++ 导出 |
 | [legacy/README.md](legacy/README.md) | 归档内容索引；逐文件去向见 [legacy/MANIFEST.tsv](legacy/MANIFEST.tsv) |
+
+计划、评审、调研与一次性运维快照（data2vec 2×2、MLM 反思、封装、HPC 队列、各实验执行计划）已收进
+[legacy/docs/](legacy/docs/)；`docs/` 只保留当前口径、结果与总表。
 
 ### 说明
 

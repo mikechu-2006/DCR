@@ -335,4 +335,4 @@ python scripts/summarize_p4_multiseed_audio.py \
 | `scripts/compare_multiseed_unpaired.py` | 不同划分下的非配对均值对照 |
 | `scripts/summarize_p4_multiseed_audio.py` | 三臂汇总与配对 Δ |
 | `scripts/watch_p4_multiseed_audio.sh` | 两臂完成后的后台分析 watcher |
-| `docs/p4_multiseed_audio_plan.md` | 本次手动执行计划（已归档） |
+| `legacy/docs/plans/p4_multiseed_audio_plan.md` | 本次手动执行计划（已归档） |
