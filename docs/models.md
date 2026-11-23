@@ -53,15 +53,17 @@ L_hat = b0 + bu[u] + bm[m] + interaction
   mf_dot : interaction = <P[u], C[m]>
 ~~~
 
+> **2026-11-23 退役**：最初的稀疏矩阵填充 / MSE 支线（mirt / mirt_1 / mirt_exp、
+> D 约束、msd 特征、F1/F2、漂移）不再维护；只保留 **bias / mf_dot** 作为参考基线。
+> 旧代码仍在（可被历史脚本调用，但 CLI 会拒绝 mirt），旧结果在
+> [legacy/results/initial_mse/](../legacy/results/initial_mse/)。
+
 | 参数 | 默认 | 说明 |
 |---|---|---|
-| `--models` | `bias,mf_dot,mirt` | 逗号分隔，一次跑多个变体 |
+| `--models` | `bias,mf_dot` | 逗号分隔；只支持这两个（mirt 已退役） |
 | `--dim` | 16 | 潜向量维度 |
 | `--epochs` / `--lr` / `--wd` | 60 / 0.02 / 1e-4 | 训练 |
-| `--features` | F0 | F1 加 `ln(playcount_cur)`；F2 加自然年实体/漂移 |
-| `--p-drift` | none | `logpc` / `time`：玩家向量的练习量/时间漂移 |
 | `--chart-content` | 无 | `cm3p`：用冻结内容向量替换 `C` |
-| `--d-constraint` | none | mirt 的 `D` 约束：`nonneg` / `simplex` |
 
 运行时会跑 9 项自检（划分互斥、loss 范围、标签可逆等），只有全部通过才落盘。
 产物：`results/step2_{tag}_{model}_{features}[_dimD]_{target}.npz`（潜向量 + 预测）
@@ -73,7 +75,6 @@ L_hat = b0 + bu[u] + bm[m] + interaction
 |---|---|---|---|---|
 | bias | 1.5236 | 0.7330 | 1.3727 | 0.6874 |
 | mf_dot | 1.4548 | 0.7632 | 1.3327 | 0.7079 |
-| **mirt** | **1.4582** | **0.7633** | **1.3331** | **0.7096** |
 
 ### 默认口径 A（pairbest）
 

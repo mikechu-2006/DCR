@@ -24,6 +24,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import GroupKFold, StratifiedGroupKFold
 
 RUNS = {
+    "D2V_L": {"display": "DCR-D2V-Linear",
+              "method": "D2V + external linear (randommerge)",
+              "arm": "d2v"},
     "RM_L": {"display": "DCR-CM3P-RM-Linear",
              "method": "CM3P + external linear (randommerge)",
              "arm": "legacy"},

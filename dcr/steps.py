@@ -175,6 +175,27 @@ def _plan_step0_whitelist(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
     return argv, {"whitelist": out, "report": report}
 
 
+# ------------------------------------------------------------------- step0 / union
+def _plan_step0_union(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
+    """数据集并集：多个 step0 play 表 → 一个合并 play 表（去重 + 重排 playcount_cur）。
+
+    输入写在 params.play / params.meta（`PATH=TAG`，可重复，顺序即合并顺序）；
+    输出路径由 tag 决定，step1 直接在合并表上跑，清洗规则不变。合并语义
+    （key、去重策略、playcount 重算）与 step0/merge_snapshots 共用一份实现。
+    """
+    reserved = frozenset({"out", "meta_out", "report"})
+    _check_reserved(ctx, reserved)
+    suffix = "parquet" if ctx.out_format() == "parquet" else "csv"
+    plays = ctx.exp.artifacts / f"step0_{ctx.tag}.{suffix}"
+    meta = ctx.exp.artifacts / f"beatmap_meta_{ctx.tag}.csv"
+    report = ctx.exp.artifacts / f"step0_{ctx.tag}_union.json"
+    argv = ["--out", str(plays), "--meta-out", str(meta), "--report", str(report)]
+    argv += flags(ctx.params, skip=reserved,
+                  list_style={"play": "repeat", "meta": "repeat"},
+                  where=f"steps.{ctx.name}.params")
+    return argv, {"plays": plays, "meta": meta, "report": report}
+
+
 # --------------------------------------------------------------- step0 / validate_mix
 def _plan_step0_validate_mix(ctx: PlanCtx) -> tuple[list[str], dict[str, Any]]:
     reserved = frozenset({"computed", "json"})
@@ -383,6 +404,15 @@ register(StepDef(
     plan=_plan_step0_whitelist,
     inputs={"meta": ("step0", "meta")},
     cache={"whitelist": ("whitelist_{tag}.csv",)},
+    report=frozenset({"report"}),
+))
+
+register(StepDef(
+    name="step0", version="union", script="scripts/step0_union_datasets.py",
+    title="数据集并集：多个 step0 play 表 → 合并 play 表 + 合并 meta（play 级去重、重排 playcount）",
+    plan=_plan_step0_union,
+    cache={"plays": ("step0_{tag}.parquet", "step0_{tag}.csv"),
+           "meta": ("beatmap_meta_{tag}.csv",)},
     report=frozenset({"report"}),
 ))
 

@@ -4,6 +4,8 @@
 > 前序：[benchmark_plan.md](../legacy/docs/plans/benchmark_plan.md)（已归档）、[benchmark_vsrg.md](benchmark_vsrg.md)。
 > 新数据集结果：[randommerge_p2p4_results.md](randommerge_p2p4_results.md)。
 > 执行计划（含预注册读法）：[benchmark_linear_extra_plan.md](../legacy/docs/plans/benchmark_linear_extra_plan.md)（已归档）。
+> **后续（2026-11-23）**：D2V 内容表示的对照见 [benchmark_d2v.md](benchmark_d2v.md)
+> （D2V-L overall MAE 0.4527，比 RM-L 差 0.0311）。
 > Benchmark 快照：VSRG-DanEstimation-Benchmark@e15f89b，samples/data.csv sha256 2b43165a…；
 > samples 未更新，1,382 行不变。
 

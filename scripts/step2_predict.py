@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 """Step 2 - prediction task:  (player_id, beatmap_id) -> loss.   [torch engine]
 
+NOTE (2026-11-23): the initial sparse player x chart MSE experiments (mirt /
+mirt_1 / mirt_exp, d-constraints, msd chart features) are retired.  Only bias
+and mf_dot remain supported.  Archived results: legacy/results/initial_mse/.
+
 Design (legacy/docs/step2_prediction.md):
 
   * observation unit is the **play**; the label is step0's "loss".  No cell table, no
@@ -488,8 +492,8 @@ def determinism_selftest(device) -> bool:
     """Checklist item 8: the training path is fully seeded -- same seed -> bitwise equal."""
 
     def run_once():
-        m = EmbeddingModel("mirt", 24, 17, 4, "F2", seed=0, device=device,
-                           p_drift="logpc", d_constraint="simplex")
+        m = EmbeddingModel("mf_dot", 24, 17, 4, "F2", seed=0, device=device,
+                           p_drift="logpc")
         opt = torch.optim.Adam([m.p[k] for k in m.active], lr=0.02, weight_decay=1e-4)
         r = np.random.default_rng(7)
         u = torch.as_tensor(r.integers(0, 24, 96), dtype=torch.long, device=device)
@@ -518,7 +522,8 @@ def parse_args(argv=None):
     ap.add_argument("--label-shift", type=float, default=0.0,
                     help="step1 的 label shift s（仅用于 loss_in_range 自检与产物命名，"
                          "不改变训练）；标签为 log(s + exp(step0_loss)) = log(1+s-ACC)")
-    ap.add_argument("--models", default="bias,mf_dot,mirt")
+    ap.add_argument("--models", default="bias,mf_dot",
+                    help="comma-separated; only bias,mf_dot are supported (mirt retired)")
     ap.add_argument("--dim", type=int, default=16)
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--lr", type=float, default=0.02)
@@ -746,7 +751,16 @@ def main():
     print(f"engine: torch {torch.__version__} on {device}, threads={torch.get_num_threads()}, "
           f"deterministic_algorithms={torch.are_deterministic_algorithms_enabled()}", flush=True)
     models_wanted = [s for s in args.models.split(",") if s]
-    if (args.p_drift != "none" or args.d_constraint != "none"
+    retired = [k for k in models_wanted if k not in ("bias", "mf_dot")]
+    if retired:
+        raise SystemExit(
+            f"retired model(s): {', '.join(retired)}.  The initial sparse-matrix MSE "
+            "line (mirt / mirt_1 / mirt_exp) is no longer supported; use --models bias,mf_dot.  "
+            "Archived results: legacy/results/initial_mse/."
+        )
+    if args.d_constraint != "none":
+        raise SystemExit("--d-constraint is retired together with mirt; remove it from the config.")
+    if (args.p_drift != "none"
             or "mirt_exp" in models_wanted or "mirt_1" in models_wanted):
         print(f"mechanism: p_drift={args.p_drift} (P_eff = P + Pc*ln(playcount_cur))  "
               f"d_constraint={args.d_constraint}  d_logit_wd={args.d_logit_wd}", flush=True)

@@ -6,8 +6,9 @@
 >
 > 本文只报告本仓库的 4 个 CM3P 组合；**不包含 audio-on 臂**，也不修改 benchmark 仓库。
 >
-> **后续（2026-11-20）**：randommerge 合并集 linear_extra 的评测见
-> [benchmark_linear_extra.md](benchmark_linear_extra.md)（RM-L overall MAE 0.4216）。
+> **后续（2026-11-20 / 2026-11-23）**：randommerge 合并集 linear_extra 的评测见
+> [benchmark_linear_extra.md](benchmark_linear_extra.md)（CM3P RM-L overall MAE 0.4216）
+> 和 [benchmark_d2v.md](benchmark_d2v.md)（D2V-L overall MAE 0.4527）。
 
 ---
 

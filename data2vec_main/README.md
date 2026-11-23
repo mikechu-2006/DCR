@@ -199,6 +199,14 @@ P4 只是把 <code>run_p2_p4_multiseed.py</code> 包了一层；指标代码没�
 - 实际 compute 比 A800 预估（0.9-1.3 h）还快，wall 约 1 h（无排队）。
 - 完整 run 目录 9.4 GB（10 个中间 checkpoint + last.pt）。
 
+**数据 / token 量（补充）**
+
+- 预训练 **20,584 张图**；16 s 窗 = **800 token**（50 Hz 连续帧；100 Hz 输入 1600 帧经 stride-2 conv）。
+- 唯一有效 token：**约 153.7M**（100 Hz 输入帧 307.4M ÷ 2）；按窗 padding：202,367 窗 × 800 ≈ **161.9M**。
+- 训练曝光：25,720 × 16 × 800 = **329.2M student token**（20 epoch，每 epoch 16.46M）；teacher 再前向一遍，约 **658.4M forward token**。
+- 参数：trainable **39.1M**；含冻结 teacher 共 **76.9M**（conv 1.0M + student 37.8M + teacher 37.8M + head 0.26M）。
+
+
 ### 6.3 Extraction（job 14072889，2026-11-23）
 
 | 项 | 值 |
@@ -251,7 +259,21 @@ P4 只是把 <code>run_p2_p4_multiseed.py</code> 包了一层；指标代码没�
 
 - D2V content-only 比 **canon linear** 好 0.0375；D2V+ext 比 **canon linear_ext** 好 0.0177；paired per-seed 分别 -0.0375±0.0040 / -0.0177±0.0040（5/5）。
 - 但换成最强基线：D2V+ext 0.58561 比 canon MLP+ext 0.59425 好 **0.0086**，比 legacy MLP+ext 0.57343 差 **0.0122**；D2V content 0.59301 与 canon MLP+ext 基本打平（-0.0012），比 legacy MLP+ext 差 **0.0196**。之前“D2V 甚至优于 CM3P+ext”是拿 canon linear 当基线，已修正。
-- **caveat**：D2V 预训练用了 6,828 张 pairbest 里的 80%（5,462 张），P4 的“新 chart”是相对监督划分，不是相对编码器预训练；所以 P4 仍有 transductive 成分。干净的 P4-holdout（只留 1,365 张编码器没见过的图）正在跑，结果出来后补。
+- **caveat**：D2V 预训练用了 6,828 张 pairbest 里的 80%（5,462 张），P4 的“新 chart”是相对监督划分，不是相对编码器预训练；所以 P4 仍有 transductive 成分。干净的 P4-holdout（只留 1,365 张编码器没见过的图）见 §6.6。
+### 6.6 P4-holdout 干净口径（1,365 张编码器没见过的图）
+
+| 方法 | P4-holdout NLL | captured | Pearson(d,b) |
+|---|---:|---:|---:|
+| D2V 线性 | **0.60471 ± 0.00994** | **0.7793 ± 0.0678** | 0.4591 |
+| D2V + external 线性 | **0.60280 ± 0.01215** | **0.7940 ± 0.0708** | 0.4601 |
+| CM3P 线性 | 0.65211 ± 0.00754 | 0.3605 ± 0.0491 | 0.3482 |
+| CM3P + external 线性 | 0.62848 ± 0.01047 | 0.5664 ± 0.0426 | 0.3919 |
+| ceiling | 0.57888 ± 0.01712 | — | — |
+
+- 5 seeds；只保留 `splits/holdout/eval_ids.txt` 的 1,365 张图，编码器预训练时完全没见过。
+- paired per-seed：content Δ = **-0.0474 ± 0.0095（5/5）**；+ext Δ = **-0.0257 ± 0.0100（5/5）**。
+- 干净口径下 D2V content-only 仍比 CM3P+ext 好 0.0238；说明 P4 主结果不是纯 transductive 撑起来的。
+
 
 ## 7. 还没做
 

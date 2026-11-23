@@ -300,3 +300,5 @@ docs/# CM3P 输入裁剪与窗口导出：实现计划（v4）.md	legacy/docs/pl
 docs/mlm_continued_pretraining_review.md	legacy/docs/reviews/mlm_continued_pretraining_review.md
 docs/hpc_queue_probe.md	legacy/docs/ops/hpc_queue_probe.md
 docs/plugin_packaging.md	legacy/docs/research/plugin_packaging.md
+results/step2_1k	legacy/results/initial_mse/step2_1k
+results/mirt_cnonneg_1k	legacy/results/initial_mse/mirt_cnonneg_1k

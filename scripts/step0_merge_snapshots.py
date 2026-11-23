@@ -22,6 +22,10 @@ Output keeps the 5 columns step1 expects plus three provenance columns:
 
 playcount_cur is recomputed on the merged timeline, not taken from any snapshot.
 
+The dedupe/renumber core (`merge_frames`) is shared with
+scripts/step0_union_datasets.py: both merges must produce the same play list
+semantics, because step1 counts n_plays and segments players on it.
+
 Usage:
   python scripts/step0_merge_snapshots.py \
       --input data/processed/step0_rand_20260713.parquet=20260713 \
@@ -55,6 +59,63 @@ def parse_inputs(items: list[str]) -> list[tuple[str, Path]]:
     return out
 
 
+def merge_frames(frames: list[pd.DataFrame], tags: list[str], *,
+                 prefix: str = "snapshot") -> tuple[pd.DataFrame, dict]:
+    """Dedupe play rows on KEY and rebuild playcount_cur on the merged timeline.
+
+    `frames` and `tags` are aligned; each frame only needs COLS.  Provenance
+    columns are named after `prefix`: first/last source that saw the play and
+    the number of distinct sources (snapshot, dataset, ...).
+
+    Duplicate keys keep the earliest source (argument order), then the lowest
+    loss (= best ACC) when one source itself encoded the same play twice.  The
+    caller decides whether that is acceptable; stats reports the conflict count.
+    """
+    if len(frames) != len(tags):
+        raise ValueError(f"frames/tags length mismatch: {len(frames)} != {len(tags)}")
+    frames = [f[COLS].copy() for f in frames]
+    all_df = pd.concat(
+        [f.assign(source=tag) for f, tag in zip(frames, tags)], ignore_index=True)
+    order = {tag: i for i, tag in enumerate(tags)}
+    all_df["_order"] = all_df["source"].map(order).astype("int16")
+
+    dup_mask = all_df.duplicated(subset=KEY, keep=False)
+    n_dup_rows = int(dup_mask.sum())
+    n_dup_keys = 0
+    conflicts = 0
+    if n_dup_rows:
+        spread = all_df[dup_mask].groupby(KEY, observed=True)["loss"].nunique()
+        n_dup_keys = int(len(spread))
+        conflicts = int((spread > 1).sum())
+
+    prov_cols = [f"{prefix}_first", f"{prefix}_last", f"n_{prefix}s"]
+    prov = (all_df.sort_values("_order")
+            .groupby(KEY, observed=True)
+            .agg(**{prov_cols[0]: ("source", "first"),
+                    prov_cols[1]: ("source", "last"),
+                    prov_cols[2]: ("source", "nunique")}))
+
+    # same key, different loss happens inside a single dump too: the modern and the
+    # legacy table can encode the same play with slightly different ACC, and step0
+    # only links them when legacy_score_id is present.  Keep the earliest source,
+    # then the lowest loss (best ACC); the count is reported.
+    merged = (all_df.sort_values(KEY + ["_order", "loss"])
+              .drop_duplicates(subset=KEY, keep="first"))
+    merged = merged.drop(columns=["_order", "playcount_cur", "source"]).set_index(KEY)
+    merged = merged.join(prov).reset_index()
+    merged = merged.sort_values(["player_id", "timestamp"]).reset_index(drop=True)
+    merged["playcount_cur"] = (merged.groupby(["player_id", "beatmap_id"], observed=True)
+                               .cumcount() + 1).astype("int32")
+
+    stats = {
+        "rows_on_duplicate_keys": n_dup_rows,
+        "duplicate_keys": n_dup_keys,
+        "loss_conflicts": conflicts,
+        "duplicate_play_rule": "earliest source in argument order, then lowest loss (best ACC)",
+    }
+    return merged[COLS + prov_cols], stats
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -73,7 +134,6 @@ def main() -> int:
             print("missing input: " + str(path), file=sys.stderr)
             return 2
         df = pd.read_parquet(path, columns=COLS)
-        df["snapshot"] = tag
         df["timestamp"] = pd.to_datetime(df["timestamp"])
         frames.append(df)
         tags.append(tag)
@@ -86,37 +146,12 @@ def main() -> int:
         }
         print("[merge] %s: %d plays, %d players" % (tag, len(df), df["player_id"].nunique()))
 
-    all_df = pd.concat(frames, ignore_index=True)
-    order = {tag: i for i, tag in enumerate(tags)}
-    all_df["_order"] = all_df["snapshot"].map(order).astype("int16")
-
-    dup_mask = all_df.duplicated(subset=KEY, keep=False)
-    n_dup_rows = int(dup_mask.sum())
-    conflicts = 0
+    merged, stats = merge_frames(frames, tags, prefix="snapshot")
+    n_dup_rows = stats["rows_on_duplicate_keys"]
+    conflicts = stats["loss_conflicts"]
     if n_dup_rows:
-        spread = all_df[dup_mask].groupby(KEY, observed=True)["loss"].nunique()
-        conflicts = int((spread > 1).sum())
         print("[merge] %d rows on %d duplicate keys, %d loss conflicts"
-              % (n_dup_rows, len(spread), conflicts))
-
-    prov = (all_df.sort_values("_order")
-            .groupby(KEY, observed=True)
-            .agg(snapshot_first=("snapshot", "first"),
-                 snapshot_last=("snapshot", "last"),
-                 n_snapshots=("snapshot", "nunique")))
-
-    # same key, different loss happens inside a single dump too: the modern and the
-    # legacy table can encode the same play with slightly different ACC, and step0
-    # only links them when legacy_score_id is present.  Keep the earliest snapshot,
-    # then the lowest loss (best ACC); the count is reported.
-    merged = (all_df.sort_values(KEY + ["_order", "loss"])
-              .drop_duplicates(subset=KEY, keep="first"))
-    merged = merged.drop(columns=["_order", "playcount_cur"]).set_index(KEY)
-    merged = merged.join(prov).reset_index()
-    merged = merged.sort_values(["player_id", "timestamp"]).reset_index(drop=True)
-    merged["playcount_cur"] = (merged.groupby(["player_id", "beatmap_id"], observed=True)
-                               .cumcount() + 1).astype("int32")
-
+              % (n_dup_rows, stats["duplicate_keys"], conflicts))
     if conflicts and args.strict:
         print("[merge] aborting: %d keys disagree on loss (remove --strict to keep "
               "the earliest snapshot / lowest loss)" % conflicts, file=sys.stderr)
@@ -126,8 +161,7 @@ def main() -> int:
               "lowest loss" % conflicts, file=sys.stderr)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    merged[COLS + ["snapshot_first", "snapshot_last", "n_snapshots"]].to_parquet(
-        args.out, index=False)
+    merged.to_parquet(args.out, index=False)
     print("[merge] wrote %s (%d plays)" % (args.out, len(merged)))
 
     players_by_snap = {tag: set(frame["player_id"].unique())
@@ -159,6 +193,7 @@ def main() -> int:
             "plays_seen_in_ge2_snapshots": int((merged["n_snapshots"] >= 2).sum()),
         },
         "duplicates": {"rows_on_duplicate_keys": n_dup_rows,
+                       "duplicate_keys": stats["duplicate_keys"],
                        "loss_conflicts": conflicts},
         "player_overlap": overlap,
         "players_seen_in_k_snapshots":

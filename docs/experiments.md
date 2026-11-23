@@ -41,7 +41,7 @@
 
 | 方法族 | 实现 / 入口 | 类型 | 出现在 |
 |---|---|---|---|
-| **bias / mf_dot / mirt** | step2/predict | loss 回归 oracle；无 rank 信号 | 仅 §4（RMSE） |
+| **bias / mf_dot** | step2/predict | loss 回归 oracle；无 rank 信号；mirt 已退役 | 仅 §4（RMSE） |
 | **CM3P 线性** | step2/predict + 内容表 | 冻结 512d 内容向量，PCA 后点积 | 1k / audio / canon / published 子集 / randommerge |
 | **CM3P 内容锚定 MLP** | step2/cm3p_mlp | 内容塔 + 玩家向量点积 | 同上 |
 | **CM3P + external** | 内容表 + msd_overall,sunny_star | 线性 / MLP 两种头 | 1k / audio / canon / randommerge / D2V |
@@ -202,6 +202,9 @@ chart-disjoint**（不是 5 个划分种子）；P4 是 5 个划分种子。
 **读法**：D2V 在 P2 比 canon+线性低 0.0377、P4 低 0.0375（P4 paired 5/5），
 但它**只赢 canon + 线性**；换成 legacy + external MLP，P2/P4 仍差
 0.0150/0.0122 左右（D2V+ext 0.5810/0.5856 vs 0.5660/0.5734）。
+VSRG benchmark（2026-11-23，randommerge linear_extra）：D2V-L **0.4527**，
+优于旧 M1-L 0.7411，但比 CM3P RM-L 0.4216 差 0.031；高段 expected>15
+D2V-L 0.6232 甚至比 M1-L 0.5548 差。见 [benchmark_d2v.md](benchmark_d2v.md)。
 D2V MLP 没有增益。P4 主口径还有 **transductive 成分**：编码器预训练见过
 6,828 图中的 80%（5,462 张）；下面 holdout 是干净口径。
 
@@ -467,18 +470,18 @@ published 算法没有做 isotonic 重校准，见 §3.3。
 
 ## 4. 旧 loss 回归（附录；不是 sign-NLL）
 
-bias / mf_dot / mirt 是 loss 回归基线，仓库没有把它们转成 rank 信号；因此**没有
-sign-NLL/Pearson(d,b)**，不补跑。
+bias / mf_dot 是 loss 回归基线，仓库没有把它们转成 rank 信号；因此**没有
+sign-NLL/Pearson(d,b)**，不补跑。最初的稀疏矩阵填充 / MSE 支线（mirt、mirt_1、
+mirt_exp、msd 特征、F1/F2、漂移）已于 2026-11-23 退役，只保留 bias/mf_dot 作为参考。
 
 | 模型 | 1k RMSE | 1k Spearman | 10k RMSE | 10k Spearman |
 |---|---:|---:|---:|---:|
 | bias | 1.5236 | 0.7330 | 1.3727 | 0.6874 |
 | mf_dot | 1.4548 | 0.7632 | 1.3327 | 0.7079 |
-| **mirt** | **1.4582** | **0.7633** | **1.3331** | **0.7096** |
 
 pairbest 口径 A 的 mf_dot dim=8：1k RMSE 0.7015 / Spearman 0.6749；
 10k 0.6844 / 0.6966。CM3P 线性（clean、覆盖子集）RMSE 1.57595。
-来源：[docs/models.md](models.md) §2–§3、[results/step2_1k/](../results/step2_1k/)。
+来源：[docs/models.md](models.md) §2–§3、[legacy/results/initial_mse/step2_1k/](../legacy/results/initial_mse/step2_1k/)。
 
 ## 5. 缺失与边界
 
@@ -486,7 +489,7 @@ pairbest 口径 A 的 mf_dot dim=8：1k RMSE 0.7015 / Spearman 0.6749；
 
 | 方法族 | 1k P2/P4 | audio | canon | randommerge | 4,042 子集 | 10K | VSRG |
 |---|---|---|---|---|---|---|---|
-| bias / mf_dot / mirt | —（仅 loss） | — | — | — | — | — | — |
+| bias / mf_dot | —（仅 loss） | — | — | — | — | — | — |
 | CM3P 线性 / MLP | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
 | CM3P + external 线性 / MLP | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
 | data2vec | ✓（P2 单划分） | — | — | —（仅有日志） | — | — | — |
@@ -503,7 +506,7 @@ pairbest 口径 A 的 mf_dot dim=8：1k RMSE 0.7015 / Spearman 0.6749；
 * **10K 没有 P2/P4**：10K 只有 ALL/RC20/LN/Koishi-native 等全量或子集结果；不能把
   10K 的 NLL 与 1k/randommerge 的 P2/P4 比。
 * **ISOR/Koishi 没有 P2/P4**：只有 10K/randommerge 全量；Koishi 覆盖 6.57% 图。
-* **bias/mf_dot/mirt 没有 rank 信号**：只有 RMSE/Spearman（§4）。
+* **bias/mf_dot 没有 rank 信号**：只有 RMSE/Spearman（§4）；mirt 已退役。
 * **D2V P2 MLP 不完整**：只跑完 3/5 折，没有 5 折汇总；D2V randommerge 只有日志，
   没有结果。HPC 批量 14076958/14076959 截至 2026-11-23 20:25 仍 pending。
 * **D2V P4-holdout 没有 legacy MLP+ext 对照**：只与 canon 对照，不能写“干净口径超过
@@ -538,8 +541,8 @@ pairbest 口径 A 的 mf_dot dim=8：1k RMSE 0.7015 / Spearman 0.6749；
 | CM3P per-chart 单划分 | [results/cm3p_rank_1k/](../results/cm3p_rank_1k/) |
 | column probe | [results/cm3p_column_probe/](../results/cm3p_column_probe/) |
 | 10K ISOR/Koishi | [results/ki_eval/](../results/ki_eval/) |
-| VSRG benchmark | [results/benchmark/](../results/benchmark/)、[docs/benchmark_vsrg.md](benchmark_vsrg.md)、[docs/benchmark_linear_extra.md](benchmark_linear_extra.md) |
-| 旧 loss 回归 | [results/step2_1k/](../results/step2_1k/)、[docs/models.md](models.md) |
+| VSRG benchmark | [results/benchmark/](../results/benchmark/)、[docs/benchmark_vsrg.md](benchmark_vsrg.md)、[docs/benchmark_linear_extra.md](benchmark_linear_extra.md)、[docs/benchmark_d2v.md](benchmark_d2v.md) |
+| 旧 loss 回归（bias/mf_dot） | [legacy/results/initial_mse/step2_1k/](../legacy/results/initial_mse/step2_1k/)、[docs/models.md](models.md) |
 
 ---
 

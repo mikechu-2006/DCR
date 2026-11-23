@@ -58,7 +58,7 @@ processor 快照，并复现了这条路径：
 | F | longest | 2000 | 0.98868 | 0.98129 |
 | G | max_length | 2000 | 0.98868 | 0.98129 |
 | H | max_length | 4000 | 0.98991 | 0.98519 |
-| I | longest（ffmpeg 解码） | 2000 | 失败：站点 ffmpeg 与 conda 的 libp11-kit/libffi 冲突 |
+| I | longest（ffmpeg 解码） | 2000 | — | 站点 ffmpeg 与 conda 的 libp11-kit/libffi 冲突 |
 
 结论：**padding 模式完全不影响结果**（F == G，印证 mask 等价）；把截断上限放到 4000
 只把 min 从 0.9813 抬到 0.9852，**截断不是低分主因**。剩余差异更像音频本身（mapset

@@ -1,13 +1,13 @@
 # DenseConstantRegressor
 
-仅通过谱面信息计算难度，并在玩家行为数据集上验证。数据集经过激进的清理处理，
-包括但不限于删除所有单独的（玩家，谱面）对游玩记录。
+仅通过谱面信息计算难度，并在处理后的玩家行为数据集上验证。
 
 现有方法论包括 MinaCalc 及其衍生、CM3P 谱面向量化、data2vec 自监督内容编码器，
 以及直接对难度序训练的 per-chart 潜变量；同时提供 bias、mf_dot 等 oracle 方法以方便比较。
 
 > **2026-11-23**：1k/10k pairbest 主线稳定；新增 randommerge 合并集（20,388 图）、
-> VSRG Dan Benchmark 外部评测、Koishi/ISOR 信号复测与 data2vec（route B）首轮结果。
+> **full 三集并集（1,898,076 对 / 20,945 图）**、VSRG Dan Benchmark 外部评测、
+> Koishi/ISOR 信号复测与 data2vec（route B）首轮结果。
 > 不同数据集 / 不同 ceiling 的绝对 NLL 不可互比，各节都标注了口径。
 
 [中文](#中文) · [English](#english)
@@ -36,6 +36,7 @@ play，不能和 pairbest 的 test 混用。
 | **1k pairbest** | 6,828 图 / 109,706 对 | 快速迭代、1k 主表、P2/P4 |
 | **10k pairbest** | 16,061 图 / 1,513,746 对 / 10,266 玩家段 | 全量 rank-NLL、Koishi/ISOR |
 | **randommerge** | 453,406 对 / 20,388 图 / 12,758 玩家 | 补低难度覆盖、窗口池化、外部 benchmark 训练集 |
+| **full** | 1,898,076 对 / 20,945 图 / 22,535 玩家段 | 1k + 10k + randommerge 的 play 级并集；单一训练集 |
 | **VSRG benchmark** | 1,382 图（1,146 有 bid） | 唯一带外部 Dan 标签的留出评测 |
 
 1k/10k 来自 top-1000/top-10000 玩家 dump；randommerge 合并 4 个
@@ -44,6 +45,15 @@ play，不能和 pairbest 的 test 混用。
 占比 23.4%，而 top-10k 只有 1.36%。VSRG benchmark 的 1,382 行只用于外部评测；
 它与 randommerge 训练集有 201 个重叠 bid，第 6 节的 RM-L 结果给了排除重叠后的数字，
 benchmark 的 MAE 也不能和 DCR 的 RMSE / NLL 换算。
+
+**full** 是 1k / 10k / randommerge 的 play 级并集（`step0/union`）：三张 step0 play 表
+按 (玩家, 谱面, 秒) 去重后重跑 step1，共 **17,293,289 play / 1,898,076 对 / 20,945 图 /
+22,535 玩家段**（train 1,329,090 / test 568,986）。1k 的 play 有 99.99% 已在 10k 里，
+所以并集必须在 play 级做、按秒去重，不能在 step1 层 concat；去重删了 2,001,789 行
+重复 play（11 个 key 的 loss 不一致），**0 个单次对**因合并“复活”。低难度覆盖从
+10k 的 1.36%（≤3★ 行）提到 **6.31%**（randommerge 22.06%）。内容表覆盖
+20,832/20,945 图（99.46%），过滤版 1,897,881 对 / 20,832 图。详见
+[docs/full_union_report.md](docs/full_union_report.md)。
 
 ### 两条评价轴
 
@@ -78,7 +88,7 @@ rank-NLL 把 `bm` 换成内容信号后，只评价“序”。定义、归一�
 
 | 方法 | 入口 | 说明 |
 |---|---|---|
-| **bias / mf_dot / mirt** | `step2/predict` | oracle 基线：玩家/谱面偏置、玩家×谱面点积、IRT 式链接 |
+| **bias / mf_dot** | `step2/predict` | oracle 基线：玩家/谱面偏置、玩家×谱面点积（mirt 已退役） |
 | **CM3P 线性** | `step2/predict` + 内容表 | 冻结 512 维 CM3P 向量，PCA 后与玩家向量点积 |
 | **CM3P 内容锚定 MLP** | `step2/cm3p_mlp` | 内容塔把谱面映射到交互空间，再与玩家向量点积 |
 | **data2vec（route B）** | [`data2vec_main/`](data2vec_main/README.md) | 100 Hz×8 通道 piano roll → 50 Hz/512d；span-mask Transformer + EMA teacher；产出 512d 内容向量 |
@@ -106,6 +116,7 @@ cd ../..
 
 python main.py -c configs/exp_pairbest_1k.yaml    # 默认 A + bias/mf_dot
 python main.py -c configs/exp_pairbest_10k.yaml   # 默认 A，10k
+python main.py -c configs/exp_pairbest_full.yaml  # 1k+10k+randommerge 并集（需 3 个 step0 表）
 python main.py -c configs/exp_cm3p_1k.yaml        # CM3P 内容向量（线性）
 python main.py -c configs/exp_cm3p_mlp_1k.yaml    # CM3P 内容锚定 MLP
 python main.py -c configs/exp_full_1k.yaml        # raw dump 全流程（legacy clean）
@@ -166,7 +177,6 @@ legacy/               退役脚本、归档文档、历史日志、scratch 探�
 |---|---|---|---|---|
 | bias | 1.5236 | 0.7330 | 1.3727 | 0.6874 |
 | mf_dot | 1.4548 | 0.7632 | 1.3327 | 0.7079 |
-| **mirt** | **1.4582** | **0.7633** | **1.3331** | **0.7096** |
 
 #### 2. loss 回归（pairbest，口径 A）
 
@@ -286,7 +296,8 @@ P4 **0.58202**）。
 1,382 张 4K 谱面（RC 1,246 / LN 102 / course 34；1,146 行有 beatmap id），
 benchmark 快照 `e15f89b`；5 折按 chart-group 的 LOCV（同 bid 的 rate 变体同组），
 isotonic 校准为主、linear 为对照，全部 out-of-fold。M1 = CM3P + external MLP，
-M2 = CM3P MLP；L = legacy 内容表，C = canon；RM-L = randommerge `linear_extra`。
+M2 = CM3P MLP；L = legacy 内容表，C = canon；RM-L = randommerge CM3P `linear_extra`，
+D2V-L = randommerge D2V `linear_extra`。
 
 | 方法 | MAE | MAE 95% CI | Spearman |
 |---|---:|---|---:|
@@ -294,7 +305,8 @@ M2 = CM3P MLP；L = legacy 内容表，C = canon；RM-L = randommerge `linear_ex
 | M1-C | 0.7918 | [0.7249, 0.8688] | 0.8450 |
 | M2-L | 1.1489 | [1.0728, 1.2388] | 0.6609 |
 | M2-C | 1.1248 | [1.0442, 1.2185] | 0.6823 |
-| **RM-L（randommerge）** | **0.4216** | **[0.3965, 0.4481]** | **0.8652** |
+| **RM-L（randommerge CM3P）** | **0.4216** | **[0.3965, 0.4481]** | **0.8652** |
+| D2V-L（randommerge D2V） | 0.4527 | [0.4270, 0.4821] | 0.8534 |
 | `sunny_star` isotonic | **0.3367** | [0.3155, 0.3587] | 0.9060 |
 | `msd_overall` isotonic | 0.6286 | [0.5882, 0.6697] | 0.7849 |
 | [Sunny, MSD] 线性 | 0.6568 | [0.6297, 0.6883] | 0.9021 |
@@ -307,6 +319,11 @@ M2 = CM3P MLP；L = legacy 内容表，C = canon；RM-L = randommerge `linear_ex
 Δ −0.031（CI 跨 0）；按 msd 分带 Q4 也只有 −0.001（CI 跨 0）。RC 0.3655、
 LN 1.0733、course 0.5227（旧 M1-L 的 LN/course 是 2.11 / 2.25）。
 
+**D2V-L 是另一条内容表示**：0.4527，比 RM-L 差 +0.0311 [0.0076, 0.0531]，
+但比旧 M1-L 好 −0.2883；它在低/中段、LN、course 接近 RM-L，在高段
+（expected>15）反而比 M1-L 差（0.6232 vs 0.5548）。结论与限制见
+[docs/benchmark_d2v.md](docs/benchmark_d2v.md)。
+
 按 `expected >= 12` 在子集内**重拟合**（post-hoc，1,142 行）后：M1-L **0.3194**、
 M1-C **0.3108**、Sunny **0.2396**、MSD **0.3990**；M1-L 胜 MSD 0.0796、负 Sunny
 0.0798。全量 0.7411 主要由 `expected<12` 的 240 行（MAE 2.3815）拉动。
@@ -315,7 +332,8 @@ published 算法（覆盖率不同，80–100%）：Koishi **0.1540**、XDC1 0.2
 Azusa 0.2628、ISOR 0.2672、Mixed 0.2879、Daniel 0.4224、Companella 0.4934、
 Sunny 0.5763、P1h 0.8314。RM-L 0.4216 与 Daniel 同量级，仍落后前六个。结论与限制见
 [docs/benchmark_vsrg.md](docs/benchmark_vsrg.md)、
-[docs/benchmark_linear_extra.md](docs/benchmark_linear_extra.md)。
+[docs/benchmark_linear_extra.md](docs/benchmark_linear_extra.md)、
+[docs/benchmark_d2v.md](docs/benchmark_d2v.md)。
 
 #### 7. Koishi / ISOR 在 DCR 难度序上的复测
 
@@ -394,9 +412,12 @@ canon 线性 0.65211、+ext 0.62848，但仍未与 legacy MLP+ext 对照。P2 ML
 | [docs/p4_multiseed_canon.md](docs/p4_multiseed_canon.md) | **实验**：canon vs legacy 同协议配对；39/40 个 seed×方法组合变差 |
 | [docs/p4_multiseed_pub.md](docs/p4_multiseed_pub.md) | **实验**：published 子集三臂复测；published 对 local audio-off 40/40 更好 |
 | [docs/random_merge_report.md](docs/random_merge_report.md) | **数据**：4 个 random 快照合并、453,601 对重建、0 个复活对、2.8% 重复 play |
+| [docs/full_union_report.md](docs/full_union_report.md) | **数据**：full 三集并集（play 级去重、来源覆盖、标签/内容/star、口径边界） |
 | [randommerge_p2p4_results.md](docs/randommerge_p2p4_results.md) · [pool](docs/randommerge_pool_results.md) · [log_n/OD](docs/randommerge_od_legacy_results.md) | **实验**：20,388 图 P2/P4；external 线性 0.5833/0.5827、MLP 负结果、A0–A3 池化、log_n/OD |
 | [docs/benchmark_vsrg.md](docs/benchmark_vsrg.md) | **外部评测**：4 个 CM3P 组合的 5 折 chart-group LOCV、isotonic 校准与负迁移 |
-| [docs/benchmark_linear_extra.md](docs/benchmark_linear_extra.md) | **外部评测**：randommerge linear_extra 的 OOF MAE 0.4216、难度分层与重叠检查 |
+| [docs/benchmark_linear_extra.md](docs/benchmark_linear_extra.md) | **外部评测**：randommerge CM3P linear_extra 的 OOF MAE 0.4216、难度分层与重叠检查 |
+| [docs/benchmark_d2v.md](docs/benchmark_d2v.md) | **外部评测**：randommerge D2V linear_extra 的 OOF MAE 0.4527、高段失败与对比 |
+| [deploy/README.md](deploy/README.md) | **封装**：两个函数（cm3p/d2v）、514 维向量契约、全量 VSRG isotonic、parity |
 | [docs/koishi_isor_report.md](docs/koishi_isor_report.md) | **实验**：Koishi / ISOR 在 10K 与 randommerge 上的 rank-NLL；覆盖率与边界 |
 | [docs/low_difficulty_data.md](docs/low_difficulty_data.md) | **数据**：低难度为何被删、random 快照实测、为什么不用 API 批量爬 |
 | [data2vec_main/README.md](data2vec_main/README.md) | **实验**：route B from-scratch audio-style data2vec；预训练、抽取、P2/P4 probe 与 caveat |
@@ -438,13 +459,14 @@ DCR predicts 4K mania difficulty from **chart content only**, validated on playe
 data cleaned so aggressively that every singleton (player, beatmap) pair is removed.
 Methods include MinaCalc and derivatives, CM3P content vectors, a from-scratch
 audio-style data2vec encoder, and per-chart difficulty learned directly against pairwise
-rank-NLL; oracle baselines (bias, mf_dot, mirt) are kept for comparison.
+rank-NLL; oracle baselines (bias, mf_dot) are kept for comparison.
 
-**Data.** Three in-domain sets — 1k/10k pairbest (6,828 / 16,061 charts) and a
+**Data.** Three in-domain source sets — 1k/10k pairbest (6,828 / 16,061 charts) and a
 randommerge set built from four `performance_mania_random_10000` snapshots
-(453,406 pairs / 20,388 charts / 12,758 players) — plus the external VSRG Dan Benchmark
-(1,382 charts, 1,146 with beatmap ids). Absolute RMSE / NLL / MAE are not comparable
-across these sets or across ceilings.
+(453,406 pairs / 20,388 charts / 12,758 players) — plus a `full` table that unions them
+at play level (17,293,289 plays / 1,898,076 pairs / 20,945 charts) and the external VSRG
+Dan Benchmark (1,382 charts, 1,146 with beatmap ids). Absolute RMSE / NLL / MAE are not
+comparable across these sets or across ceilings.
 
 **Two axes and one external check.** *Loss regression* predicts `log(1-ACC)` per
 (player, beatmap) row and reports RMSE / Spearman. *Rank-NLL* asks whether a difficulty
@@ -480,6 +502,7 @@ pip install -r requirements.txt
 # download the 1k/10k dumps into data/raw/ (commands above)
 
 python main.py -c configs/exp_pairbest_1k.yaml     # default protocol A
+python main.py -c configs/exp_pairbest_full.yaml   # 1k+10k+randommerge union (needs the 3 step0 tables)
 python main.py -c configs/exp_cm3p_1k.yaml         # CM3P content vectors
 python main.py -c configs/exp_cm3p_mlp_1k.yaml     # content-anchored MLP
 
@@ -497,10 +520,13 @@ result indexes are [results/README.md](results/README.md) and
 [scripts/README.md](scripts/README.md). Deep dives:
 [docs/p4_multiseed.md](docs/p4_multiseed.md) (1k P2/P4),
 [docs/randommerge_p2p4_results.md](docs/randommerge_p2p4_results.md) (randommerge),
-[docs/benchmark_vsrg.md](docs/benchmark_vsrg.md) and
-[docs/benchmark_linear_extra.md](docs/benchmark_linear_extra.md) (external benchmark),
-[docs/koishi_isor_report.md](docs/koishi_isor_report.md) (Koishi/ISOR), and
-[data2vec_main/README.md](data2vec_main/README.md) (route B).
+[docs/benchmark_vsrg.md](docs/benchmark_vsrg.md),
+[docs/benchmark_linear_extra.md](docs/benchmark_linear_extra.md) and
+[docs/benchmark_d2v.md](docs/benchmark_d2v.md) (external benchmark),
+[deploy/README.md](deploy/README.md) (two-function Dan deploy interface),
+[docs/koishi_isor_report.md](docs/koishi_isor_report.md) (Koishi/ISOR),
+[data2vec_main/README.md](data2vec_main/README.md) (route B), and
+[docs/full_union_report.md](docs/full_union_report.md) (the full union).
 
 Retired scripts, archived docs, historical logs and the rank-NLL development scratch
 live in [legacy/](legacy/README.md). No data is tracked; `experiments/` and

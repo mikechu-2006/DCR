@@ -1,0 +1,53 @@
+# full = 1k pairbest ∪ 10k pairbest ∪ randommerge，在 **step0 的 play 行**上合并，
+# 再用与 1k/10k 完全相同的 step1/pairbest 规则重建对。
+#   python main.py -c configs/exp_pairbest_full.yaml
+#
+# 为什么不在 step1 层直接 concat：n_plays、playcount_cur、365 天空窗拆分都依赖
+# 完整 play 列表；1k 的 play 有 99.99% 已经在 10k 里，pair 级拼接会重复计数，
+# 也无法识别“同一秒同图”的重复 play。合并/去重由 step0/union 完成。
+# 1k/10k/randommerge 三个上游 step0 表放在 data/processed/，需要先各自生成。
+name: pairbest_full
+tag: full
+io:
+  out_format: parquet
+steps:
+  step0:
+    version: union
+    params:
+      # PATH=TAG，可重复；顺序 = 合并顺序（重复 key 保留最早来源，再取最低 loss）
+      play:
+        - data/processed/step0_1k.csv=1k
+        - data/processed/step0_10k.parquet=10k
+        - data/processed/step0_randommerge.parquet=randommerge
+      # 谱面元数据按 beatmap_id 去重，靠后的来源覆盖靠前的（新快照优先）
+      meta:
+        - data/processed/beatmap_meta_20260713.csv=20260713
+        - data/processed/beatmap_meta_20260801.csv=20260801
+        - data/processed/beatmap_meta_1k.csv=1k
+        - data/processed/beatmap_meta_10k.csv=10k
+        - data/processed/beatmap_meta_random.csv=randommerge
+        - data/processed/beatmap_meta_20261105.csv=20261105
+  step1:
+    version: pairbest
+    params:
+      train_frac: 0.70
+      split_method: pair-random
+      split_seed: 20260928
+      min_plays_per_pair: 2
+      max_best_acc: 0.998
+      acc_floor: 0.90
+      gap_days: 365
+      min_plays_per_player: 20
+      formats: parquet
+  step2:
+    version: predict
+    params:
+      models: [bias, mf_dot]
+      dim: 8
+      epochs: 60
+      lr: 0.02
+      wd: 1.0e-4
+      features: F0
+      entity: player
+      seed: 0
+      device: auto

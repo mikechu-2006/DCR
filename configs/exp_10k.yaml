@@ -26,6 +26,6 @@ steps:
   step2:
     version: predict
     params:
-      models: [bias, mf_dot, mirt]
+      models: [bias, mf_dot]
       dim: 16
       epochs: 60

@@ -15,10 +15,10 @@ bias / mf_dot 等 oracle、CM3P 内容向量）以及 [`minacalc/`](../minacalc/
 | [`docs/`](docs/) | 73 | 归档文档：step0/step1 长文与清洗分析、CM3P 设计/结果/MLP/远程与 HPC runbook、MinaCalc、map_analyser、[archive/](docs/archive/)、[figs/](docs/figs/)、[plans/](docs/plans/)、[reviews/](docs/reviews/)、[ops/](docs/ops/)、[research/](docs/research/) |
 | [`configs/`](configs/) | 4 | 旧维度扫描、map_analyser、MinaCalc L1/L2 配置 |
 | [`logs/`](logs/) | 32 | 2026-09 ~ 2026-10 的历史运行日志（新日志在各实验目录的 `logs/`） |
-| [`results/`](results/) | 6 | 已退役分析（PCA）的旧结果目录 |
+| [`results/`](results/) | 5 个目录 | 已退役分析（PCA）与初始 MSE 支线（[initial_mse/](results/initial_mse/)：step2_1k、mirt_cnonneg_1k） |
 | [`scratch_rank_metric/`](scratch_rank_metric/) | 30 | 2026-10-31 开发 rank-NLL 时的临时探针、小样本烟测与中间结果（含 [说明](scratch_rank_metric/README.md)） |
 | `local/`（仅本机） | 2 | `DCR.bundle`、`upload_to_github.sh`（被 .gitignore 忽略，不随仓库分发） |
-| [`MANIFEST.tsv`](MANIFEST.tsv) | — | 四轮整理的全部 `old → new` 路径（301 条，含删除的缓存） |
+| [`MANIFEST.tsv`](MANIFEST.tsv) | — | 五轮整理的全部 `old → new` 路径（303 条，含删除的缓存） |
 
 ## 第一轮：退役分析 + 实验目录（2026-10-20）
 
@@ -61,7 +61,7 @@ bias / mf_dot 等 oracle、CM3P 内容向量）以及 [`minacalc/`](../minacalc/
 * **results/ 分组**：主线结果按主题收进子目录（`rank_eval_1k/`、`minacalc/`、
   `step2_1k/`），索引见 [results/README.md](../results/README.md)。这一步只搬运行产物，
   不改任何数字；legacy 文档里 `results/step2_1k_summary_loss.json` 等旧路径按迁移前
-  位置书写。
+  位置书写。第五轮起 `step2_1k/` 本身也退役，见 [initial_mse/](results/initial_mse/)。
 
 ## 第四轮：docs 精简（2026-11-23）
 
@@ -80,6 +80,18 @@ bias / mf_dot 等 oracle、CM3P 内容向量）以及 [`minacalc/`](../minacalc/
 移入后 `docs/` 从 33 个 .md 降到 21 个；被移动文档里的相对链接按迁移前位置书写，
 需要时按 [MANIFEST.tsv](MANIFEST.tsv) 放回。
 
+## 第五轮：初始 MSE 支线退役（2026-11-23）
+
+* **范围**：最初的稀疏矩阵填充 / MSE 支线（`mirt` / `mirt_1` / `mirt_exp`、
+  D 约束、msd 特征、F1/F2、漂移）不再维护。`step2/predict` 只保留
+  **bias / mf_dot** 作为参考基线；`--models mirt...` 会被 CLI 拒绝并指向本目录。
+* **结果归档**：旧 clean 口径的 `results/step2_1k/` 与 `results/mirt_cnonneg_1k/`
+  移到 [results/initial_mse/](results/initial_mse/)。
+* **代码保留**：`step2_predict.py` 里的 mirt 分支没有删（仍可被历史脚本 import），
+  但 CLI 禁用；历史设计与消融在
+  [legacy/docs/step2_prediction.md](docs/step2_prediction.md)、
+  [legacy/docs/step2_fit_skills.md](docs/step2_fit_skills.md) 等旧文档。
+
 ## 使用说明
 
 * 归档脚本与文档里的**相对路径按迁移前的位置书写**，直接运行/点击可能失效；
@@ -89,4 +101,4 @@ bias / mf_dot 等 oracle、CM3P 内容向量）以及 [`minacalc/`](../minacalc/
 * 主线仍然可用的同类能力：
   * 谱面内容特征：`step2/cm3p_mlp`（`step2/predict` 也接受 CM3P 内容表）；
   * 旧 play 级清洗：`step1/clean`；
-  * 基线：`step2/predict` 的 `bias` / `mf_dot` / `mirt`。
+  * 基线：`step2/predict` 的 `bias` / `mf_dot`（mirt 已退役）。

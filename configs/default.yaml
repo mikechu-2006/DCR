@@ -9,6 +9,7 @@
 # 现成可跑的配置见：
 #   configs/exp_pairbest_1k.yaml     默认口径 A + bias/mf_dot dim=8（推荐起点）
 #   configs/exp_pairbest_10k.yaml    默认口径 A，10k
+#   configs/exp_pairbest_full.yaml   1k+10k+randommerge 的 play 级并集（step0/union）
 #   configs/exp_std_1k.yaml          旧的 play 级 clean（只跑 step2，复用 data/processed 缓存）
 #   configs/exp_full_1k.yaml         从 raw dump 全流程跑 1k（旧 clean 口径）
 #   configs/exp_10k.yaml             10k 全流程（旧 clean 口径，需要 10k dump）
@@ -77,7 +78,7 @@ steps: {}
 #   step2:
 #     version: predict             # 取 split=train 的行训练，在 split=test 的行上报指标
 #     params:
-#       models: [bias, mf_dot, mirt]
+#       models: [bias, mf_dot]  # mirt retired 2026-11
 #       dim: 16
 #       epochs: 60
 #       # split_col: split         # step1 写标签的列名（默认 split）

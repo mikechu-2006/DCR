@@ -14,11 +14,13 @@
 | `step0d_fetch_osu.py` | `step0/fetch_osu` | 按 id 清单抓 `.osu` **正文** |
 | `step0g_whitelist.py` | `step0/whitelist` | 白名单表 + 缓存状态（`cacheable`） |
 | `step0e_validate_mix.py` | `step0/validate_mix` | 校验不同来源的 CM3P 向量能否混用 |
+| `step0_union_datasets.py` | `step0/union` | 数据集并集：多个 step0 play 表 → 合并 play 表 + 合并 meta（play 级去重、重排 playcount）；见 docs/full_union_report.md |
 | `step1_pairbest.py` | `step1/pairbest` | **默认 A**：一对一行（规则见 docs/data.md） |
 | `step1_clean.py` | `step1/clean` | legacy play 级：划分后清洗 train 侧 |
 | `step1_pairbest_resplit.py` | — | 重新生成 pair-random 70/30 划分（P2 多种子；split 是 step1 最后一步，等价于重跑 step1 换 split-seed） |
 | `step1_p4_split.py` | — | P4 双重冷启动划分：玩家/谱面各分层 60/40，6×6 train / 4×4 test；见 docs/p4_multiseed.md |
-| `step2_predict.py` | `step2/predict` | bias / mf_dot / mirt（+ CM3P 内容向量） |
+| `step1_content_subset.py` | — | step1 表按内容表过滤（CM3P 训练子集；randommerge / full 的 `*_content` 表） |
+| `step2_predict.py` | `step2/predict` | bias / mf_dot（+ CM3P 内容向量；mirt 已退役） |
 | `step2_cm3p_mlp.py` | `step2/cm3p_mlp` | CM3P 内容锚定 MLP |
 | `test_step2_cm3p_mlp.py` | — | 上述 MLP 的 7 条自检（合成张量，1 秒，不需要 data/） |
 | `step2_rank_eval.py` | — | 难度序的成对 NLL（BT ceiling / captured / 逐玩家 Spearman / 与 BT 尺度 `b` 的 Pearson、Spearman）；ceiling 默认用全部行拟合、只在 `--split` 行评测；见 docs/metrics.md |
@@ -43,6 +45,7 @@
 * `step0d_fetch_osu.py`：`--ids-file --out-dir --state`
 * `step0g_whitelist.py`：`--tag --meta --cache --out --manifest-out --dropped-out --json`
 * `step0e_validate_mix.py`：`--computed --probe-npz --json`
+* `step0_union_datasets.py`：`--play PATH=TAG --meta PATH=TAG --out --meta-out --report`
 * `step1_*.py`：`--in --out` + 清洗/划分参数
 * `step2_*.py`：`--train-path --proc-dir --out-dir` + 模型参数（见各自 `--help`）
 
@@ -54,6 +57,7 @@
 | `inspect_score.py` | 单张谱面的 MinaCalc 7 维难度 / 所需技能诊断（`--diag --json`）；示例见 `results/minacalc/inspect_score_example.txt` |
 | `fit_player_vectors.py` | 玩家技能向量拟合（MiniCalc 6 维 LM vs CM3P+MLP 对照）；产物在 `results/player_vector_fit/` |
 | `index_experiments.py` | 读 `experiments/*/manifest.json` 生成 `experiments/INDEX.md`（本机索引，实验目录不入库） |
+| `union_report.py` | 并集数据集报告：来源重叠与复活、来源 step1 覆盖、标签、每图支持度、内容与 star；产物 docs/full_union_report.md |
 
 ```bash
 python scripts/minacalc_whitelist_stats.py --jobs 8   # 分片并行 + 合并
