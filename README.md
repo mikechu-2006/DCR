@@ -384,6 +384,7 @@ canon 线性 0.65211、+ext 0.62848，但仍未与 legacy MLP+ext 对照。P2 ML
 | [docs/data.md](docs/data.md) | **数据**：step0 的保留规则与两张表、step1 pairbest / clean、规模与消融 |
 | [docs/models.md](docs/models.md) | **模型**：oracle 公式与结果、CM3P 线性/MLP、MinaCalc 入口 |
 | [docs/metrics.md](docs/metrics.md) | **指标**：难度序的成对 NLL、cross-fitted ceiling、captured、逐玩家 Spearman、训练目标 |
+| [docs/experiments.md](docs/experiments.md) | **总表**：全部实验的 P2/P4 sign-NLL / Pearson / Spearman、随机合并集、10K、ISOR/Koishi 与 VSRG benchmark（含高难子集与缺失清单） |
 | [docs/rank_eval.md](docs/rank_eval.md) | **实验**：MinaCalc / osumania_map_analyser（含 LN）的难度序评测 |
 | [docs/cm3p_rank.md](docs/cm3p_rank.md) | **实验**：CM3P → per-chart 难度序；M0–M2、P1/P2、new-player val、content ceiling |
 | [docs/cm3p_crop_windows.md](docs/cm3p_crop_windows.md) | **管线**：canon 裁剪 T0–T2、token 审计、窗口导出；T3 池化未跑 |
