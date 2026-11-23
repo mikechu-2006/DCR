@@ -8,6 +8,7 @@
 > 校准：与权重在同一个 JSON 里
 > 一致性测试：[deploy/test_parity.py](test_parity.py)
 > 分布/MAE 检查：[deploy/check_benchmark.py](check_benchmark.py)
+> **出表脚本：[deploy/export_dcr_table.py](export_dcr_table.py)**（§9，把 21,945 张图一次性算成查表）
 
 ## 1. 快速使用
 
@@ -195,3 +196,66 @@ python scripts/export_dan_deploy.py \
 - **模型选择**：VSRG benchmark 上 CM3P/RM-L 的 MAE 0.4216 优于 D2V 的 0.4527；
   D2V 在 expected>15 的高段（0.6232）甚至比旧 M1-L（0.5548）差。
   如果目标人群集中在高段，优先 CM3P；D2V 适合作为第二路 content provider/对照。
+
+## 9. 出表：把 21,945 张图一次算完
+
+插件侧（ManaMapAnalyser）不装 512 维向量表，只装一张 `md5 → Dan` 的定长表。
+这张表由 `deploy/export_dcr_table.py` 生成，**在你这边跑**（需要 `rank_signals_1k.parquet`，
+它被 `.gitignore` 的 `data/**` 与 `*.parquet` 挡住，所以不在仓库里）。
+
+~~~bash
+python deploy/export_dcr_table.py \
+  --content data/processed/chart_content_cm3p_local.parquet \
+  --signals data/processed/rank_signals_1k.parquet \
+  --whitelist manifests/whitelist_1k.csv
+~~~
+
+默认读 `deploy/models/cm3p_linear_extra.json`、输出到 `deploy/table/`：
+
+~~~text
+deploy/table/dcr_content.bin              600 KB（21,945 行 × 28 B + 16 B 头）
+deploy/table/dcr_content.manifest.json    sha256 / count / 覆盖 / Dan 分布 / model_id
+~~~
+
+只想要两列信号（给没有本仓库的人）：
+
+~~~bash
+python deploy/export_dcr_table.py --signals data/processed/rank_signals_1k.parquet \
+    --dump-signals signals_1k.csv
+~~~
+
+### 9.1 表格式（客户端按这个解析，不要改）
+
+~~~text
+header 16 B : "DCRT" | u16 format_version=1 | u16 record_size=28 | u32 count | u32 reserved
+record 28 B : md5[16] | f32 dan | f32 d | f32 sunny      按 md5 字节升序，二分查找
+~~~
+
+- `dan`：校准后的 Reform Dan，**这是 UI 显示的数**；
+- `d`：BT 潜变量，仅用于对拍/诊断；
+- `sunny`：训练期的 `sunny_star`，仅用于对拍/诊断。
+
+### 9.2 脚本会拦住的四类错
+
+1. **内容表与模型不匹配**：`md5(parquet 字节)` ≠ 模型 `content_md5` → 直接退出 2，
+   不产出任何文件（这条最容易静默出错：拿 d2v 模型配 cm3p 向量，数字照样出得来，但全错）。
+2. **向量维度/信号缺失**：`embedding` 不是 512、或 `msd_overall`/`sunny_star` 为 NaN → 退出 2。
+3. **重复键**：内容表或信号表里 `beatmap_id` 重复 → 退出 2。
+4. **写出后回读**：magic / 记录长度 / 总数 / md5 有序性逐项复核。
+
+另外会抽 200 行用公开 API `cm3p_to_dan()` 复算，确认导出值与参考实现一致（阈值 1e-9）。
+
+### 9.3 已验证的数字（合成信号，仅验链路，不是真实读数）
+
+| 项 | 值 |
+|---|---:|
+| 行数 / 体积 | 21,945 / 614,476 B |
+| 覆盖 4K 白名单 | 21,945 / 21,945（100%） |
+| 落盘 f32 与 Python 参考的最大差 | 4.5e-07（f32 精度极限） |
+| 与插件侧独立实现的字节比对 | **完全一致**（sha256 相同） |
+
+真实 `dan` 分布要等真实 `msd/sunny` 跑出来才有效；当前用合成信号时中位数偏低（3.43），
+因为合成的 `sunny_star` 均值 3.89 覆盖不到高段。
+
+表更新后，插件侧要同步 bump `CACHE_KEY_STAR_UNIFIED_VERSION`（`js/app/core/analysis.js`），
+否则玩家看到的是旧缓存里的数。
