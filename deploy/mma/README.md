@@ -32,6 +32,6 @@ python deploy/mma/build.py
 
 The builder uses the pinned MMA tree, applies `mma.patch`, then adds the browser modules and release assets. It writes the ZIP and the unpacked counter under `data/reform/mma_release/`. Use `--out` to build into a new directory. The companion setup is separate from the static counter.
 
-To regenerate the release calibration, run `python scripts/fit_reform_isotonic.py`. It now defaults to a monotone cubic spline and exports the same knot format the counter reads. Use `--fit isotonic` for the previous calibration or pass `--calibration` to the builder to package a separate calibration file.
+To regenerate the release calibration, run `python scripts/fit_reform_isotonic.py`. It fits through Delta first, with more spline intervals from 8th Dan to Delta, then extends the curve to the upper anchors. Above Epsilon, anchors have half weight and the curvature penalty is reduced to one quarter after the median Epsilon score for each method. Use `--fit isotonic` for a comparison on the revised scale or pass `--calibration` to the builder to package a separate calibration file.
 
 The base index uses the DCR checksum whitelist. Unknown IDs, changed chart bytes, and rows without a verified checksum can be calculated on demand. The release also includes real, individually identified Reform anchor charts. Temporary IDs assigned to split anchors remain in the calibration inputs.

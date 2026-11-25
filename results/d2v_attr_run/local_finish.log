@@ -54,3 +54,14 @@ OMP: Warning #179: Function Can't set size of SHM failed:
 [data] maps=20,388 (content coverage 100.0% of step1 maps) train_rows=453,406 test_rows=0
 [pairs] train 20,158,819 (39,654,821 comparisons) | test skipped (--fit-all)
 [val] 12758 fit players / 0 val players; fit pairs 20,158,819
+[save-model] results/benchmark_attr/models/A0D-full.pt (linear_extra, fit_all=True, train_rows=453,406)
+[done] train_nll=0.58267 (fit_all) -> signals.parquet / train.json (1624.1s)
+[infer] a0d
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] content=1,382 signals=1,382 common=1,382
+[done] results/benchmark_attr/pred/A0D.parquet: 1382 rows, n_models=1, d_m mean=+3.9257 sd=1.3903
+[fit] a17d
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=20,388 (content coverage 100.0% of step1 maps) train_rows=453,406 test_rows=0
+[pairs] train 20,158,819 (39,654,821 comparisons) | test skipped (--fit-all)
+[val] 12758 fit players / 0 val players; fit pairs 20,158,819

@@ -7,7 +7,7 @@
 ### 当前结果
 
 - [原始锚点分数](../../data/reform/raw_scores.csv) 与[正式校准曲线](../../data/reform/calibration.json) 均覆盖 117/117 个锚点。模型 ID：Sunny `SunnyRework`、DCR `471bdaba847d36b2`、CM3P_ext `RM_L`。
-- 修正希腊字段位刻度后，等权 isotonic 的锚点拟合 MAE 为 Sunny **0.3234**、DCR **0.4429**、CM3P_ext/RM-L **0.3572**。这是拟合用锚点上的误差。修正移动了 50 个锚点的目标值，三种方法的原始分保持一致。
+- 发布标尺采用 Alpha 14.5、Delta 17.5、Epsilon 19.5。Epsilon 以上按 0.5 倍权重拟合。
 - DCR 产品头在 1,382 行 VSRG benchmark 上的 5 折 chart-group isotonic OOF MAE 为 **0.4294**；DCR 部署 JSON 与 512 维头前向的最大差为 `3.88e-7`。
 - 首发不包含 M1-L。`M1_L_full.pt` 仍是研究检查点，不进入客户端清单和 calibration。
 
@@ -52,7 +52,8 @@ D2V a20d 的难度序结果来自单个 split seed 的 mapset-disjoint Protocol 
 | --- | ---: |
 | Intro 1 / 2 / 3 | 1.5 / 2.5 / 3.5 |
 | Regular x | x + 3.5 |
-| Alpha、Beta、Gamma 等希腊字母段 | Alpha = 15.5，之后每段递增 1。Beta = 16.5，Gamma = 17.5，本批锚点最高为 Kappa = 24.5 |
+| Alpha、Beta、Gamma、Delta | 14.5、15.5、16.5、17.5 |
+| Epsilon 及后续希腊字段 | Epsilon = 19.5，之后每段递增 1，本批锚点最高为 Kappa = 24.5 |
 
 **同一难度中的所有锚点共享该难度中心值**。每张分谱及总谱各贡献一条 raw score → 同一个 Reform 中心值的观测。常规难度为 5 条，第六段为 7 条。第六段两版的 7 个锚点仍映射至同一个第六段中心值。manifest 记录锚点角色、版本和来源，避免去重时删掉同版但内容不同的谱。
 
@@ -66,7 +67,7 @@ D2V a20d 的难度序结果来自单个 split seed 的 mapset-disjoint Protocol 
 | [.6, .8) | mid/high |
 | [.8, 1.0) | high |
 
-三个方法分别用同一组锚点、各自的 raw score 拟合带曲率惩罚的单调三次样条。锚点内按密集采样节点插值，两端继续夹取到最低或最高目标值。五档边界已确认：`[.0,.2)` low、`[.2,.4)` low/mid、`[.4,.6)` mid、`[.6,.8)` mid/high、`[.8,1.0)` high。校准按方法、模型、曲包清单和输入合同版本化，并导出 Python 与客户端 JS 共用的 knots。
+三个方法分别用各自的 raw score 拟合。先用 Delta 及以下拟合主曲线，在 8 dan 至 Delta 放更多样条节点。再固定接点的值和斜率拟合高段。Epsilon 以上锚点权重为 0.5，Epsilon 的中位 raw score 之后，曲率惩罚降到高段默认值的 1/4。客户端按密集采样节点插值，两端夹取到最低或最高目标值。五档边界为 `[.0,.2)` low、`[.2,.4)` low/mid、`[.4,.6)` mid、`[.6,.8)` mid/high、`[.8,1.0)` high。校准按方法、模型、曲包清单和输入合同版本化。
 
 产品侧统一调用 `anchor_difficulty(raw_score, method) -> float`。函数按当前方法和生效模型加载校准节点、插值并夹取到目标范围，返回连续 Reform 数值。卡片按数值区间格式化 low、mid 等标签。线性头默认用 CPU 推理。
 
@@ -76,8 +77,8 @@ D2V a20d 的难度序结果来自单个 split seed 的 mapset-disjoint Protocol 
 2. **补齐分谱锚点。** 对没有独立单谱文件的锚点，从对应 Marathon 谱面人工切出音符事件。按每段的起止时间重置谱面时间，并复制范围内的 timing points，同时在片段起点带入此前生效的 tempo、meter、SV、kiai 等状态。保留原始 Marathon MD5、切分起止、转换规则和拆分后 MD5。可找到对应独立单谱的地方，用音符数、长度、hold、BPM/SV 轮廓及 raw score 做对拍。切分结果由人工复核后加入正式 manifest。
 3. **建锚点 manifest。** 每条记录包含 anchor group、单曲或总锚点角色、难度及版本、目标数值、技能位或曲目顺序、原始谱面身份、set 来源、bake-rate 和拆分 provenance。查出同 MD5 多条关联和同一难度多候选后按锚点清单核对。常规段按 5 点，第六段按两版并集的 7 点进入校准。
 4. **计算各方法 raw score。** Sunny 使用 MMA 目标提交的原始 Sunny 函数。CM3P_ext 和 DCR 对向量命中相同模型合同的本地表就复用，缺失条目用已锁定编码器补算。每条保留成功状态、缺失原因和编码版本。按 `.osu` 文件中已经烘焙的 rate 计算，输入不再重复套用客户端运行时 rate。
-5. **分别拟合和检查 isotonic。** 三种方法使用相同 anchor rows 和 Reform 中心值。报告共同有分样本上的 MAE、段位偏差、五档分类错误、覆盖率和曲包/技能位切片。每个难度的 5 或 7 个锚点作为一个组做 OOF，并同时给出全量拟合的最终校准。数据集仅覆盖列出的曲包，结果解释范围限定于这些曲包锚点。
-6. **夹取和格式化。** 原始值经过 isotonic 后对低/高端 clip。对拍低于最低值、位于每个 .2 档边界、恰在 .4/.6/.8 边界和超过最高值的输出。低于最低值展示最低档，高于最高值展示最高档。参见[现有分组校准脚本](../../scripts/benchmark_calibrate_eval.py)。
+5. **分别拟合发布曲线。** 三种方法使用相同锚点和 Reform 中心值。研究评估可将每个难度的 5 或 7 个锚点作为一个组做 OOF。发布参数使用全量锚点拟合。
+6. **夹取和格式化。** 校准时将低端和高端值夹取到目标范围。对拍低于最低值、位于每个 .2 档边界、恰在 .4/.6/.8 边界和超过最高值的输出。参见[现有分组校准脚本](../../scripts/benchmark_calibrate_eval.py)。
 
 ## 3. 本地查找、补算和写入
 
