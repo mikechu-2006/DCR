@@ -8,6 +8,7 @@ import torch
 from torch.utils.data import Dataset
 
 from . import index_cache as index_mod
+from .attributes import ChannelSpec, build_attribute_window, parse_attributes
 from .charts import ChartError, ChartStore, build_window, parse_chart, window_starts
 
 
@@ -28,6 +29,13 @@ class ChartWindowDataset(Dataset):
         self.window_frames = int(round(float(d["window_sec"]) * self.frame_hz))
         self.sigma_ms = float(d["gaussian_sigma_ms"])
         self.min_valid = int(round(float(d["min_valid_sec"]) * self.frame_hz))
+        self.spec = ChannelSpec.from_config(cfg)
+        self.use_attributes = self.spec.n_channels > 8
+        if self.use_attributes and self.spec.n_channels != int(
+                cfg.get("model", {}).get("in_channels", self.spec.n_channels)):
+            raise ValueError(
+                "model.in_channels=%r does not match data.channels (%d channels)"
+                % (cfg.get("model", {}).get("in_channels"), self.spec.n_channels))
         self.rng = None
         self.items: list[tuple[int, int]] = []
         self.index: list[tuple[int, int]] = []
@@ -75,9 +83,14 @@ class ChartWindowDataset(Dataset):
             _, n_frames = parse_chart(str(self.store.path(cid)), self.frame_hz)
         events, _ = parse_chart(str(self.store.path(cid)), self.frame_hz)
         window = build_window(events, start, self.window_frames, self.frame_hz, self.sigma_ms)
+        if self.use_attributes:
+            attrs = parse_attributes(self.store.path(cid), self.frame_hz)
+            block = build_attribute_window(attrs, start, self.window_frames,
+                                           self.frame_hz, self.spec, self.sigma_ms)
+            window = np.concatenate([window, block], axis=0)
         valid = max(0, min(self.window_frames, n_frames - start))
         return {
-            "x": torch.from_numpy(window),
+            "x": torch.from_numpy(np.ascontiguousarray(window)),
             "valid_len": int(valid),
             "chart_id": int(cid),
             "start": int(start),

@@ -1,0 +1,2 @@
+/home/mikechu/anaconda3/bin/python scripts/export_dan_deploy.py --model results/benchmark/models/D2V_A20D_P_full.pt --pred results/benchmark/pred/D2V_A20D_P.parquet --content-type d2v --out deploy/models/d2v_a20d_linear_extra.json --oof results/benchmark/eval_d2v_a20d_p/oof.parquet --oof-col D2V_A20D_P_isotonic --created 2026-11-25
+[export] deploy/models/d2v_a20d_linear_extra.json model_id=471bdaba847d36b2 iso_knots=156 mae_in=0.3906 mae_oof=0.42939040420500374

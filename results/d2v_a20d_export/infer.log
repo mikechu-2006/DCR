@@ -1,0 +1,3 @@
+/home/mikechu/anaconda3/bin/python scripts/benchmark_infer.py --model results/benchmark/models/D2V_A20D_P_full.pt --content data/processed/benchmark_content_d2v_a20d_prod.parquet --signals /home/mikechu/Documents/Projects/DCR/data/processed/benchmark_signals.parquet --out results/benchmark/pred/D2V_A20D_P.parquet
+[data] content=1,382 signals=1,382 common=1,382
+[done] results/benchmark/pred/D2V_A20D_P.parquet: 1382 rows, n_models=1, d_m mean=+4.2284 sd=1.5291

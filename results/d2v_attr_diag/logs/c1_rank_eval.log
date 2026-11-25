@@ -1,0 +1,4 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+[ceiling] fit b on all 109,706 rows / 6,828 charts; evaluate on test rows (33,139 rows)
+[    2.3s] cm3p_rank                nll=0.66018 ceil=0.56276 captured=0.2528 n=1,144,617/1,144,617 lw=+0.3145 macro=+0.3023 beta=0.5759
+wrote results/d2v_attr_diag/meta_summary_p2_rank_eval.json (2.3s)

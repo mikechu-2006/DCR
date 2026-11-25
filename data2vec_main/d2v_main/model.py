@@ -79,6 +79,12 @@ class Data2VecModel(nn.Module):
     def __init__(self, cfg: dict):
         super().__init__()
         m = cfg["model"]
+        from .attributes import ChannelSpec
+        spec = ChannelSpec.from_config(cfg)
+        if int(m["in_channels"]) != spec.n_channels:
+            raise ValueError(
+                "model.in_channels=%r != data.channels n_channels=%d"
+                % (m["in_channels"], spec.n_channels))
         self.dim = int(m["dim"])
         self.top_k = int(m["top_k"])
         self.loss_beta = float(m["loss_beta"])

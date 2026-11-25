@@ -88,6 +88,11 @@ def main() -> int:
           ceil2.seen_folds is not None and len(ceil2.seen_folds) == 2
           and all(np.asarray(s).size == n_items for s in ceil2.seen_folds),
           f"{None if ceil2.seen_folds is None else len(ceil2.seen_folds)} folds")
+    check("ceiling stores cluster ids for paired scripts",
+          ceil2.cluster_ids is not None
+          and np.array_equal(np.asarray(ceil2.cluster_ids),
+                             np.unique(clusters)),
+          f"{None if ceil2.cluster_ids is None else len(ceil2.cluster_ids)} clusters")
     st_nll, st_n = rm.nll_on_ceiling_pairs(groups, item, perf, b_true,
                                            clusters, ceil2)
     check("strict pair set matches the ceiling pair count",
@@ -158,6 +163,17 @@ def main() -> int:
                                             beta=1.0, ties="half"))
     check("torch rank loss half-ties equals log 2 at a constant score",
           abs(tied_half - float(np.log(2.0))) < 1e-6, f"{tied_half:.6f}")
+
+    # E1_fix F2: bf16 logits with a large, correctly ordered difference used to
+    # produce 0 * -inf = NaN in the sigmoid+clamp+log implementation.
+    for dt in (torch.float32, torch.bfloat16):
+        extreme = torch.tensor([0.0, 8.0], dtype=dt)
+        extreme_target = extreme.clone()
+        ent2 = torch.tensor([0, 0])
+        v = float(rm.pairwise_rank_loss(extreme, ent2, extreme_target,
+                                        beta=1.0))
+        check(f"torch rank loss finite at bf16 extreme ({dt})",
+              np.isfinite(v), f"{v:.6g}")
 
     ok = all(v for _, v in CHECKS)
     print(f"\n{sum(v for _, v in CHECKS)}/{len(CHECKS)} checks passed")

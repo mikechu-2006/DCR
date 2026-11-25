@@ -1,0 +1,16 @@
+/hpc2hdd/home/aiaa3111_l01_008/.conda/envs/DCR/bin/python scripts/step2_cm3p_rank.py --in data/processed/step1_1k_pairbest_p4sets_s1.parquet --content-path data/processed/chart_content_cm3p_local.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 8 --name cm3p_mlp_h64_L2 --out-signals results/audio_newset/p4sets/legacy/p4/s1/signals/cm3p_mlp_h64_L2.parquet --out-json results/audio_newset/p4sets/legacy/p4/s1/signals/cm3p_mlp_h64_L2.json --model mlp --lam 1e-2 --hid 64 --depth 2 --dropout 0.1 --lr 3e-3 --epochs 98
+
+[data] maps=6,819 (content coverage 100.0% of step1 maps) train_rows=37,383 test_rows=18,845
+[pairs] train 957,836 (2,468,726 comparisons) | test 377,736 (915,317)
+[val] 609 fit players / 0 val players; fit pairs 957,836
+  [mlp ep   1] train=0.60655
+  [mlp ep  10] train=0.61339
+  [mlp ep  20] train=0.60436
+  [mlp ep  30] train=0.59269
+  [mlp ep  40] train=0.58449
+  [mlp ep  50] train=0.57413
+  [mlp ep  60] train=0.56550
+  [mlp ep  70] train=0.55870
+  [mlp ep  80] train=0.55139
+  [mlp ep  90] train=0.54798
+[done] test_nll=0.64259 bits=0.0729 beta=0.493 -> cm3p_mlp_h64_L2.parquet / cm3p_mlp_h64_L2.json (32.7s)

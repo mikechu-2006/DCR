@@ -8,6 +8,7 @@ scripts/step2_cm3p_rank.py / run_p2_p4_multiseed.py can consume it directly:
 from __future__ import annotations
 
 import argparse
+import copy
 import sys
 from pathlib import Path
 
@@ -16,6 +17,7 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
+from .attributes import ChannelSpec
 from .charts import ChartStore
 from .config import load_config
 from .data import ChartWindowDataset, collate_windows
@@ -43,9 +45,17 @@ def parse_args(argv=None):
 @torch.no_grad()
 def main(argv=None) -> int:
     args = parse_args(argv)
-    cfg = load_config(args.config)
-    if args.osu_dir:
-        cfg["data"]["osu_dir"] = args.osu_dir
+    ckpt = torch.load(args.ckpt, map_location="cpu", weights_only=False)
+    if isinstance(ckpt.get("cfg"), dict):
+        cfg = copy.deepcopy(ckpt["cfg"])
+        if args.osu_dir:
+            cfg["data"]["osu_dir"] = args.osu_dir
+        print("[extract] config loaded from checkpoint cfg: in_channels=%s"
+              % cfg.get("model", {}).get("in_channels"), flush=True)
+    else:
+        cfg = load_config(args.config)
+        if args.osu_dir:
+            cfg["data"]["osu_dir"] = args.osu_dir
     device = resolve_device(args.device or str(cfg["train"].get("device", "auto")))
     ids = None
     if args.ids_file:
@@ -57,9 +67,12 @@ def main(argv=None) -> int:
                             use_index_cache=not args.no_index_cache)
     loader = DataLoader(ds, batch_size=args.batch_size, shuffle=False,
                         num_workers=args.num_workers, collate_fn=collate_windows)
+    spec = ChannelSpec.from_config(cfg)
     model = Data2VecModel(cfg).to(device)
-    ckpt = torch.load(args.ckpt, map_location="cpu", weights_only=False)
+    assert int(model.conv.conv1.in_channels) == spec.n_channels, (
+        model.conv.conv1.in_channels, spec.n_channels)
     model.load_state_dict(ckpt["model"])
+    print("[extract] channels=%d groups=%s" % (spec.n_channels, spec.groups), flush=True)
     model.eval()
     sums: dict[int, np.ndarray] = {}
     counts: dict[int, int] = {}
@@ -98,6 +111,10 @@ def main(argv=None) -> int:
             "d2v_rev": rev,
         })
     out = Path(args.out)
+    protected = {"chart_content_d2v_holdout.parquet", "chart_content_d2v.parquet",
+                 "chart_content_d2v_holdout.bak.parquet"}
+    if out.name in protected:
+        raise SystemExit("refusing to overwrite baseline content table %s" % out)
     out.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_parquet(out, index=False)
     print(f"[extract] wrote {len(rows)} charts -> {out}", flush=True)

@@ -1,0 +1,12 @@
+/hpc2hdd/home/aiaa3111_l01_008/.conda/envs/DCR/bin/python scripts/step2_rank_eval.py --in data/processed/step1_1k_pairbest_p4sets_s5.parquet --signal-table results/audio_newset/p4sets/audio/p4/s5/signals.parquet --signals cm3p_linear,cm3p_linear_extra,cm3p_mlp_h64_L2,cm3p_mlp_extra,sunny_star,daniel_star,star --split test --ceiling-fit all --common-maps --strict-pairs --folds 2 --bootstrap 0 --seed 0 --cache-dir data/processed/rank_eval_cache --out results/audio_newset/p4sets/audio/p4/s5/rank_eval.json
+
+[common-maps] 6,819 charts shared by 7 signals (signal table 6,819 -> 6,819 rows)
+[ceiling] fit b on all 109,569 rows / 6,819 charts; evaluate on test rows (18,022 rows)
+[  118.0s] cm3p_linear              nll=0.62619 ceil=0.55916 captured=0.4997 n=801,907/857,945 lw=+0.4058 macro=+0.3740 beta=0.6135
+[  118.6s] cm3p_linear_extra        nll=0.58707 ceil=0.55916 captured=0.7917 n=801,907/857,945 lw=+0.5078 macro=+0.4775 beta=0.8253
+[  119.2s] cm3p_mlp_h64_L2          nll=0.62265 ceil=0.55916 captured=0.5261 n=801,907/857,945 lw=+0.4138 macro=+0.3866 beta=0.6297
+[  119.9s] cm3p_mlp_extra           nll=0.58334 ceil=0.55916 captured=0.8195 n=801,907/857,945 lw=+0.5077 macro=+0.4817 beta=0.816
+[  120.5s] sunny_star               nll=0.62457 ceil=0.55916 captured=0.5118 n=801,907/857,945 lw=+0.5161 macro=+0.5036 beta=0.7604
+[  121.1s] daniel_star              nll=0.62492 ceil=0.55916 captured=0.5092 n=801,907/857,945 lw=+0.5076 macro=+0.4968 beta=0.78
+[  121.7s] star                     nll=0.65834 ceil=0.55916 captured=0.2598 n=801,907/857,945 lw=+0.3303 macro=+0.3232 beta=0.4494
+wrote results/audio_newset/p4sets/audio/p4/s5/rank_eval.json (121.7s)

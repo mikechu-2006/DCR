@@ -1,0 +1,6 @@
+/home/mikechu/anaconda3/bin/python scripts/step2_cm3p_rank.py --in data/processed/step1_randommerge_pairbest_content.parquet --content-path data/processed/chart_content_d2v_a20d_prod.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --model linear_extra --lam 1e-3 --val-frac 0 --seed 0 --threads 8 --name cm3p_linear_extra --fit-all --save-model results/benchmark/models/D2V_A20D_P_full.pt --out-signals /home/mikechu/Documents/Projects/DCR/results/benchmark/d2v_a20d_linear/train/D2V_A20D_P_signals.parquet --out-json /home/mikechu/Documents/Projects/DCR/results/benchmark/d2v_a20d_linear/train/D2V_A20D_P.json
+[data] maps=20,388 (content coverage 100.0% of step1 maps) train_rows=453,406 test_rows=0
+[pairs] train 20,158,819 (39,654,821 comparisons) | test skipped (--fit-all)
+[val] 12758 fit players / 0 val players; fit pairs 20,158,819
+[save-model] results/benchmark/models/D2V_A20D_P_full.pt (linear_extra, fit_all=True, train_rows=453,406)
+[done] train_nll=0.56745 (fit_all) -> D2V_A20D_P_signals.parquet / D2V_A20D_P.json (1017.4s)

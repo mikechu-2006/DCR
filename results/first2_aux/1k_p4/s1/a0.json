@@ -1,0 +1,35 @@
+{
+ "in": "data/processed/step1_1k_pairbest_p4_s1.parquet",
+ "first2": "data/processed/step1_1k_pairbest_first2.parquet",
+ "aux_label_col": "loss_first2",
+ "aux_scope": "all",
+ "n_rows": {
+  "train": 39825,
+  "test": 17569,
+  "aux_train": 39825,
+  "aux_test": 17569
+ },
+ "n_charts": 6828,
+ "pairs": {
+  "train": 1014938,
+  "train_instances": 2783688,
+  "test": 346709,
+  "test_instances": 791078,
+  "aux_train": 1014938,
+  "aux_train_instances": 2783688
+ },
+ "aux_weight_grid": [
+  0.0
+ ],
+ "best_lam_aux": 0.0,
+ "val_nll": null,
+ "val_curve": [],
+ "train_nll_hist": 0.5593432903304899,
+ "train_beta": 1.0443989257627941,
+ "test_nll_hist": 0.5867930921987451,
+ "test_beta": 0.8958034247330945,
+ "test_nll_first2": 0.5776241612402675,
+ "train_obj": 0.5660548516967684,
+ "n_params": 514,
+ "seconds": 76.9
+}

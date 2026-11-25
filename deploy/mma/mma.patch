@@ -1,0 +1,307 @@
+diff --git a/ManiaMapAnalyser by Leo_Black/config.js b/ManiaMapAnalyser by Leo_Black/config.js
+index 9a09936..37f6c06 100644
+--- a/ManiaMapAnalyser by Leo_Black/config.js	
++++ b/ManiaMapAnalyser by Leo_Black/config.js	
+@@ -6,7 +6,7 @@ export const APP_CONFIG = {
+         contentBar: ["None", "Auto", "Pattern", "Etterna", "Graph", "ReworkPP", "Full"],
+         srText: ["Auto", "ReworkSR", "MSD", "Pattern", "InterludeSR", "ReworkPP"],
+         diffText: ["None", "Graph", "Difficulty", "MSD", "Pattern", "ReworkSR", "InterludeSR"],
+-        estimatorAlgorithm: ["Azusa", "Roxy", "Mixed", "Sunny", "Daniel", "Companella"],
++        estimatorAlgorithm: ["Sunny", "DCR", "CM3P_ext"],
+         etternaVersion: ["0.68.0-Unofficial", "0.70.0", "0.72.0", "0.72.3", "0.74.0", "0.75.0"],
+         companellaEtternaVersion: ["0.68.0-Unofficial", "0.70.0", "0.72.0", "0.72.3", "0.74.0", "0.75.0"],
+         cardOpacity: ["100%", "95%", "90%", "80%", "70%"],
+@@ -80,7 +80,7 @@ export const APP_CONFIG = {
+         wsEndpoint: "localhost:24050",
+         autoMode: false,
+         useDanielAlgorithm: false,
+-        estimatorAlgorithm: "Mixed",
++        estimatorAlgorithm: "Sunny",
+         azusaSunnyReferenceHo: true,
+         etternaVersion: "0.72.3",
+         companellaEtternaVersion: "0.74.0",
+diff --git a/ManiaMapAnalyser by Leo_Black/index.html b/ManiaMapAnalyser by Leo_Black/index.html
+index f838b6e..dd6d085 100644
+--- a/ManiaMapAnalyser by Leo_Black/index.html	
++++ b/ManiaMapAnalyser by Leo_Black/index.html	
+@@ -35,6 +35,10 @@
+                 <div class="star-right">
+                     <div class="top-right-capsule" id="rework-right-capsule" hidden>-</div>
+                     <div class="star-subtitle" id="rework-diff">-</div>
++                    <div id="reform-rating" aria-live="polite" hidden>
++                        <div id="reform-value"></div>
++                        <button id="reform-calculate" type="button" hidden>计算难度</button>
++                    </div>
+                     <div class="star-graph-wrap" id="rework-diff-graph-wrap" hidden>
+                         <svg id="rework-diff-graph" class="star-graph" viewBox="0 0 260 86" preserveAspectRatio="none" aria-label="Difficulty graph" role="img">
+                             <defs>
+diff --git a/ManiaMapAnalyser by Leo_Black/js/app/analysis.js b/ManiaMapAnalyser by Leo_Black/js/app/analysis.js
+index 070b06b..a90fad2 100644
+--- a/ManiaMapAnalyser by Leo_Black/js/app/analysis.js	
++++ b/ManiaMapAnalyser by Leo_Black/js/app/analysis.js	
+@@ -1,3 +1,5 @@
++import { chartRequest, isReformMethod } from "../reform/core.js";
++import { renderReformCard, resetReformCard } from "../reform/card.js";
+ import { runAnalysisPipeline } from "../pipeline/runAnalysisPipeline.js";
+ import { calculateReworkPp } from "../rework/reworkPerformance.js";
+ import { applyCompanellaToMixedResult } from "../estimator/mixedEstimator.js";
+@@ -281,6 +283,7 @@ function shouldShowBodySkeletonDuringExpand(previousCardHeight, activeContentBar
+ }
+ 
+ export function resetReworkDisplay() {
++    resetReformCard();
+     state.actualEstimatorAlgorithm = state.estimatorAlgorithm;
+     state.ppMetrics = null;
+     clearReworkPpBody();
+@@ -377,6 +380,7 @@ export { toTelemetryActualAlgorithm } from "./telemetrySpec.js";
+ export async function fetchBeatmapFile(reason) {
+     const requestSeq = (state.analysisRequestSeq || 0) + 1;
+     state.analysisRequestSeq = requestSeq;
++    resetReformCard();
+     // 离线圈模式守卫：仅当页面本身就是壳离线页（端口 24061）且无 tosu 数据面
+     // 时才跳过 osu 抓取（避免 "Failed to fetch" 噪声）。浏览器 tosu 页
+     // （其他端口）即使壳开着也绝不挡——否则首图/背景/切图会被吞。
+@@ -488,8 +492,13 @@ export async function fetchBeatmapFile(reason) {
+     const CACHE_KEY_STAR_UNIFIED_VERSION = "star-v8";
+     const cacheKey = `${CACHE_KEY_STAR_UNIFIED_VERSION}|${state.estimatorAlgorithm}|${state.lastBeatmapIdentity}|${state.modSignature}`;
+     const isMetaDegraded = String(state.lastBeatmapIdentity || "").startsWith("meta:");
++    const method = currentEstimatorAlgorithm();
++    const chartIdentity = state.lastBeatmapIdentity;
++    const modSignature = state.modSignature;
++    const useReform = telemetryClient.startsWith("stable") || telemetryClient.startsWith("lazer");
++    const isReform = useReform && isReformMethod(method);
+     let cached = null;
+-    if (state.enableResultCache && state.lastBeatmapIdentity) {
++    if (!isReform && state.enableResultCache && state.lastBeatmapIdentity) {
+         const snapshot = resultCache.get(cacheKey);
+         if (snapshot
+             && snapshot.computed.graph === needComputed.graph
+@@ -504,6 +513,8 @@ export async function fetchBeatmapFile(reason) {
+     try {
+         let parsedInfo = null;
+         let rawText = null;
++        let rawBytes = null;
++        let reformChart = null;
+         // 内容栏遵循用户设置：任何键数都不再强制降级为 Pattern。
+         // （Graph 对任意键数均可渲染——star 序列为键数无关的 estimator 输出。）
+         // 唯一例外：Etterna 容器内的 osu 谱（externalSourceOsuLike）没有 Etterna
+@@ -549,7 +560,12 @@ export async function fetchBeatmapFile(reason) {
+                 throw new Error(`Request failed with status ${response.status}`);
+             }
+ 
+-            rawText = await response.text();
++            if (isReform) {
++                rawBytes = await response.arrayBuffer();
++                rawText = new TextDecoder().decode(rawBytes);
++            } else {
++                rawText = await response.text();
++            }
+             if (isStaleRequest()) return;
+             if (!rawText || !rawText.trim()) {
+                 throw new Error("Empty beatmap content.");
+@@ -596,7 +612,15 @@ export async function fetchBeatmapFile(reason) {
+                     etternaVersion: state.etternaVersion,
+                     companellaEtternaVersion: state.companellaEtternaVersion,
+                 };
+-                const pipelineInput = { rawText, estimatorAlgorithm, options: pipelineOptions };
++                if (isReform && rawBytes) {
++                    reformChart = chartRequest(rawBytes, rawText, chartIdentity,
++                        estimatorOptions.speedRate, state.modCodes || []);
++                }
++                const pipelineInput = {
++                    rawText, estimatorAlgorithm: isReform ? "Sunny" : estimatorAlgorithm,
++                    options: pipelineOptions,
++                    reform: reformChart ? { method, chart: reformChart } : null,
++                };
+                 const wp = runInWorker(pipelineInput);
+                 try {
+                     pipelineResult = wp ? await wp : await runAnalysisPipeline(pipelineInput);
+@@ -1085,7 +1109,7 @@ export async function fetchBeatmapFile(reason) {
+ 
+             // 写缓存：companella 完成后、SV/auto-profile 段之前。
+             // 门控：miss && 开关开 && 全成功 && generation 未变（防 clear 后旧分析写回）。
+-            if (!cached && state.enableResultCache && state.lastBeatmapIdentity
++            if (!isReform && !cached && state.enableResultCache && state.lastBeatmapIdentity
+                 && errors.length === 0
+                 && rework && !isStaleRequest()
+                 && genAtStart === resultCacheGeneration()) {
+@@ -1290,6 +1314,14 @@ export async function fetchBeatmapFile(reason) {
+             setEstimateDifficultyText("VIBRO");
+         }
+ 
++        if (isReform && !isStaleRequest()) {
++            renderReformCard(pipelineResult?.reformResult, reformChart, rawBytes,
++                () => !isStaleRequest() && chartIdentity === state.lastBeatmapIdentity
++                    && modSignature === state.modSignature && method === currentEstimatorAlgorithm(),
++                () => scheduleRecompute("Reform calculation complete", false),
++                () => !state.isInPlayState);
++        }
++
+         // 主体渲染完成：auto 高度下内容撑开是瞬时的，这里从渲染前高度补过渡动画。
+         // 放在 refreshAutoDisplayProfile 之后，避免 profile 切换已触发的动画被打断重播。
+         animateCardHeightTransition(heightBeforeBodyRender);
+@@ -1311,7 +1343,7 @@ export async function fetchBeatmapFile(reason) {
+             hideOverlay();
+         }
+ 
+-        if (rework && metadataErrors.length === 0 && !isStaleRequest()) {
++        if (!isReform && rework && metadataErrors.length === 0 && !isStaleRequest()) {
+             // 数值化难度（Reform 段位体系，.0 = mid）：Azusa/Roxy 的原生值已是
+             // 标准尺度，直接用；其余算法（Sunny/Companella/Daniel——Daniel 的
+             // 原生值是其 DP 尺度，比标准约高 0.5）用 estDiff 标签反向换算。
+diff --git a/ManiaMapAnalyser by Leo_Black/js/app/graph.js b/ManiaMapAnalyser by Leo_Black/js/app/graph.js
+index 9860fcb..0fb38c5 100644
+--- a/ManiaMapAnalyser by Leo_Black/js/app/graph.js	
++++ b/ManiaMapAnalyser by Leo_Black/js/app/graph.js	
+@@ -750,7 +750,7 @@ export function refreshGraphTimeline() {
+ 
+ export function updateDiffTextVisibility() {
+     const mode = state.diffText;
+-    const showDiffText = mode === "Difficulty";
++    const showDiffText = mode === "Difficulty" && !["Sunny", "DCR", "CM3P_ext"].includes(state.estimatorAlgorithm);
+     const showHeaderGraph = mode === "Graph";
+     const showRightCapsule = mode === "MSD"
+         || mode === "Pattern"
+@@ -773,7 +773,7 @@ export function updateDiffTextVisibility() {
+         }
+     }
+ 
+-    estDiffCaptionEl.hidden = mode === "None";
++    estDiffCaptionEl.hidden = mode === "None" || (mode === "Difficulty" && !showDiffText);
+     if (mode === "Graph") {
+         estDiffCaptionEl.textContent = "Difficulty Graph";
+     } else if (showRightCapsule) {
+diff --git a/ManiaMapAnalyser by Leo_Black/js/parser/settingsParser.js b/ManiaMapAnalyser by Leo_Black/js/parser/settingsParser.js
+index cbe7151..d5529fe 100644
+--- a/ManiaMapAnalyser by Leo_Black/js/parser/settingsParser.js	
++++ b/ManiaMapAnalyser by Leo_Black/js/parser/settingsParser.js	
+@@ -44,6 +44,8 @@ export function normalizeEstimatorAlgorithmValue(value) {
+     if (lowered === "mixed") return "Mixed";
+     if (lowered === "mix") return "Mixed";
+     if (lowered === "sunny") return "Sunny";
++    if (lowered === "dcr") return "DCR";
++    if (lowered === "cm3p_ext") return "CM3P_ext";
+     if (lowered === "rework") return "Sunny";
+     if (lowered === "direct") return "Sunny";
+     if (lowered === "daniel") return "Daniel";
+@@ -335,7 +337,7 @@ export function createSettingsParsers(appConfig) {
+ 
+         const legacyValue = extractSettingValue(settingsPayload, "useDanielAlgorithm");
+         if (legacyValue !== undefined && legacyValue !== null) {
+-            return normalizeBooleanSetting(legacyValue, false) ? "Daniel" : "Sunny";
++            return "Sunny";
+         }
+ 
+         const fallback = normalizeEstimatorAlgorithmValue(appConfig.defaults.estimatorAlgorithm);
+diff --git a/ManiaMapAnalyser by Leo_Black/js/pipeline/runAnalysisPipeline.js b/ManiaMapAnalyser by Leo_Black/js/pipeline/runAnalysisPipeline.js
+index 198c9fe..14ae90e 100644
+--- a/ManiaMapAnalyser by Leo_Black/js/pipeline/runAnalysisPipeline.js	
++++ b/ManiaMapAnalyser by Leo_Black/js/pipeline/runAnalysisPipeline.js	
+@@ -14,6 +14,7 @@
+ //     （shouldReportEtternaError / isKeycountError 过滤等）依赖调用方主线程状态，
+ //     由 analysis.js 按旧条件决定是否并入，保证逐字一致。errors[] 恒为空，保留为硬错误预留。
+ 
++import { estimate } from "../reform/core.js";
+ import { OsuFileParser } from "../parser/osuFileParser.js";
+ import { runSunnyEstimatorFromText } from "../estimator/sunnyEstimator.js";
+ import { runSunnyWindowEstimatorFromText } from "../estimator/sunnyWindowEstimator.js";
+@@ -93,7 +94,7 @@ function sanitizePatternResult(result) {
+  *   companellaEttResult: object|null, companellaEttError: string|null,
+  *   errors: string[] }>}
+  */
+-export async function runAnalysisPipeline({ rawText, estimatorAlgorithm, options = {}, parsed = null }) {
++export async function runAnalysisPipeline({ rawText, estimatorAlgorithm, options = {}, parsed = null, reform = null }) {
+     // 1. 解析一次（可选复用外部已解析实例），估算器/归一化/SunnyWindow/Interlude 共享同一实例。
+     const parser = (parsed && typeof parsed?.getParsedData === "function")
+         ? parsed
+@@ -369,7 +370,24 @@ export async function runAnalysisPipeline({ rawText, estimatorAlgorithm, options
+     // 11. 马拉松时长修正由估算器本体完成（见前置段：options.marathonCorrection 注入）。
+     //     此处无派生段——修正后的数值化难度即估算器输出（语义层即算法层）。
+ 
++    let reformResult = null;
++    if (reform) {
++        const { method, chart } = reform;
++        try {
++            if (parsedSummary.columnCount !== 4 || !chart.supported) {
++                reformResult = { method, state: "unsupported" };
++            } else {
++                const rawSunny = method === "Sunny"
++                    ? runSunnyEstimatorFromText(rawText, { speedRate: chart.rate }, parser).star
++                    : undefined;
++                reformResult = await estimate(method, chart, rawSunny);
++            }
++        } catch (error) {
++            reformResult = { method, state: "error", error: error.message };
++        }
++    }
+     return {
++        reformResult,
+         rework,
+         actualEstimatorAlgorithm,
+         sunnyStar,
+diff --git a/ManiaMapAnalyser by Leo_Black/metadata.txt b/ManiaMapAnalyser by Leo_Black/metadata.txt
+index 4c3f917..385aec5 100644
+--- a/ManiaMapAnalyser by Leo_Black/metadata.txt	
++++ b/ManiaMapAnalyser by Leo_Black/metadata.txt	
+@@ -1,8 +1,8 @@
+ Usecase: ingame, obs-overlay
+-Name: ManiaMapAnalyser
++Name: DCR Reform
+ Author: Leo_Black
+ CompatibleWith: tosu
+ Resolution: 520x680
+ Version: 2.1.0
+ authorLinks: https://github.com/LeoBlackMT/osumania_map_analyser
+-Notes: Real-time osu!mania overlay for tosu that estimates difficulty, analyzes Pattern/MSD, and visualizes graph + pause data for 4K, 6K, and 7K maps.
+\ No newline at end of file
++Notes: Reform Dan difficulty for osu!mania 4K using Sunny, DCR, and CM3P_ext. Based on ManiaMapAnalyser by Leo_Black.
+\ No newline at end of file
+diff --git a/ManiaMapAnalyser by Leo_Black/settings.json b/ManiaMapAnalyser by Leo_Black/settings.json
+index 0800132..8a4c545 100644
+--- a/ManiaMapAnalyser by Leo_Black/settings.json	
++++ b/ManiaMapAnalyser by Leo_Black/settings.json	
+@@ -368,15 +368,8 @@
+ 		"type": "options",
+ 		"title": "Estimator Algorithm",
+ 		"description": "Select estimator algorithm.",
+-		"options": [
+-			"Mixed",
+-			"Azusa",
+-			"Roxy",
+-			"Sunny",
+-			"Daniel",
+-			"Companella"
+-		],
+-		"value": "Mixed"
++		"options": ["Sunny", "DCR", "CM3P_ext"],
++		"value": "Sunny"
+ 	},
+ 	{
+ 		"uniqueID": "etternaVersion",
+diff --git a/ManiaMapAnalyser by Leo_Black/styles/main.css b/ManiaMapAnalyser by Leo_Black/styles/main.css
+index 7f2f0e7..9a540c5 100644
+--- a/ManiaMapAnalyser by Leo_Black/styles/main.css	
++++ b/ManiaMapAnalyser by Leo_Black/styles/main.css	
+@@ -10,3 +10,22 @@
+ @import "./responsive.css";
+ @import "./theme.css";
+ @import "./osu-font.css";
++
++#reform-rating {
++    text-align: right;
++    color: inherit;
++    font-size: 0.8rem;
++}
++#reform-calculate {
++    margin-top: 0.2rem;
++    padding: 0.15rem 0.5rem;
++    border: 1px solid currentColor;
++    border-radius: 0.35rem;
++    background: transparent;
++    color: inherit;
++    cursor: pointer;
++}
++#reform-calculate:disabled {
++    opacity: 0.65;
++    cursor: wait;
++}

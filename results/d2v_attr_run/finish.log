@@ -1,0 +1,28 @@
+=== waiting for probe jobs 14114227,14114228 (Wed Nov 25 12:11:30 PM CST 2026)
+[wait] Wed Nov 25 12:11:30 PM CST 2026 active=2
+[wait] Wed Nov 25 12:13:31 PM CST 2026 active=2
+[wait] Wed Nov 25 12:15:32 PM CST 2026 active=1
+[wait] Wed Nov 25 12:17:32 PM CST 2026 active=1
+[wait] Wed Nov 25 12:19:33 PM CST 2026 active=1
+[wait] Wed Nov 25 12:21:34 PM CST 2026 active=1
+[wait] Wed Nov 25 12:23:35 PM CST 2026 active=1
+[wait] Wed Nov 25 12:25:35 PM CST 2026 active=1
+[wait] Wed Nov 25 12:27:36 PM CST 2026 active=1
+[wait] Wed Nov 25 12:29:37 PM CST 2026 active=1
+[wait] Wed Nov 25 12:31:37 PM CST 2026 active=1
+[wait] Wed Nov 25 12:33:38 PM CST 2026 active=1
+[wait] Wed Nov 25 12:35:39 PM CST 2026 active=1
+[wait] Wed Nov 25 12:37:40 PM CST 2026 active=1
+[wait] Wed Nov 25 12:39:40 PM CST 2026 active=1
+[wait] Wed Nov 25 12:41:41 PM CST 2026 active=1
+[wait] Wed Nov 25 12:43:42 PM CST 2026 active=1
+[wait] Wed Nov 25 12:45:42 PM CST 2026 active=0 streak=1
+[wait] Wed Nov 25 12:47:13 PM CST 2026 active=0 streak=2
+=== collecting (Wed Nov 25 12:47:13 PM CST 2026)
+14114227|d2v_attr_probe|COMPLETED|0:0|01:03:00
+14114227.batch|batch|COMPLETED|0:0|01:03:00
+14114227.extern|extern|COMPLETED|0:0|01:03:00
+14114228|d2v_attr_probe|FAILED|1:0|00:03:40
+14114228.batch|batch|FAILED|1:0|00:03:40
+14114228.extern|extern|COMPLETED|0:0|00:03:40
+=== DONE Wed Nov 25 12:47:26 PM CST 2026

@@ -1,0 +1,126 @@
+{
+  "task": "attribute decodability (C4)",
+  "model": "sklearn.RidgeCV(alpha by GCV on train charts)",
+  "alphas_grid": [
+    0.1,
+    1.0,
+    10.0,
+    100.0,
+    1000.0,
+    10000.0
+  ],
+  "n_train_charts": 3835,
+  "n_test_charts": 1627,
+  "targets": {
+    "log1p_n_sv_changes": {
+      "n_train": 3835,
+      "n_test": 1627,
+      "target_mean": 1.2834622158391227,
+      "target_std": 1.3762860766847085,
+      "ridge_alpha": 1.0,
+      "r2_train": 0.8549876251755317,
+      "r2_test": 0.7298546338593728,
+      "pearson_test": 0.8624659266472212,
+      "test_mean_predictor_r2": -3.239481805028532e-05,
+      "test_pred_std": 1.4265212277350343
+    },
+    "kiai_frac": {
+      "n_train": 3835,
+      "n_test": 1627,
+      "target_mean": 0.44068277160448444,
+      "target_std": 0.30199237883342755,
+      "ridge_alpha": 1.0,
+      "r2_train": 0.8177664256401566,
+      "r2_test": 0.6750627239181084,
+      "pearson_test": 0.8239029526349123,
+      "test_mean_predictor_r2": -0.00237062899899132,
+      "test_pred_std": 0.27430330039609546
+    },
+    "log2_bpm_p50": {
+      "n_train": 3835,
+      "n_test": 1627,
+      "target_mean": 7.381976195422706,
+      "target_std": 0.3625561733159136,
+      "ridge_alpha": 10.0,
+      "r2_train": 0.9263281304551975,
+      "r2_test": 0.8757180654731826,
+      "pearson_test": 0.9364469905932177,
+      "test_mean_predictor_r2": -0.0002582617675943588,
+      "test_pred_std": 0.3646695368560488
+    },
+    "hold_frac_gt1s": {
+      "n_train": 3835,
+      "n_test": 1627,
+      "target_mean": 0.06867899958741001,
+      "target_std": 0.14952112080936503,
+      "ridge_alpha": 10.0,
+      "r2_train": 0.4451750372532657,
+      "r2_test": 0.3411001859186248,
+      "pearson_test": 0.599806308929625,
+      "test_mean_predictor_r2": -0.003114413950787487,
+      "test_pred_std": 0.09748231584965251
+    },
+    "vol_resolved_p50": {
+      "n_train": 3835,
+      "n_test": 1627,
+      "target_mean": 49.19087353324642,
+      "target_std": 19.653068410127684,
+      "ridge_alpha": 10.0,
+      "r2_train": 0.3206722005288263,
+      "r2_test": 0.04927131216223546,
+      "pearson_test": 0.30017031590758125,
+      "test_mean_predictor_r2": -0.0004584855692577605,
+      "test_pred_std": 10.579931197193769
+    },
+    "hs_any_ext_frac": {
+      "n_train": 3835,
+      "n_test": 1627,
+      "target_mean": 0.2132825064889332,
+      "target_std": 0.27323362166255205,
+      "ridge_alpha": 10.0,
+      "r2_train": 0.4277726662911716,
+      "r2_test": 0.28717694300072094,
+      "pearson_test": 0.5415970755582209,
+      "test_mean_predictor_r2": -0.0016117154602899308,
+      "test_pred_std": 0.16576172390376806
+    }
+  },
+  "manifest": {
+    "content_path": "data/processed/chart_content_d2v_a20d-mclean.parquet",
+    "content_dim": 512,
+    "n_charts": 5462,
+    "meta": "data/processed/beatmap_meta_full.csv",
+    "audit": "data/processed/d2v_attr_audit_per_chart.parquet",
+    "split": {
+      "n_charts": 5462,
+      "n_beatmapsets": 1699,
+      "n_train_charts": 3835,
+      "n_test_charts": 1627,
+      "n_train_sets": 1189,
+      "n_test_sets": 510,
+      "train_chart_frac": 0.7021237641889417,
+      "test_frac_requested": 0.3,
+      "seed": 0,
+      "split_unit": "beatmapset_id (set-disjoint)",
+      "rng": "numpy.random.default_rng(seed).permutation(unique set ids); first round(test_frac*n) -> test"
+    },
+    "standardisation": "content z-scored with train-chart mean/std; sd<1e-8 -> 1.0",
+    "n_near_constant_dims": 0,
+    "seed": 0,
+    "provenance": {
+      "host": "local",
+      "git_commit": "3d2562516d1c823ffd990143c78c30258e4ae5fc",
+      "content_md5": "f8319ce0bccfd194ff6ba474e965cb22",
+      "generated_at": "2026-11-25 12:48:51"
+    }
+  },
+  "target_names": [
+    "log1p_n_sv_changes",
+    "kiai_frac",
+    "log2_bpm_p50",
+    "hold_frac_gt1s",
+    "vol_resolved_p50",
+    "hs_any_ext_frac"
+  ],
+  "seconds": 1.5
+}

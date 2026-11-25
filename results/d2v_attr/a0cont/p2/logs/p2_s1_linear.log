@@ -1,0 +1,11 @@
+/hpc2hdd/home/aiaa4051_083/.conda/envs/DCR/bin/python scripts/step2_cm3p_rank.py --in data/processed/step1_1k_pairbest_p2_s1.parquet --content-path data/processed/chart_content_d2v_a0cont-1k.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 8 --name cm3p_linear --out-signals results/d2v_attr/a0cont/p2/p2/s1/signals/cm3p_linear.parquet --out-json results/d2v_attr/a0cont/p2/p2/s1/signals/cm3p_linear.json --chart-only --chart-folds 5 --chart-seed 0 --model linear --lam 1e-3
+
+[data] maps=6,828 (content coverage 100.0% of step1 maps) train_rows=76,735 test_rows=32,971
+[pairs] train 2,436,947 (6,109,185 comparisons) | test 759,376 (1,124,179)
+[val] 1019 fit players / 0 val players; fit pairs 2,436,947
+[chart-fold 0] charts=1384 rows=63,919 pairs=1,608,358 train_nll=0.56637
+[chart-fold 1] charts=1235 rows=59,497 pairs=1,531,482 train_nll=0.57006
+[chart-fold 2] charts=1399 rows=61,168 pairs=1,570,267 train_nll=0.56901
+[chart-fold 3] charts=1437 rows=60,366 pairs=1,521,118 train_nll=0.57122
+[chart-fold 4] charts=1373 rows=61,990 pairs=1,566,396 train_nll=0.56564
+[done] test_nll=0.58596 bits=0.1546 beta=0.742 -> cm3p_linear.parquet / cm3p_linear.json (305.1s)

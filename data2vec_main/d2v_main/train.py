@@ -23,6 +23,8 @@ from torch.utils.data import DataLoader
 from .charts import ChartStore
 from .config import dump_config, load_config
 from .data import ChartWindowDataset, collate_windows
+from .attributes import ChannelSpec
+from .checkpoint import load_model_state_expanded
 from .masking import mask_ratio, span_mask
 from .model import Data2VecModel, EMAState, cosine_lr
 from .utils import git_rev, human_time, jsonl_append, repo_root, resolve_device, seed_all
@@ -58,6 +60,14 @@ def parse_args(argv=None):
     ap.add_argument("--index-cache", default=None, help="path to chart_index JSON")
     ap.add_argument("--no-index-cache", action="store_true",
                     help="scan .osu files instead of using the persistent index")
+    ap.add_argument("--init-from", default=None,
+                    help="weights-only init (optionally expanding conv1); fresh schedule")
+    ap.add_argument("--expand-channels", action="store_true",
+                    help="zero-init new conv1 input columns when loading --init-from")
+    ap.add_argument("--total-steps", type=int, default=0,
+                    help="override LR-schedule horizon (default: steps_per_epoch * epochs)")
+    ap.add_argument("--conv1-new-lr-mult", type=float, default=1.0,
+                    help="gradient multiplier for conv1 columns beyond the first 8 (dead-channel escape)")
     return ap.parse_args(argv)
 
 
@@ -107,7 +117,30 @@ def main(argv=None) -> int:
                               args.index_cache, not args.no_index_cache)
     print(f"[data] train windows/epoch={len(ds)} steps/epoch={len(loader)}", flush=True)
 
+    spec = ChannelSpec.from_config(cfg)
     model = Data2VecModel(cfg).to(device)
+    assert int(model.conv.conv1.in_channels) == spec.n_channels, (
+        model.conv.conv1.in_channels, spec.n_channels)
+    print(f"[model] channels={spec.n_channels} groups={spec.groups} "
+          f"names={spec.names}", flush=True)
+    if float(args.conv1_new_lr_mult) != 1.0:
+        mult = float(args.conv1_new_lr_mult)
+        base_in = 8
+
+        def _scale_new_channels(grad):
+            if grad.shape[1] > base_in:
+                grad = grad.clone()
+                grad[:, base_in:, :] *= mult
+            return grad
+
+        model.conv.conv1.weight.register_hook(_scale_new_channels)
+        print(f"[model] conv1 new-channel grad multiplier={mult}", flush=True)
+    if args.init_from:
+        if args.resume:
+            raise SystemExit("--init-from and --resume are mutually exclusive")
+        init_ckpt = torch.load(args.init_from, map_location="cpu", weights_only=False)
+        info = load_model_state_expanded(model, init_ckpt, expand=bool(args.expand_channels))
+        print(f"[init] from {args.init_from}: {info}", flush=True)
     ema = EMAState(model.teacher, enabled=bool(t.get("ema_fp32", True)))
     print(f"[model] {model.parameter_count()} ema_fp32={ema.enabled}", flush=True)
     opt = torch.optim.AdamW(
@@ -115,8 +148,11 @@ def main(argv=None) -> int:
         lr=float(t["lr"]), weight_decay=float(t["weight_decay"]), betas=(0.9, 0.98),
     )
     steps_per_epoch = max(1, len(loader))
-    total_steps = steps_per_epoch * int(t["epochs"])
+    total_steps = (int(args.total_steps) if args.total_steps
+                   else steps_per_epoch * int(t["epochs"]))
     warmup = max(1, int(total_steps * float(t["warmup_ratio"])))
+    print(f"[schedule] steps_per_epoch={steps_per_epoch} total_steps={total_steps} "
+          f"warmup={warmup} init_from={args.init_from}", flush=True)
     start_step = 0
     if args.resume:
         ckpt = torch.load(args.resume, map_location="cpu", weights_only=False)
@@ -177,11 +213,20 @@ def main(argv=None) -> int:
                     tv = float(target.float().std(dim=0).mean())
                     pv = float(pred.float().std(dim=0).mean())
                     mr = float(mask_ratio(mask, valid_out))
+                chan_health = {}
+                if spec.n_channels > 8:
+                    w1 = model.conv.conv1.weight.detach().float()
+                    for g in spec.groups:
+                        if g == "base":
+                            continue
+                        sl = spec.slice_of(g)
+                        chan_health["w_" + g] = round(float(w1[:, sl, :].abs().mean()), 6)
                 rec = {
                     "step": step, "epoch": epoch, "loss": running / max(1, running_n),
                     "lr": lr, "ema": decay, "mask_ratio": mr,
                     "target_var": tv, "pred_var": pv,
                     "elapsed": round(time.time() - t0, 1),
+                    **chan_health,
                 }
                 print(json.dumps(rec), flush=True)
                 jsonl_append(out_dir / "metrics.jsonl", rec)

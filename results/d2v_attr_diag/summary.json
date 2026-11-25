@@ -1,0 +1,168 @@
+{
+  "generated_for": "D2V attribute-channel pre-experiment diagnostics (C1/C3/C4)",
+  "content_table": {
+    "path": "data/processed/chart_content_meta_summary.parquet",
+    "dim": 12,
+    "n_charts": 21949,
+    "contract": "beatmap_id/embedding/n_windows=1/checksum_ok=True/source=meta_summary/d2v_rev=n/a",
+    "builder": "scripts/build_meta_content.py"
+  },
+  "C1_meta_only_p2_rank": {
+    "command": "python3 scripts/step2_cm3p_rank.py --in data/processed/step1_1k_pairbest.parquet --content-path data/processed/chart_content_meta_summary.parquet --model linear --chart-only --chart-folds 5 --chart-seed 0 --threads 8 --out-signals results/d2v_attr_diag/meta_summary_p2_signals.parquet --out-json results/d2v_attr_diag/meta_summary_p2_rank.json",
+    "test_nll_per_instance": 0.6601820053643117,
+    "test_bits_saved": 0.04755869477677643,
+    "best_lam": 0.01,
+    "n_maps": 6828,
+    "n_test_comparisons": 1144617,
+    "rank_eval": {
+      "captured": 0.2528265197101423,
+      "ceiling_nll": 0.5627606402815476,
+      "pearson_bhat": 0.2924021813005822,
+      "rho_bhat": 0.3798174159931987,
+      "tau_bhat": 0.2711231318928717,
+      "per_player_lw_captured": 0.3145037036304569,
+      "per_player_macro_captured": 0.3022734216078701,
+      "per_player_median_captured": 0.3139130434782609,
+      "link_beta": 0.5759455475134163,
+      "json": "results/d2v_attr_diag/meta_summary_p2_rank_eval.json"
+    },
+    "lambda_sensitivity_test_nll": {
+      "1e-3": 0.6598505008225154,
+      "1e-2(default)": 0.6601820053643117,
+      "1e-1": 0.6639127969323092
+    },
+    "baselines_cited": {
+      "d2v8_content_p2_all_linear": {
+        "nll": 0.5863233059503207,
+        "captured": 0.8192860580665555,
+        "pearson_bhat": 0.5828767438780519,
+        "rho_bhat": 0.5313529112120606,
+        "source": "results/d2v_main/eval/p2_all_d2v.json; rank json results/d2v_main/p2_all_d2v_rank.json"
+      },
+      "cm3p_legacy_p2_linear": {
+        "nll": 0.61618,
+        "sd": 0.00293,
+        "source": "docs/cm3p_rank.md:493 (5-seed P2 runner); cited, not recomputed"
+      }
+    },
+    "delta_nll_vs_d2v8": 0.07385869941399104,
+    "delta_nll_vs_cm3p_legacy": 0.04400200536431176
+  },
+  "C3_mapper_probe_d2v8": {
+    "content_dim": 512,
+    "top_k_mappers": 50,
+    "n_classes": 50,
+    "n_train_charts": 5131,
+    "n_test_charts": 2049,
+    "min_train_charts_per_mapper": 56,
+    "max_train_charts_per_mapper": 219,
+    "chance_accuracy": 0.02,
+    "top1_accuracy_test": 0.23084431429965838,
+    "majority_baseline_test_accuracy": 0.04782820888238165,
+    "macro_f1_test": 0.20246365100179006,
+    "weighted_f1_test": 0.23133846099027242,
+    "top1_lift_over_majority": 0.18301610541727673,
+    "per_class_accuracy_mean": 0.21370757498139703,
+    "seed": 0,
+    "seconds": 21.2
+  },
+  "C3_mapper_probe_control_meta12": {
+    "content_dim": 12,
+    "top1_accuracy_test": 0.14592484138604198,
+    "majority_baseline_test_accuracy": 0.04782820888238165,
+    "macro_f1_test": 0.11078913527470323,
+    "seconds": 5.8
+  },
+  "C4_attr_decodability_d2v8": {
+    "model": "sklearn.RidgeCV(alpha by GCV on train charts)",
+    "n_train_charts": 15445,
+    "n_test_charts": 6504,
+    "targets": {
+      "log1p_n_sv_changes": {
+        "r2_test": 0.10664088910855074,
+        "r2_train": 0.21780898516397285,
+        "pearson_test": 0.34155003886821494,
+        "ridge_alpha": 10.0,
+        "test_mean_predictor_r2": -1.8329182083220985e-07
+      },
+      "kiai_frac": {
+        "r2_test": 0.07843188373439136,
+        "r2_train": 0.1927613640610849,
+        "pearson_test": 0.30473220797657435,
+        "ridge_alpha": 10.0,
+        "test_mean_predictor_r2": -0.003358175050419465
+      },
+      "log2_bpm_p50": {
+        "r2_test": 0.3827235152472328,
+        "r2_train": 0.41325658732223935,
+        "pearson_test": 0.61976085201735,
+        "ridge_alpha": 10.0,
+        "test_mean_predictor_r2": -0.00023107118510767855
+      },
+      "hold_frac_gt1s": {
+        "r2_test": 0.3255617094284906,
+        "r2_train": 0.3764494375739096,
+        "pearson_test": 0.5772671194635927,
+        "ridge_alpha": 10.0,
+        "test_mean_predictor_r2": -0.0033694805225663593
+      },
+      "vol_resolved_p50": {
+        "r2_test": 0.05424821699002691,
+        "r2_train": 0.17593107782831696,
+        "pearson_test": 0.2616116201681662,
+        "ridge_alpha": 10.0,
+        "test_mean_predictor_r2": -5.271392733185998e-05
+      },
+      "hs_any_ext_frac": {
+        "r2_test": 0.2954130490011152,
+        "r2_train": 0.35492422057624395,
+        "pearson_test": 0.5460666038705948,
+        "ridge_alpha": 10.0,
+        "test_mean_predictor_r2": -0.0006738035756086447
+      }
+    }
+  },
+  "C4_attr_decodability_control_meta12_tautological": {
+    "note": "targets are direct/redundant functions of the 12-d metadata summary; R2=1.0 is a pipeline sanity check, not a finding",
+    "targets": {
+      "log1p_n_sv_changes": 0.9999999999357942,
+      "kiai_frac": 0.9999999999521908,
+      "log2_bpm_p50": 0.9999999999511208,
+      "hold_frac_gt1s": 0.9999999999138917,
+      "vol_resolved_p50": 0.9999999999546779,
+      "hs_any_ext_frac": 0.9858236362112067
+    }
+  },
+  "split": {
+    "n_charts": 21949,
+    "n_beatmapsets": 6857,
+    "n_train_charts": 15445,
+    "n_test_charts": 6504,
+    "n_train_sets": 4800,
+    "n_test_sets": 2057,
+    "train_chart_frac": 0.7036767050890701,
+    "test_frac_requested": 0.3,
+    "seed": 0,
+    "split_unit": "beatmapset_id (set-disjoint)",
+    "rng": "numpy.random.default_rng(seed).permutation(unique set ids); first round(test_frac*n) -> test"
+  },
+  "files": [
+    "results/d2v_attr_diag/attr_decodability_d2v8.json",
+    "results/d2v_attr_diag/attr_decodability_meta12.json",
+    "results/d2v_attr_diag/logs/c1_meta_summary_lam0.001.log",
+    "results/d2v_attr_diag/logs/c1_meta_summary_lam0.1.log",
+    "results/d2v_attr_diag/logs/c1_meta_summary_p2.log",
+    "results/d2v_attr_diag/logs/c1_rank_eval.log",
+    "results/d2v_attr_diag/logs/c3c4_d2v8.log",
+    "results/d2v_attr_diag/logs/c3c4_meta12.log",
+    "results/d2v_attr_diag/mapper_probe_d2v8.json",
+    "results/d2v_attr_diag/mapper_probe_meta12.json",
+    "results/d2v_attr_diag/meta_summary_p2_rank.json",
+    "results/d2v_attr_diag/meta_summary_p2_rank_eval.json",
+    "results/d2v_attr_diag/meta_summary_p2_rank_lam0.001.json",
+    "results/d2v_attr_diag/meta_summary_p2_rank_lam0.1.json",
+    "results/d2v_attr_diag/meta_summary_p2_signals.parquet",
+    "results/d2v_attr_diag/meta_summary_p2_signals_lam0.001.parquet",
+    "results/d2v_attr_diag/meta_summary_p2_signals_lam0.1.parquet"
+  ]
+}

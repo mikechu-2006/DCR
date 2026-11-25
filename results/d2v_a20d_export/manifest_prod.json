@@ -1,0 +1,31 @@
+{
+ "artifact_scope": "product",
+ "json": "deploy/models/d2v_a20d_linear_extra.json",
+ "model": "results/benchmark/models/D2V_A20D_P_full.pt",
+ "pred": "results/benchmark/pred/D2V_A20D_P.parquet",
+ "eval_dir": "results/benchmark/eval_d2v_a20d_p",
+ "key": "D2V_A20D_P",
+ "content_full": {
+  "path": "data/processed/chart_content_d2v_a20d_prod.parquet",
+  "md5": "364dd9f6b44c047f1ff4bfd0f31899d9",
+  "sha256": "7b3d037ec014cbc8d41f1c7be6b8c0e62fd59729dfe58f828e2205aa9411762b"
+ },
+ "content_benchmark": {
+  "path": "data/processed/benchmark_content_d2v_a20d_prod.parquet",
+  "md5": "2b9b9cb07626bca99a1bebc704972c4b",
+  "sha256": "61c02a47cce10e53998884c56ed6a6ab38649315a875b63c0a7f858b77fcfb77"
+ },
+ "json_sha256": "a2d76a338eb7d7578b948daff542a25479d726ae8db30eb5c5c8a3260119ea10",
+ "model_sha256": "6d9625d0379a53cf2907b49c48d3be755d81f5649dc14426f191dee4ecbeadb7",
+ "n_benchmark_rows": 1382,
+ "max_abs_d_vs_pred": 3.8756473763612576e-07,
+ "mae_dan_in_sample": 0.39059918742585786,
+ "calibration_mae_in_sample": 0.3905979459166327,
+ "calibration_mae_oof": 0.42939040420500374,
+ "oof_mae_recomputed": 0.42939040420500374,
+ "model_id": "471bdaba847d36b2",
+ "content_md5": "364dd9f6b44c047f1ff4bfd0f31899d9",
+ "content_full_md5_matches_payload": true,
+ "n_train_rows": 453406,
+ "created": "2026-11-25"
+}

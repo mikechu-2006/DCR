@@ -1,0 +1,16 @@
+OMP: Warning #179: Function Can't set size of SHM failed:
+/home/mikechu/anaconda3/lib/python3.13/site-packages/joblib/_multiprocessing_helpers.py:44: UserWarning: [Errno 13] Permission denied.  joblib will operate in serial mode
+  warnings.warn("%s.  joblib will operate in serial mode" % (e,))
+[data] content=data/processed/chart_content_d2v_a12-1k.parquet n=6,828 dim=512 md5=7ef80ef5
+[split] set-disjoint: train 4,795 charts / 2,667 sets | test 2,033 charts / 1,143 sets
+[scale] standardised on train charts; 0 near-constant dims
+[C3] mapper top1=0.2420 (chance 0.0200, majority 0.0198) n_test=657 -> results/d2v_attr_diag/mapper_probe_a12.json (2.7s)
+[C4] attribute decodability (test R2):
+  log1p_n_sv_changes   R2= 0.1568  (train  0.2621, alpha=10, pearson= 0.4014)
+  kiai_frac            R2= 0.0669  (train  0.2655, alpha=10, pearson= 0.2953)
+  log2_bpm_p50         R2= 0.1618  (train  0.3997, alpha=10, pearson= 0.4575)
+  hold_frac_gt1s       R2= 0.1392  (train  0.3260, alpha=10, pearson= 0.4042)
+  vol_resolved_p50     R2= 0.0217  (train  0.2639, alpha=10, pearson= 0.2565)
+  hs_any_ext_frac      R2= 0.2414  (train  0.4166, alpha=10, pearson= 0.4985)
+  -> results/d2v_attr_diag/attr_decodability_a12.json (2.0s)
+[done] 5.0s

@@ -46,9 +46,13 @@ def _cluster_index(clusters: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return np.array([pos[int(c)] for c in clusters], dtype=np.int64), ids
 
 
+CACHE_VERSION = 2
+
+
 def _cache_key(map_ids: np.ndarray, seed: int, folds: int, min_l: int,
                n_rows: int, split: str, extra: str = "") -> str:
     h = hashlib.md5()
+    h.update(f"v{CACHE_VERSION}".encode())
     h.update(np.asarray(map_ids, dtype=np.int64).tobytes())
     for x in (seed, folds, min_l, n_rows, split):
         h.update(str(x).encode())
@@ -83,6 +87,8 @@ def _save_ceiling(path: Path, c: rm.Ceiling, map_ids: np.ndarray) -> None:
              b_full=c.b_full, fold_of_cluster=c.fold_of_cluster,
              nll_by_cluster=c.nll_by_cluster, n_by_cluster=c.n_by_cluster,
              map_ids=map_ids,
+             cluster_ids=(c.cluster_ids if c.cluster_ids is not None
+                          else np.zeros(0, dtype=np.int64)),
              rho_lw=c.rho["lw"], rho_macro=c.rho["macro"],
              rho_fisher=c.rho["fisher_l3"], rho_median=c.rho["median"],
              rho_values=c.rho["values"], rho_ls=c.rho["ls"],
@@ -112,7 +118,10 @@ def _load_ceiling(path: Path) -> rm.Ceiling:
                       n_by_cluster=z["n_by_cluster"],
                       n_clusters=int(z["n_clusters"]),
                       fold_of_cluster=z["fold_of_cluster"],
-                      seen_folds=seen_folds)
+                      seen_folds=seen_folds,
+                      cluster_ids=(z["cluster_ids"]
+                                   if "cluster_ids" in z.files else None),
+                      map_ids=z["map_ids"] if "map_ids" in z.files else None)
 
 
 def _jsonable(x):
@@ -371,6 +380,9 @@ def main() -> int:
             "ceiling_fit_rows": int(n_rows_total if fit_all else len(sub)),
             "ceiling_fit_maps": int(fit_n_items if fit_all else n_items),
             "ceiling_eval_rows": int(len(sub)),
+            "ceiling_cache": None if args.no_cache else str(cpath),
+            "ceiling_cluster_ids": _jsonable(ceil.cluster_ids)
+            if ceil.cluster_ids is not None else None,
             "link": {"kind": link.kind, "beta": float(link.beta),
                      **{k: _jsonable(v) for k, v in link.extra.items()}},
             "per_player": {k: pp[k] for k in ("lw", "macro", "fisher_l3",
@@ -429,6 +441,7 @@ def main() -> int:
         "signal_table": str(args.signal_table), "signals": signals,
         "min_l": args.min_l, "link": args.link, "knots": args.knots,
         "folds": args.folds, "bootstrap": args.bootstrap, "seed": args.seed,
+        "cache_version": CACHE_VERSION,
         "tag": args.tag, "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "metric": "pairwise Bradley-Terry NLL, cross-fitted ceiling",
     }, "signals": results}

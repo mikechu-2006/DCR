@@ -1,0 +1,61 @@
+{
+  "task": "mapper-ID probe (C3)",
+  "content_dim": 12,
+  "top_k_mappers": 50,
+  "n_classes": 50,
+  "n_train_charts": 5131,
+  "n_test_charts": 2049,
+  "min_train_charts_per_mapper": 56,
+  "max_train_charts_per_mapper": 219,
+  "chance_accuracy": 0.02,
+  "majority_class_train_charts": 219,
+  "top1_accuracy_test": 0.14592484138604198,
+  "top1_accuracy_lift_over_chance": 0.12592484138604199,
+  "majority_baseline_test_accuracy": 0.04782820888238165,
+  "top1_lift_over_majority": 0.09809663250366032,
+  "macro_f1_test": 0.11078913527470323,
+  "weighted_f1_test": 0.12326138839801891,
+  "per_class_accuracy_mean": 0.1303188302871304,
+  "model": {
+    "kind": "sklearn.LogisticRegression",
+    "solver": "lbfgs",
+    "max_iter": 200,
+    "C": 1.0,
+    "tol": 0.0001,
+    "n_iter": [
+      48
+    ],
+    "warnings": []
+  },
+  "seed": 0,
+  "manifest": {
+    "content_path": "data/processed/chart_content_meta_summary.parquet",
+    "content_dim": 12,
+    "n_charts": 21949,
+    "meta": "data/processed/beatmap_meta_full.csv",
+    "audit": "data/processed/d2v_attr_audit_per_chart.parquet",
+    "split": {
+      "n_charts": 21949,
+      "n_beatmapsets": 6857,
+      "n_train_charts": 15445,
+      "n_test_charts": 6504,
+      "n_train_sets": 4800,
+      "n_test_sets": 2057,
+      "train_chart_frac": 0.7036767050890701,
+      "test_frac_requested": 0.3,
+      "seed": 0,
+      "split_unit": "beatmapset_id (set-disjoint)",
+      "rng": "numpy.random.default_rng(seed).permutation(unique set ids); first round(test_frac*n) -> test"
+    },
+    "standardisation": "content z-scored with train-chart mean/std; sd<1e-8 -> 1.0",
+    "n_near_constant_dims": 0,
+    "seed": 0,
+    "provenance": {
+      "host": "local",
+      "git_commit": "3d2562516d1c823ffd990143c78c30258e4ae5fc",
+      "content_md5": "281e2787b7bcba0946d067f21087b402",
+      "generated_at": "2026-11-24 22:51:01"
+    }
+  },
+  "seconds": 5.8
+}

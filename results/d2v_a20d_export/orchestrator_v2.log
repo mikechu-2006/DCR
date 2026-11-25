@@ -1,0 +1,4 @@
+=== [1/4] sync small inputs (Wed Nov 25 05:12:14 PM CST 2026)
+[rsync] attempt 1 failed Wed Nov 25 05:12:14 PM CST 2026; sleep 60
+[rsync] attempt 2 failed Wed Nov 25 05:14:43 PM CST 2026; sleep 60
+[rsync] attempt 3 failed Wed Nov 25 05:16:28 PM CST 2026; sleep 60

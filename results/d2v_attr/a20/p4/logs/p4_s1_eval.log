@@ -1,0 +1,10 @@
+/hpc2hdd/home/aiaa4051_083/.conda/envs/DCR/bin/python scripts/step2_rank_eval.py --in data/processed/step1_1k_pairbest_p4_s1.parquet --signal-table results/d2v_attr/a20/p4/p4/s1/signals.parquet --signals cm3p_linear,cm3p_linear_extra,sunny_star,daniel_star,star --split test --ceiling-fit all --common-maps --strict-pairs --folds 2 --bootstrap 0 --seed 0 --cache-dir data/processed/rank_eval_cache --out results/d2v_attr/a20/p4/p4/s1/rank_eval.json
+
+[common-maps] 6,828 charts shared by 5 signals (signal table 6,828 -> 6,828 rows)
+[ceiling] fit b on all 109,706 rows / 6,828 charts; evaluate on test rows (17,569 rows)
+[    0.8s] cm3p_linear              nll=0.58839 ceil=0.55443 captured=0.7552 n=741,466/791,078 lw=+0.5031 macro=+0.4817 beta=0.8152
+[    1.4s] cm3p_linear_extra        nll=0.57957 ceil=0.55443 captured=0.8188 n=741,466/791,078 lw=+0.5245 macro=+0.5074 beta=0.8565
+[    2.0s] sunny_star               nll=0.63168 ceil=0.55443 captured=0.4431 n=741,466/791,078 lw=+0.5054 macro=+0.5100 beta=0.7316
+[    2.6s] daniel_star              nll=0.63034 ceil=0.55443 captured=0.4528 n=741,466/791,078 lw=+0.4966 macro=+0.5001 beta=0.7567
+[    3.2s] star                     nll=0.66221 ceil=0.55443 captured=0.2231 n=741,466/791,078 lw=+0.3249 macro=+0.3246 beta=0.4208
+wrote results/d2v_attr/a20/p4/p4/s1/rank_eval.json (3.2s)

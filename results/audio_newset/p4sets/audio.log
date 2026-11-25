@@ -1,0 +1,54 @@
+[07:19:15] === p4 seed 1 (6,819 charts) ===
+[07:19:15] p4 s1 linear: train
+[07:21:08] p4 s1 linear_extra: train
+[07:22:43] p4 s1 mlp: train
+[07:23:14] p4 s1 mlp_extra: train
+[07:23:45] p4 s1: signals 6819 charts x 7 cols (cm3p_linear, cm3p_linear_extra, cm3p_mlp_h64_L2, cm3p_mlp_extra, sunny_star, daniel_star, star) -> results/audio_newset/p4sets/audio/p4/s1/signals.parquet
+[07:23:45] p4 s1: eval
+[07:25:54] === p4 seed 2 (6,819 charts) ===
+[07:25:54] p4 s2 linear: train
+[07:27:21] p4 s2 linear_extra: train
+[07:29:03] p4 s2 mlp: train
+[07:29:24] p4 s2 mlp_extra: train
+[07:29:54] p4 s2: signals 6819 charts x 7 cols (cm3p_linear, cm3p_linear_extra, cm3p_mlp_h64_L2, cm3p_mlp_extra, sunny_star, daniel_star, star) -> results/audio_newset/p4sets/audio/p4/s2/signals.parquet
+[07:29:54] p4 s2: eval
+[07:32:00] === p4 seed 3 (6,819 charts) ===
+[07:32:00] p4 s3 linear: train
+[07:33:18] p4 s3 linear_extra: train
+[07:34:51] p4 s3 mlp: train
+[07:35:19] p4 s3 mlp_extra: train
+[07:35:48] p4 s3: signals 6819 charts x 7 cols (cm3p_linear, cm3p_linear_extra, cm3p_mlp_h64_L2, cm3p_mlp_extra, sunny_star, daniel_star, star) -> results/audio_newset/p4sets/audio/p4/s3/signals.parquet
+[07:35:48] p4 s3: eval
+[07:38:01] === p4 seed 4 (6,819 charts) ===
+[07:38:01] p4 s4 linear: train
+[07:39:31] p4 s4 linear_extra: train
+[07:41:01] p4 s4 mlp: train
+[07:41:22] p4 s4 mlp_extra: train
+[07:41:52] p4 s4: signals 6819 charts x 7 cols (cm3p_linear, cm3p_linear_extra, cm3p_mlp_h64_L2, cm3p_mlp_extra, sunny_star, daniel_star, star) -> results/audio_newset/p4sets/audio/p4/s4/signals.parquet
+[07:41:52] p4 s4: eval
+[07:44:04] === p4 seed 5 (6,819 charts) ===
+[07:44:04] p4 s5 linear: train
+[07:45:28] p4 s5 linear_extra: train
+[07:46:45] p4 s5 mlp: train
+[07:47:19] p4 s5 mlp_extra: train
+[07:47:48] p4 s5: signals 6819 charts x 7 cols (cm3p_linear, cm3p_linear_extra, cm3p_mlp_h64_L2, cm3p_mlp_extra, sunny_star, daniel_star, star) -> results/audio_newset/p4sets/audio/p4/s5/signals.parquet
+[07:47:48] p4 s5: eval
+[07:49:52] aggregate -> results/audio_newset/p4sets/audio/summary.csv / summary_mean_std.csv / summary.md
+# P2 / P4 multi-seed summary
+
+Seeds are train/test split seeds; model seed is fixed at 0.
+
+## P4（新玩家 + 新 chart，6×6 / 4×4）
+
+ceiling NLL = 0.55947 ± 0.01429 （5 seeds）
+
+| 方法 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|
+| CM3P + external 线性 | 0.58285 ± 0.00787 | 0.5686 ± 0.0110 | 0.5429 ± 0.0179 |
+| CM3P + external MLP | 0.58012 ± 0.00730 | 0.5810 ± 0.0123 | 0.5499 ± 0.0204 |
+| CM3P 线性 (λ1e-3) | 0.62110 ± 0.00732 | 0.5131 ± 0.0194 | 0.4765 ± 0.0246 |
+| CM3P MLP h64 L2 | 0.62112 ± 0.00582 | 0.5162 ± 0.0165 | 0.4865 ± 0.0303 |
+| Sunny | 0.63284 ± 0.00768 | 0.2823 ± 0.0442 | 0.3117 ± 0.0417 |
+| Daniel | 0.63094 ± 0.00691 | 0.2853 ± 0.0439 | 0.3155 ± 0.0424 |
+| star | 0.66922 ± 0.00668 | 0.2351 ± 0.0504 | 0.2664 ± 0.0417 |
+

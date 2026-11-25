@@ -1,0 +1,72 @@
+=== [1/6] waiting for HPC chart index cache (Tue Nov 24 10:54:38 PM CST 2026)
+=== cache ready (Tue Nov 24 11:01:30 PM CST 2026)
+=== [2/6] submitting Protocol S continuation runs (Tue Nov 24 11:01:30 PM CST 2026)
+[S-train] ARM=a0cont job=14101480
+[S-train] ARM=a12 job=14101481
+[S-train] ARM=a20 job=14101483
+[S-train] ARM=a27 job=14101484
+=== submitting Protocol D from-scratch runs (Tue Nov 24 11:01:32 PM CST 2026)
+[D-train] ARM=a0d job=14101485
+[D-train] ARM=a12d job=14101486
+[D-train] ARM=a20d job=14101487
+[D-train] ARM=a27d job=14101488
+=== [3/6] submitting extraction jobs (Tue Nov 24 11:01:35 PM CST 2026)
+[S-extract] job=14101489
+[D-extract] job=14101490
+=== [4/6] submitting CPU probe jobs (Tue Nov 24 11:01:36 PM CST 2026)
+[S-probe] job=14101491
+[D-probe] job=14101495
+=== submitted jobs:
+protocol_s_train:  14101480 14101481 14101483 14101484
+protocol_d_train:  14101485 14101486 14101487 14101488
+extract_s: 14101489
+extract_d: 14101490
+probe_s: 14101491
+probe_d: 14101495
+=== [5/6] monitoring jobs until the queue is empty (Tue Nov 24 11:01:37 PM CST 2026)
+[monitor] Tue Nov 24 11:01:38 PM CST 2026 tracked_remaining=12
+[monitor] Tue Nov 24 11:03:39 PM CST 2026 tracked_remaining=12
+[monitor] Tue Nov 24 11:05:40 PM CST 2026 tracked_remaining=12
+[monitor] Tue Nov 24 11:07:40 PM CST 2026 tracked_remaining=11
+[monitor] Tue Nov 24 11:09:41 PM CST 2026 tracked_remaining=7
+[monitor] Tue Nov 24 11:11:42 PM CST 2026 tracked_remaining=6
+[monitor] Tue Nov 24 11:13:43 PM CST 2026 tracked_remaining=6
+[monitor] Tue Nov 24 11:15:44 PM CST 2026 tracked_remaining=6
+[monitor] Tue Nov 24 11:17:45 PM CST 2026 tracked_remaining=6
+[monitor] Tue Nov 24 11:19:46 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:21:46 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:23:47 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:25:48 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:27:48 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:29:49 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:31:50 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:33:51 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:35:51 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:37:52 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:39:53 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:41:54 PM CST 2026 tracked_remaining=5
+[monitor] Tue Nov 24 11:43:55 PM CST 2026 tracked_remaining=4
+[monitor] Tue Nov 24 11:45:55 PM CST 2026 tracked_remaining=4
+[monitor] Tue Nov 24 11:47:56 PM CST 2026 tracked_remaining=4
+[monitor] Tue Nov 24 11:49:57 PM CST 2026 tracked_remaining=4
+[monitor] Tue Nov 24 11:51:58 PM CST 2026 tracked_remaining=4
+[monitor] Tue Nov 24 11:53:59 PM CST 2026 tracked_remaining=4
+[monitor] Tue Nov 24 11:56:00 PM CST 2026 tracked_remaining=4
+[monitor] Tue Nov 24 11:58:01 PM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:00:02 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:02:03 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:04:03 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:06:04 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:08:05 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:10:06 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:12:06 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:14:07 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:16:08 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:26:55 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:28:56 AM CST 2026 tracked_remaining=4
+[monitor] Wed Nov 25 12:30:57 AM CST 2026 tracked_remaining=4
+=== monitor timeout after 9h
+=== [6/6] collecting accounting and results (Wed Nov 25 09:02:37 AM CST 2026)
+ssh: Could not resolve hostname hpc2login.hpc.hkust-gz.edu.cn: Temporary failure in name resolution
+=== sacct:
+=== DONE Wed Nov 25 09:02:38 AM CST 2026

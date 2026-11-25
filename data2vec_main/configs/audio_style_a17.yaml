@@ -1,0 +1,48 @@
+seed: 0
+
+data:
+  osu_dir: data/osu_cache
+  ids_file: null
+  window_sec: 16.0
+  frame_hz: 100
+  gaussian_sigma_ms: 8.0
+  min_valid_sec: 1.0
+  channels:
+    version: attr_v1
+    groups:
+      release: {}
+      tempo:
+        bpm: true
+        beat_phase: sin_cos
+        bar_phase: sin_cos
+
+model:
+  in_channels: 17
+  conv_hidden: 256
+  dim: 512
+  layers: 12
+  heads: 8
+  ff_mult: 4
+  dropout: 0.1
+  top_k: 6
+  mask_prob: 0.065
+  mask_length: 10
+  loss_beta: 1.0
+  max_frames: 4096
+
+train:
+  batch_size: 16
+  lr: 1.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  epochs: 20
+  grad_clip: 1.0
+  ema_start: 0.999
+  ema_end: 0.9999
+  ema_anneal_steps: 30000
+  ema_fp32: true
+  log_every: 50
+  save_every: 2000
+  num_workers: 4
+  amp: true
+  device: auto

@@ -1,0 +1,63 @@
+{
+  "task": "mapper-ID probe (C3)",
+  "content_dim": 512,
+  "top_k_mappers": 50,
+  "n_classes": 50,
+  "n_train_charts": 1371,
+  "n_test_charts": 470,
+  "min_train_charts_per_mapper": 17,
+  "max_train_charts_per_mapper": 77,
+  "chance_accuracy": 0.02,
+  "majority_class_train_charts": 77,
+  "top1_accuracy_test": 0.14468085106382977,
+  "top1_accuracy_lift_over_chance": 0.12468085106382977,
+  "majority_baseline_test_accuracy": 0.04042553191489362,
+  "top1_lift_over_majority": 0.10425531914893615,
+  "macro_f1_test": 0.12884646559199564,
+  "weighted_f1_test": 0.1450799745598553,
+  "per_class_accuracy_mean": 0.14022786257666528,
+  "model": {
+    "kind": "sklearn.LogisticRegression",
+    "solver": "lbfgs",
+    "max_iter": 200,
+    "C": 1.0,
+    "tol": 0.0001,
+    "n_iter": [
+      200
+    ],
+    "warnings": [
+      "lbfgs failed to converge after 200 iteration(s) (status=1):\nSTOP: TOTAL NO. OF ITERATIONS REACHED LIMIT\n\nIncrease the number of iterations to improve the convergence (max_iter=200).\nYou might also want to scale the data as shown in:\n    https://scikit-learn.org/stable/modules/preprocessing.html\nPlease also refer to the documentation for alternative solver options:\n    https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression"
+    ]
+  },
+  "seed": 0,
+  "manifest": {
+    "content_path": "data/processed/chart_content_d2v_a17d-mclean.parquet",
+    "content_dim": 512,
+    "n_charts": 5462,
+    "meta": "data/processed/beatmap_meta_full.csv",
+    "audit": "data/processed/d2v_attr_audit_per_chart.parquet",
+    "split": {
+      "n_charts": 5462,
+      "n_beatmapsets": 1699,
+      "n_train_charts": 3835,
+      "n_test_charts": 1627,
+      "n_train_sets": 1189,
+      "n_test_sets": 510,
+      "train_chart_frac": 0.7021237641889417,
+      "test_frac_requested": 0.3,
+      "seed": 0,
+      "split_unit": "beatmapset_id (set-disjoint)",
+      "rng": "numpy.random.default_rng(seed).permutation(unique set ids); first round(test_frac*n) -> test"
+    },
+    "standardisation": "content z-scored with train-chart mean/std; sd<1e-8 -> 1.0",
+    "n_near_constant_dims": 0,
+    "seed": 0,
+    "provenance": {
+      "host": "local",
+      "git_commit": "3d2562516d1c823ffd990143c78c30258e4ae5fc",
+      "content_md5": "4ccc055765bac2ea2b4e9a0daf6b1aa5",
+      "generated_at": "2026-11-25 19:52:36"
+    }
+  },
+  "seconds": 3.0
+}

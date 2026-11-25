@@ -1,0 +1,38 @@
+=== [0/5] local full-cache parser scan (Wed Nov 25 09:16:54 AM CST 2026)
+OMP: Warning #179: Function Can't set size of SHM failed:
+scan 5000 bad 0 elapsed 161.4
+scan 10000 bad 0 elapsed 309.8
+scan 15000 bad 0 elapsed 440.7
+scan 20000 bad 0 elapsed 569.1
+SCAN_RESULT checked=21949 bad=0 elapsed=614.2
+=== local scan clean (Wed Nov 25 09:27:09 AM CST 2026)
+=== [1/5] cancelling stale attempt-2 jobs (Wed Nov 25 09:27:09 AM CST 2026)
+=== [2/5] syncing fixed code (Wed Nov 25 09:27:10 AM CST 2026)
+=== [3/5] submitting training jobs (Wed Nov 25 09:27:11 AM CST 2026)
+[S-train] a12 job=14114218
+[S-train] a20 job=14114219
+[S-train] a27 job=14114220
+[D-train] a12d job=14114221
+[D-train] a20d job=14114223
+[D-train] a27d job=14114224
+=== [4/5] submitting extraction + probes (Wed Nov 25 09:27:15 AM CST 2026)
+[S-extract] 14114225
+[D-extract] 14114226
+[S-probe] 14114227
+[D-probe] 14114228
+=== submitted:
+protocol_s_train:  14114218 14114219 14114220
+protocol_d_train:  14114221 14114223 14114224
+extract_s: 14114225
+extract_d: 14114226
+probe_s: 14114227
+probe_d: 14114228
+=== [5/5] monitoring (Wed Nov 25 09:27:18 AM CST 2026)
+[monitor] Wed Nov 25 09:27:18 AM CST 2026 active=10
+[monitor] Wed Nov 25 09:29:19 AM CST 2026 active=10
+[monitor] Wed Nov 25 09:31:20 AM CST 2026 active=10
+[monitor] Wed Nov 25 09:33:21 AM CST 2026 active=10
+[monitor] Wed Nov 25 09:35:21 AM CST 2026 active=10
+[monitor] Wed Nov 25 09:37:22 AM CST 2026 active=10
+[monitor] Wed Nov 25 09:39:23 AM CST 2026 active=10
+[monitor] Wed Nov 25 09:41:24 AM CST 2026 active=10

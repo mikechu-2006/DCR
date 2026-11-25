@@ -1,0 +1,12 @@
+/hpc2hdd/home/aiaa3111_l01_066/.conda/envs/DCR/bin/python scripts/step2_rank_eval.py --in data/processed/step1_mclean25_p4sets_cached_s1.parquet --signal-table results/d2v_attr_d_cached/a17d/setp4/p4/s1/signals.parquet --signals cm3p_linear,cm3p_linear_extra,sunny_star,daniel_star,star --split test --ceiling-fit all --common-maps --strict-pairs --folds 2 --bootstrap 0 --seed 0 --cache-dir data/processed/rank_eval_cache --out results/d2v_attr_d_cached/a17d/setp4/p4/s1/rank_eval.json
+
+/hpc2hdd/home/aiaa3111_l01_066/DCR/scripts/step2_rank_eval.py:192: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.
+  sig["beatmap_id"] = sig["beatmap_id"].astype(step1["beatmap_id"].dtype, copy=False)
+[common-maps] 5,204 charts shared by 5 signals (signal table 5,204 -> 5,204 rows)
+[ceiling] fit b on all 468,646 rows / 5,204 charts; evaluate on test rows (79,551 rows)
+[   97.3s] cm3p_linear              nll=0.59892 ceil=0.52448 captured=0.5586 n=1,153,456/1,155,915 lw=+0.4659 macro=+0.4517 beta=0.6608
+[  101.5s] cm3p_linear_extra        nll=0.58704 ceil=0.52448 captured=0.6291 n=1,153,456/1,155,915 lw=+0.5031 macro=+0.4899 beta=0.8221
+[  105.6s] sunny_star               nll=0.61090 ceil=0.52448 captured=0.4876 n=1,153,456/1,155,915 lw=+0.5258 macro=+0.5243 beta=1.159
+[  109.8s] daniel_star              nll=0.62272 ceil=0.52448 captured=0.4176 n=1,153,456/1,155,915 lw=+0.4792 macro=+0.4696 beta=1.103
+[  114.0s] star                     nll=0.64639 ceil=0.52448 captured=0.2772 n=1,153,456/1,155,915 lw=+0.3720 macro=+0.3674 beta=0.7225
+wrote results/d2v_attr_d_cached/a17d/setp4/p4/s1/rank_eval.json (114.0s)

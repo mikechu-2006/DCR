@@ -1,0 +1,12 @@
+/hpc2hdd/home/aiaa4051_083/.conda/envs/DCR/bin/python scripts/step2_rank_eval.py --in data/processed/step1_mclean25_p4sets_cached_s1.parquet --signal-table results/d2v_attr_d_cached/cm3p_legacy/setp4/p4/s1/signals.parquet --signals cm3p_linear,cm3p_linear_extra,cm3p_mlp_h64_L2,cm3p_mlp_extra,sunny_star,daniel_star,star --split test --ceiling-fit all --common-maps --strict-pairs --folds 2 --bootstrap 0 --seed 0 --cache-dir data/processed/rank_eval_cache --out results/d2v_attr_d_cached/cm3p_legacy/setp4/p4/s1/rank_eval.json
+
+[common-maps] 5,204 charts shared by 7 signals (signal table 5,204 -> 5,204 rows)
+[ceiling] fit b on all 468,646 rows / 5,204 charts; evaluate on test rows (79,551 rows)
+[    4.5s] cm3p_linear              nll=0.61804 ceil=0.52448 captured=0.4453 n=1,153,456/1,155,915 lw=+0.4328 macro=+0.4171 beta=0.6663
+[    8.6s] cm3p_linear_extra        nll=0.58889 ceil=0.52448 captured=0.6181 n=1,153,456/1,155,915 lw=+0.5200 macro=+0.5086 beta=0.9604
+[   12.8s] cm3p_mlp_h64_L2          nll=0.61702 ceil=0.52448 captured=0.4513 n=1,153,456/1,155,915 lw=+0.4242 macro=+0.4083 beta=0.6038
+[   16.8s] cm3p_mlp_extra           nll=0.58696 ceil=0.52448 captured=0.6296 n=1,153,456/1,155,915 lw=+0.4941 macro=+0.4788 beta=0.7779
+[   21.0s] sunny_star               nll=0.61090 ceil=0.52448 captured=0.4876 n=1,153,456/1,155,915 lw=+0.5258 macro=+0.5243 beta=1.159
+[   25.1s] daniel_star              nll=0.62272 ceil=0.52448 captured=0.4176 n=1,153,456/1,155,915 lw=+0.4792 macro=+0.4696 beta=1.103
+[   29.2s] star                     nll=0.64639 ceil=0.52448 captured=0.2772 n=1,153,456/1,155,915 lw=+0.3720 macro=+0.3674 beta=0.7225
+wrote results/d2v_attr_d_cached/cm3p_legacy/setp4/p4/s1/rank_eval.json (29.2s)

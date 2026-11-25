@@ -1,31 +1,55 @@
 # 三个后续实验：具体方法论与执行计划
 
-> **状态：草案，等待确认；本文件不包含新的正式实验结果。**
+> **状态：草案 v3（2026-11-23，按你的最新回复更新）。**
+> 本文件不包含新的正式实验结果。
 > 目的：把旗舰模型提出的三个方向转成可执行、可预注册、可复现的实验；先钉死评价口径、
 > 数据构造、代码改动、判据与风险，再决定跑哪些格子。
 >
 > 本文件里的“预实验 / 只读核查”只用于验证口径和估算样本量，**不是结论**。
+> 已确认：四个数据集分别跑；加相关性；VSRG=benchmark；6×6 训练侧；
+> MLP+ext 与 linear_extra、P2/P4 都不分主次；全部 CPU 任务提交 HPC；
+> **Q3 用 A1（全部 pair）作字面实现，A2/A3 只作敏感性；Q7 因网络/磁盘限制不补
+> randommerge/full 音频，Experiment 2 只汇报 1k 结果。**
+>
+> **2026-11-24 执行更新：Experiment 1 已在 1k + randommerge 的 P4 5 seeds 上完成；
+> A1 没有稳定增益，机制是 n_plays=2 的重复标签/加权；10k/full 未跑。
+> 结果见 [docs/first2_aux_results.md](first2_aux_results.md)。**
+>
+> **2026-11-24 执行更新：Experiment 2 已完成（1k 6,819 图）。2a 与 2b 都通过：
+> 整 beatmapset 留出后 audio 仍 5/5 为负，external 线性 −0.01091、external MLP
+> −0.00581；跨 set 严格子集 −0.01138 / −0.00631。结论：audio 可迁移到新 set，
+> 不是主要同 set 泄漏；randommerge/full 因数据条件未补音频。
+> 结果见 [docs/audio_newset_results.md](audio_newset_results.md)。**
+>
+> **2026-11-24 执行更新：Experiment 3 已完成。P4-holdout 上 D2V 残差在 MLP 基线
+> 5/5 为负、5/5 CI<0（overall −0.00891，near −0.00932，LN −0.00862）；线性基线
+> 5/5 为负但 3/5 CI<0。P2 chart-disjoint 版本只有 1.07 万次比较，未确认（线性
+> −0.0037，MLP +0.0004）。结论：directional support；先做小规模列感知探针，
+> 不直接投入完整四列编码器。结果见 [docs/d2v_residual_results.md](d2v_residual_results.md)。**
 
 ---
 
 ## 执行摘要
 
 1. **Experiment 1（first2 辅助训练）**：只改训练信号，不改 test 标签/测试对/ceiling；
-   主指标仍是历史最佳 rank-NLL。用 randommerge P2/P4 5 seeds 做主判据，1k 作稳健性；
-   VSRG Dan MAE 作为 second gate。已复现 17.2% 的标签反转，且反转率随练习机会上升。
+   主指标仍是历史最佳 rank-NLL。**1k / 10k / randommerge / full 四个数据集分别跑**，
+   每个都做 P2/P4 5 seeds；相关性与 ΔNLL 一起报，VSRG benchmark 作 second gate。
+   已复现 17.2% 的标签反转，且反转率随练习机会上升。
 2. **Experiment 2（整 set 留出）**：先用现成 audio/legacy 预测做 2a（只读），再做按
    `beatmapset_id` 分组的 P4（2b）。2a 预实验显示新 set 子集的 audio 增益没有系统性
    缩小（覆盖率 10.8–18.2%，5/5 seed 为负）；2b 是干净检验，模拟有 ~92 万次 test 比较。
    只有 2b 通过，才值得为 randommerge/full 补 ~1.4 万张图的音频。
-3. **Experiment 3（D2V 残差）**：在 1,365 张编码器未见图上重训 legacy 强基线，用训练内
+3. **Experiment 3（D2V 残差）**：在 1,365 张编码器未见图上重训 legacy 强基线；**MLP+ext
+   与 linear_extra 同等对待，P2-holdout 与 P4-holdout 同等对待**，不预设主次。用训练内
    5 折 OOF 基线分数拟合带正则的 D2V 线性修正；并排看整体、近分对、长押图，随机/打乱
    512d 作负对照。P2-holdout 54,721 次比较、P4-holdout 31,962 次；只能可靠检测
    ~0.005–0.01 的效应。
-4. **主要成本**：Experiment 1/2/3 的 minimal 版本全部 CPU；randommerge 全量 fit 和 VSRG
-   在 HPC CPU；只有 Experiment 2 通过后的音频编码需要 GPU/抓音频工程。
-5. **需要先确认**：Q1（评价口径是否保持历史最佳）、Q2（randommerge vs 1k/full）、
-   Q3（辅助损失范围）、Q4/Q5（VSRG 的含义与 gate）、Q6（训练侧定义）、Q7（audio 阈值）、
-   Q8（Experiment 3 基线/口径）。其余问题有默认值，可先跑。
+4. **执行方式**：所有 CPU 任务（包括标签构造、split 生成、训练、评测、汇总）全部提交
+   HPC 并行；本地只做代码修改和结果阅读。只有 Experiment 2 通过后的音频编码需要
+   GPU/抓音频工程。
+5. **已确认**：Q1 保持历史最佳主指标 + 加相关性；Q2 四个数据集分别跑；Q4/Q5 VSRG =
+   benchmark；Q6 训练侧只算 6×6；Q8 MLP+ext 与 linear_extra 都跑、P2/P4 不分主次。
+   **仍需确认**：Q3（辅助损失范围）、Q7（audio 阈值）；其余按默认。
 
 ---
 
@@ -40,6 +64,8 @@
   `d_m` 越高越难；评测入口 `scripts/step2_rank_eval.py`；
 * 模型比较：同一 test pair 集上的 **paired ΔNLL**，按 `player_id_base` 聚类做
   cluster bootstrap（`scripts/paired_delta_nll.py`）；
+* **相关性系数（与 ΔNLL 并列报）**：Pearson(d,b)、Spearman(d,b)、逐玩家
+  lw/macro Spearman；每个数据集 × 协议 × 方法都要有这张表；
 * 划分：P2（新 chart，5 折 chart-disjoint）与 P4（新玩家 + 新 chart，6×6 / 4×4），
   各 5 个 split seed；模型 seed 固定 0；
 * test 标签：历史最佳 `loss = log(1 - ACC_best)`，不因任何新实验改标签、改筛选、改 ceiling。
@@ -181,8 +207,24 @@ Experiment 3 只能可靠检测 ~0.005–0.01 nats 量级的近分对效应**，
 | randommerge | 20,388 | 6,710 | 13,678 | 32.9% |
 | full | 20,832 | 6,819 | 14,013 | 32.7% |
 
-**含义**：如果 §2 的整 set 留出 P4 通过，补音频不是“顺手跑一下”，而是约 1.4 万张图的
-抓音频 + CM3P audio-on 编码工程；必须先过 §2.4 的判据再投入。
+**数据边界（已确认）**：randommerge/full 补音频在现条件下不可行（网络/磁盘限制），
+所以 Experiment 2 **只覆盖 1k 的 6,819 图**，不把“补 randommerge/full 音频”作为行动。
+这张表只用于说明为什么不能把 1k 结论外推到 full。
+
+### 0.5 四个数据集的 split 现状（Experiment 1 要分别跑）
+
+| 数据集 | pair 行 | 图 | P2 5 seeds | P4 5 seeds | first2 的 step0 |
+|---|---:|---:|---|---|---|
+| 1k | 109,706 | 6,828 | 已有 | 已有 | `step0_1k.csv` |
+| 10k | 1,513,746 | 16,061 | **需生成** | **需生成** | `step0_10k.parquet` |
+| randommerge | 453,406 | 20,388 | 已有 | 已有 | `step0_randommerge.parquet` |
+| full | 1,898,076 | 20,832 | **需生成** | **需生成** | `step0_full.parquet` |
+
+* 1k 用 canonical 6,828（`step1_1k_pairbest.parquet`）；**不要**和 audio 的 6,819
+  `_nogap` 表混用。两条线的结论分开写。
+* 10k / full 的 P2/P4 split 用现有脚本生成：`step1_pairbest_resplit.py`（P2）、
+  `step1_p4_split.py`（P4），seeds 1–5，与 1k/randommerge 同协议。
+* 10k / full 的 P4 行数分别是 ~1.5M / ~1.9M；一次只跑一个 seed，避免单进程内存峰值。
 
 ---
 
@@ -209,6 +251,9 @@ Experiment 3 只能可靠检测 ~0.005–0.01 nats 量级的近分对效应**，
 
 **可证伪点**：如果 A1（first2 辅助）相对 A0 的 paired ΔNLL 不为负，或 A4（random-2）/
 A6（打乱 first2）与 A1 同样好，则 H1 不成立。
+
+**判据**：按原计划，A1 是主实验；A2/A3 是敏感性；A4/A5/A6 是控制。最终看 A1 相对
+A0 的 paired ΔNLL 与相关性是否提升；如果没有提升，就是否定的答案，不需要额外实验。
 
 ### 1.2 为什么不是“换标签评价”
 
@@ -240,13 +285,18 @@ A6（打乱 first2）与 A1 同样好，则 H1 不成立。
    * `n_plays == 2` 时 `loss_hist == loss_first2`；
    * 不因 first2 的 ACC 重新过滤 pair（A1 主实验保留全部；A3 只 mask 辅助损失）。
 
-**数据选择**：
+**数据选择：四个数据集分别跑，不设“主数据集”**。
 
-| 数据集 | step0 | step1 | 用途 |
-|---|---|---|---|
-| randommerge | `data/processed/step0_randommerge.parquet` | `step1_randommerge_pairbest_content.parquet` | **主实验**（17.2% 在这里测的；453k 对） |
-| 1k nogap | `data/processed/step0_1k_nogap.csv` | `step1_1k_pairbest_nogap.parquet` | 稳健性 / 与 audio 口径一致（6,819 图；若要与 6,828 的旧 1k 表比，另跑 6,828 版本） |
-| full | `data/processed/step0_full.parquet` | `step1_full_pairbest_content.parquet` | 只有 randommerge 通过后才跑 |
+| 数据集 | step0 | step1 | P2/P4 | 备注 |
+|---|---|---|---|---|
+| 1k | `data/processed/step0_1k.csv` | `step1_1k_pairbest.parquet` | 已有 | canonical 6,828；不要用 6,819 的 `_nogap` |
+| 10k | `data/processed/step0_10k.parquet` | `step1_10k_pairbest.parquet` | **需生成** | 16,061 图 / 1.5M 对 |
+| randommerge | `data/processed/step0_randommerge.parquet` | `step1_randommerge_pairbest_content.parquet` | 已有 | 20,388 图 / 453k 对 |
+| full | `data/processed/step0_full.parquet` | `step1_full_pairbest_content.parquet` | **需生成** | 20,832 图 / 1.9M 对 |
+
+* 四个数据集各出各的 P2/P4 表；**不合并、不跨数据集比较绝对 NLL**。
+* 10k/full 的 split 生成是 Stage 0 的一部分（§4）。
+* first2 标签脚本对四个数据集用同一实现；只换 `--step0` / `--pairs`。
 
 **产物**：`data/processed/step1_{tag}_first2.parquet`，在 step1 原列上增加：
 
@@ -257,11 +307,14 @@ A6（打乱 first2）与 A1 同样好，则 H1 不成立。
 
 ### 1.4 模型与训练目标
 
-**基线**：`linear_extra`，内容表 legacy CM3P 512d，外部信号：
+**基线**：`linear_extra`，内容表 legacy CM3P 512d，外部信号统一为
+`msd_overall, sunny_star, log_n`：
 
-* randommerge：`msd_overall, sunny_star, log_n`（现行 L1 最佳）；
-* 1k：`msd_overall, sunny_star`（1k 主线没有使用 `log_n`；为了与现有 1k 表可比，
-  辅助实验不换特征集。若要单独研究 `log_n`，另开一组）。
+* `log_n` 在四个数据集上都是 100% 覆盖（`rank_signals_randommerge_od.parquet`）；
+* 1k/10k 的主线表没有用 `log_n`，所以本实验的 A0 是**重训的 matched baseline**，
+  不能直接拿旧表当 A0；
+* 另跑一个 `msd_overall, sunny_star`（无 `log_n`）的 feature-set 敏感性，确认辅助效应
+  不是 `log_n` 的交互。主表仍用三特征。
 
 `d_m = w' C_m + v' S_m`，L2 `λ_ridge = 1e-3`，模型 seed 0。
 
@@ -326,9 +379,11 @@ d = X @ w
 **分阶段**：
 
 1. **1a（pilot）**：randommerge P4 s1，A0–A5；只检查实现、效应量、λ 曲线，不做结论。
-2. **1b（确认）**：randommerge P2/P4 5 seeds，A0/A1/A2/A3；若 A1 为正，再加 A4/A6。
-3. **1c（外部）**：VSRG benchmark（§1.5.3）。
-4. **1d（可选）**：1k P4 5 seeds；full 只在 1b/1c 都通过后跑。
+   通过后四数据集并行铺开。
+2. **1b（确认）**：1k / 10k / randommerge / full × P2/P4 × 5 seeds，A0/A1/A2/A3；
+   若 A1 为正，再加 A4/A6。按 (dataset, protocol, seed) 拆 HPC job array。
+3. **1c（外部）**：VSRG benchmark，四个数据集 × 2 臂（§1.5.3）。
+4. **汇总**：四数据集 × 两协议 × 两指标的 4×2 表；不做跨数据集合并。
 
 ### 1.5 评价
 
@@ -338,17 +393,20 @@ d = X @ w
 * 每个 seed 用 `scripts/paired_delta_nll.py` 按 `player_id_base` 做 400 次 cluster
   bootstrap，报点估计与 95% CI；
 * 5 个 split seed 报 mean ± std、负值 seed 数（5/5 等）；
-* 同时报 Pearson/Spearman(d,b)、逐玩家 Spearman、link β、ceiling 覆盖。
+* **相关性（用户要求，与 ΔNLL 并列）**：Pearson(d,b)、Spearman(d,b)、逐玩家
+  lw/macro Spearman，每个数据集 × 协议 × seed 都报；另给 5-seed 的 mean ± std；
+* 同时报 link β、ceiling 覆盖、test pair 数。
 
 **注意**：5 个 split seed 不是独立样本（同一批图/玩家，只是划分不同）。不要把 5 个
 seed 的 std 当成总体标准误；主证据是“每个 seed 的配对 CI + 5/5 方向”，不是跨 seed 的
-t 检验。
+t 检验。相关性系数同理：报逐 seed 与均值，不用它单独做显著性检验。
 
 #### 1.5.2 机制分层
 
 * **按练习机会**：在 raw within-player pair 上按 `min(n_plays_a, n_plays_b)` 分层
   （2 / 3 / 4–5 / 6–10 / 11–20），报每层的 ΔNLL。若 H1 成立，增益应更多出现在
-  `min(n_plays) ≥ 3` 的层；`min=2` 的层辅助标签等于主标签，不应有额外增益。
+  `min(n_plays) ≥ 3` 的层。`min=2` 的层里至少一张图的标签被截到 2 条；只有两张都
+  `n_plays=2` 时辅助标签才等于主标签，所以该层仍可能因另一张图 `n_plays>2` 而有小增益。
 * **按难度**：msd_overall / sunny_star 四分位；
 * **按玩家活跃度**：每个 player cluster 的 train pair 数分层；
 * **诊断**：在 first2 test 标签上评估 A1 vs A0。如果 A1 只改善 first2、不改善历史最佳，
@@ -360,38 +418,46 @@ t 检验。
 
 #### 1.5.3 VSRG benchmark（外部检查）
 
-在 randommerge 上用 `--fit-all` 训练 4 个模型，做 2×2：
+VSRG 指仓库里的 **VSRG Dan Benchmark**（1,382 行，5 折 chart-group OOF isotonic）。
+“四个数据集分别跑”也延伸到外部检查：四个数据集各训一对 baseline/aux，做 8 个模型：
 
-| 特征集 | baseline | aux |
-|---|---|---|
-| `msd_overall, sunny_star` | B0 | B1 |
-| `msd_overall, sunny_star, log_n` | L0 | L1 |
+| 训练集 | baseline | aux | 备注 |
+|---|---|---|---|
+| 1k | B0 | B1 | 与 1k 主表同数据 |
+| 10k | B0 | B1 | 更大、更偏 top 玩家 |
+| randommerge | B0 | B1 | **与 RM-L（0.4216）同训练集** |
+| full | B0 | B1 | 最大、覆盖最广 |
 
+* 特征集用 `msd_overall, sunny_star`（与 RM-L 可比；benchmark 的 `log_n` 需要从
+  `benchmark_content_legacy.parquet` 的 `n_windows` 另算；主表先不加，避免多一个变量）；
 * 训练：`linear_extra`，λ=1e-3，seed 0，`--fit-all`，保存模型；
-* benchmark 信号表需要 `log_n`：从 `benchmark_content_legacy.parquet` 的 `n_windows`
-  取 `log(n_windows)`，生成 `benchmark_signals_with_log_n.parquet`；
-* 推理 + 5 折 chart-group OOF isotonic，与 RM-L 完全同一套折/校准；
-* 报整体 MAE、RC/LN/course、expected 分带、排除 201 个训练重叠 bid 的敏感性；
-* 主对照是**同特征集的 baseline vs aux**（B1−B0、L1−L0）；RM-L（0.4216）只作外部参照。
+* 推理 + 5 折 chart-group OOF isotonic，四个训练集共用同一套 benchmark 折/校准；
+* 报整体 MAE、Spearman、RC/LN/course、expected 分带、排除 201 个训练重叠 bid 的敏感性；
+* 主对照是**同训练集的 baseline vs aux**（B1−B0）；RM-L（0.4216）只作 randommerge 行的
+  外部参照。若四个数据集的 DCR 效应与 VSRG 效应方向不一致，单独报，不强行合并。
 
 ### 1.6 判据（预注册）
 
-以 randommerge P2/P4 的 5 seeds 为主：
+**四个数据集分别判定，不合并 NLL**；每个数据集内部看 P2/P4 5 seeds 的 paired ΔNLL
+与相关性。下面的“≥3/4 数据集”只用于生产建议，不是跨数据集统计检验。
 
 | 结果 | 判据 | 行动 |
 |---|---|---|
-| **强成功** | mean ΔNLL ≤ −0.004，5/5 seed 为负，≥4/5 的 95% CI 排除 0；Pearson/Spearman 不回退；VSRG 同特征集 ΔMAE 的 95% CI 上限 ≤ +0.01 | 进入 full / 生产候选 |
-| **成功** | mean ΔNLL ≤ −0.002，≥4/5 为负，≥3/5 CI 排除 0；VSRG 同特征集 ΔMAE 的 95% CI 上限 ≤ +0.02 | 值得在 full 上复现 |
-| **零结果** | mean 在 ±0.001 内，或方向混合 | 停止，不投入 first2 标签 |
-| **负结果** | mean ΔNLL > +0.001 | 停止，记录负面结果 |
+| **强成功** | ≥3/4 数据集 mean ΔNLL ≤ −0.004；这些数据集 5/5 seed 为负、≥4/5 CI 排除 0；Pearson/Spearman 不回退；VSRG 至少 3/4 数据集同向 | 进入生产候选 |
+| **成功** | ≥3/4 数据集 mean ΔNLL ≤ −0.002；这些数据集 ≥4/5 为负、≥3/5 CI 排除 0；相关性不回退；VSRG 不明显变差 | 值得复现/扩展 |
+| **零结果** | 四个数据集都在 ±0.001 内，或方向混合 | 停止，不投入 first2 标签 |
+| **负结果** | ≥3/4 数据集 mean ΔNLL > +0.001 | 停止，记录负面结果 |
 
 补充规则：
 
+* **相关性单独看**：如果 ΔNLL 变好但 Pearson/Spearman 明显回退（例如 ΔPearson < −0.01），
+  标为“不一致”，不进入生产；不能只凭 NLL 一个数下结论。
 * 如果 A1 为正，但 A4（random-2）或 A6（打乱）与 A1 同样好 → 只能声称“辅助损失正则化”，
   不能声称“练习不变性”；不进入生产。
-* 如果 DCR 赢但 VSRG 变差 > 0.01 → 不声称“提升 VSRG 泛化”，只报 DCR 结果，并把这个
-  冲突作为后续分析对象。
+* 如果 DCR 赢但 VSRG 在 ≥3/4 数据集变差 > 0.02 → 不声称“提升 VSRG 泛化”，只报 DCR
+  结果，并把这个冲突作为后续分析对象。
 * 如果 A2（仅 n_plays>2）明显好于 A1 → 说明一半“重复标签”在稀释辅助信号，后续默认 A2。
+* P2 与 P4 结果不一致时分开报：P4 是双重冷启动，不能和 P2 平均成一个数。
 
 ### 1.7 代码改动与产物
 
@@ -414,21 +480,26 @@ t 检验。
 
 | 路径 | 内容 |
 |---|---|
-| `data/processed/step1_randommerge_first2.parquet` | randommerge 的 first2 标签 |
-| `data/processed/step1_1k_pairbest_nogap_first2.parquet` | 1k nogap 的 first2 标签 |
+| `data/processed/step1_{1k,10k,randommerge,full}_first2.parquet` | 四个数据集的 first2 标签 |
+| `data/processed/step1_10k_pairbest_p{2,4}_s{1..5}.parquet` | 10k 的新 split |
+| `data/processed/step1_full_pairbest_p{2,4}_s{1..5}.parquet` | full 的新 split |
 | `results/first2_aux/pilot/…` | 1a 的 λ 曲线与烟测 |
-| `results/first2_aux/{p2,p4}/s*/…` | 1b 的信号、rank_eval、paired_delta |
-| `results/first2_aux/summary.md` | 主表 + 分层 + 判据 |
-| `results/first2_aux/vsrg/…` | 1c 的 4 个模型、OOF、MAE |
+| `results/first2_aux/{dataset}/{p2,p4}/s*/…` | 1b 的信号、rank_eval、paired_delta |
+| `results/first2_aux/summary.md` | 四数据集主表 + 相关性 + 分层 + 判据 |
+| `results/first2_aux/vsrg/…` | 1c 的 4 数据集 × 2 臂 = 8 个模型、OOF、MAE |
 
-### 1.8 计算量
+### 1.8 计算量（全部提交 HPC）
 
-* 标签构造：randommerge 4.5M play / 453k pair，本机几分钟；1k 更快。
-* `linear_extra` 单次 randommerge P4 fit 约 438 s（HPC 8 线程，参考
-  `benchmark_linear_extra_plan.md`）；6 个 λ × 5 seeds 若串行约 3.6 h，但可以先在
-  pilot 上筛 λ 网格，再对确认臂只跑 2–3 个 λ；实际约 1–2 h HPC。
-* VSRG：4 个 `--fit-all` 模型，每个约 15–35 min；推理/校准几分钟。
-* 无 GPU（除非做 VSRG 的 D2V 对照，不需要）。
+* **标签构造**：1k 1.4M play、10k 13.4M、randommerge 4.5M、full 17.3M；每个数据集一个
+  HPC CPU 作业（full 约几分钟到十几分钟，取决于 I/O）。
+* **10k/full split 生成**：P2/P4 各 5 seeds；10k ~1.5M 行、full ~1.9M 行，一个 seed
+  一个作业，避免单进程内存峰值。
+* **训练**：每个数据集 × P2/P4 × 5 seeds × 臂。randommerge P4 单次 `linear_extra`
+  约 438 s（8 线程）；10k/full 的 P4 训练行更多，单次可能 10–30 min；HPC 上按
+  (dataset, protocol, seed) 拆成 job array，可同时跑几十个。
+* **VSRG**：8 个 `--fit-all` 模型（4 数据集 × baseline/aux）；randommerge 约
+  15–35 min，10k/full 约 1–3 h；推理/校准几分钟。拆成 8 个作业。
+* 全部 CPU；无 GPU（音频编码除外，见 §2）。
 
 ### 1.9 风险与限制
 
@@ -437,8 +508,11 @@ t 检验。
 3. **重复标签**：约一半 pair 的 first2 = 历史最佳；A1 会重复主损失，A2 是更干净的对照。
 4. **早 vs 晚**：first2 也受日历时间/早期水平影响；A5（last-2）用来区分“早”与“晚”。
 5. **测试集 n_plays 分布**：P4 的 test 玩家/图与 train 不同；分层报告，不要只报总体。
-6. **选择偏差**：pairbest 的 ACC 截断、top-1000 切片不变；结论不外推。
+6. **四个数据集的切片不同**：1k 是 top-1000、10k 是 top-10000、randommerge 是随机快照、
+   full 是三集并集；结论分别写，不能把四个数据集的 NLL 合并成一个数。
 7. **VSRG 构造不同**：Dan 标签不是 ACC；VSRG 结果只作外部检查。
+8. **10k/full 的 P4 规模**：单次 fit 的行数/内存明显更大；按 seed 拆作业，先跑一个
+   smoke seed 确认时间和内存，再铺 5 seeds。
 
 ---
 
@@ -494,7 +568,8 @@ new_set(m)   = beatmapset_id(m) not in train_sets
 * 分层：msd/sunny 四分位、`ln_ratio`、`min(n_plays)`；报告子集构成，避免“新 set 子集
   恰好更难/更简单”被误读。
 
-**预实验已跑**（§0.4c）：覆盖率 10.8–18.2%，Δ 在 5/5 seed 为负，且不小于完整 test。
+**预实验已跑**（§0.4c）：覆盖率 10.8–18.2%，Δ 在 5/5 seed 为负，且没有系统性小于
+完整 test。
 这支持“audio 不是纯同曲泄漏”，但仍是条件子集；Step 2b 才是干净检验。
 
 **脚本**：`scripts/eval_newset_audio.py`，输出
@@ -554,13 +629,14 @@ new_set(m)   = beatmapset_id(m) not in train_sets
 
 | 结果 | 判据 | 行动 |
 |---|---|---|
-| **通过** | Δ_setP4 ≤ −0.004，≥4/5 seed 为负，≥4/5 CI 排除 0；跨 set 子集 ≤ −0.003 | 认为 audio 可迁移到新 set；评估补 randommerge/full 音频 |
-| **弱通过** | −0.004 < Δ_setP4 < 0，≥4/5 为负 | 方向对但幅度不足；先做更大复制（randommerge audio）再投入 |
-| **不通过** | Δ_setP4 ≥ 0，或 abs(Δ) < 0.001 | 现有增益主要是同 set 泄漏；**不**补 randommerge/full 音频 |
-| **方法反转** | MLP_extra 与 linear_extra 方向相反 | 先查优化/容量，不急着下结论 |
+| **通过** | Δ_setP4 ≤ −0.004，≥4/5 seed 为负，≥4/5 CI 排除 0；跨 set 子集 ≤ −0.003 | 认为 audio 在 **1k 新 set** 上可迁移；报告 1k 结果；**不补** randommerge/full 音频 |
+| **弱通过** | −0.004 < Δ_setP4 < 0，≥4/5 为负 | 方向对但幅度不足；报告 1k；不补音频 |
+| **不通过** | Δ_setP4 ≥ 0，或 abs(Δ) < 0.001 | 现有 1k 增益主要是同 set 泄漏；报告 1k；不补音频 |
+| **方法反转** | MLP_extra 与 linear_extra 方向相反 | 先查优化/容量；报告 1k；不补音频 |
 
-**补音频的成本门槛**：randommerge 只有 32.9% 的图已有 audio 向量，需新编码 13,678 张；
-full 需 14,013 张。只有 §2.4 通过才进入“抓音频 + CM3P audio-on”工程；否则不投入。
+**数据边界（已确认）**：randommerge/full 音频**不补**（网络/磁盘限制），因此
+Experiment 2 的结论只覆盖 1k 的 6,819 图；不能外推到 randommerge/full。若未来音频
+条件允许，再用同一套 set-P4 判据决定是否扩展。
 
 ### 2.5 代码与产物
 
@@ -580,13 +656,13 @@ full 需 14,013 张。只有 §2.4 通过才进入“抓音频 + CM3P audio-on�
 | `results/audio_newset/p4sets/…` | 两臂 × 4 方法 × 5 seeds 的信号与 rank_eval |
 | `results/audio_newset/summary.md` | 主表 + 跨 set + 与标准 P4 对照 |
 
-### 2.6 计算量
+### 2.6 计算量（全部提交 HPC）
 
-* Step 2a：纯 CPU 读表 + pair 表，几分钟。
-* Step 2b：1k 6,819 图 / 109k 行；4 方法 × 2 臂 × 5 seeds。现有协议单 seed 约几分钟
-  （linear）到十几分钟（MLP）；总计约 1–2 h CPU（可并行）。
-* 补音频（仅通过后）：约 1.4 万张图的音频抓取 + CM3P 编码；瓶颈在抓音频/音频源覆盖，
-  不在推理。需要单独立项，不在本计划自动执行。
+* Step 2a：纯 CPU 读表 + pair 表，一个 HPC 作业几分钟；五个 seed 可一个作业顺序跑。
+* Step 2b：1k 6,819 图 / 109k 行；4 方法 × 2 臂 × 5 seeds。按 (method, arm, seed)
+  拆 job array；单 job 约几分钟（linear）到十几分钟（MLP），HPC 可同时跑 40 个。
+* **不补音频**：randommerge/full 的音频补齐受网络/磁盘限制，不在本计划内；2b 只用
+  1k 现成的 6,819 张 audio 向量。
 
 ### 2.7 风险与限制
 
@@ -596,8 +672,10 @@ full 需 14,013 张。只有 §2.4 通过才进入“抓音频 + CM3P audio-on�
 4. **编码器预训练暴露**：CM3P 的 audio 编码器可能在大语料上见过这些歌；Step 2b 只能排除
    “监督训练侧的同 set 图”，不能排除编码器预训练暴露。结论要写成“超出监督同 set 的迁移”。
 5. **音频来源混合**：published 4,037 + local 2,782；local 子集更难/更热门。set-P4 仍用混合表；
-   若通过，后续补音频时再分来源。
-6. **ceiling 噪声**：set-P4 的 test 图更少/更集中，ceiling 覆盖可能下降；报 ceiling 与
+   若通过，只报告 1k 的混合来源结果，不拆分来源。
+6. **不能外推到 randommerge/full**：音频补齐受网络/磁盘限制；Experiment 2 只回答
+   1k 的 6,819 图，不能据此说 randommerge/full 也会受益。
+7. **ceiling 噪声**：set-P4 的 test 图更少/更集中，ceiling 覆盖可能下降；报 ceiling 与
    coverage，captured 只作参考。
 
 ---
@@ -635,19 +713,22 @@ full 需 14,013 张。只有 §2.4 通过才进入“抓音频 + CM3P audio-on�
 * 外部信号：`rank_signals_1k.parquet` 的 `msd_overall, sunny_star`；
 * LN/pattern：`ln_ratio, patt_ln_percent, patt_mode_tag, n_holds`。
 
-**强基线**：
+**强基线（两个同等对待，不预设主/备）**：
 
-* 主：`mlp_extra`，CM3P legacy + [msd, sunny]，h64×2、dropout 0.1、98 epoch、seed 0
+* `mlp_extra`：CM3P legacy + [msd, sunny]，h64×2、dropout 0.1、98 epoch、seed 0
   （与 1k P4 最强基线同配置）；
-* 备：`linear_extra`，λ=1e-3（小样本更稳，作为 fallback / 对照）。
+* `linear_extra`：λ=1e-3（小样本更稳）。
+
+两个都跑 **P2-holdout 与 P4-holdout**；最后是 2×2 表（model × protocol），不先验地选
+“主口径”。如果两个基线结论不一致，分开写，不取平均。
 
 **必须重训基线**：现有 1k P4 的 MLP+ext 是在 6,828 图上训练的，holdout 图可能出现在它的
 训练侧；不能直接拿它的预测当“编码器未见图”的基线。要在 1,365 图的 split 上重新训练
 （P2 5 折 chart-disjoint；P4 6×6），保持同超参。
 
 **小样本风险**：P4-holdout 只有 8,882 行 train / 3,556 行 test；MLP 可能过拟合。报告
-train/val NLL、早停/固定 epoch 的差异；若 MLP 不稳定，以 linear_extra 为主基线，MLP 作
-敏感性。
+train/val NLL、早停/固定 epoch 的差异；如果 MLP 不稳定，仍然报它，但把 `linear_extra`
+作为稳定对照；两者方向不一致时以“不一致”记录，不强行选一个。
 
 ### 3.3 训练内折外预测的线性修正
 
@@ -659,15 +740,15 @@ train/val NLL、早停/固定 epoch 的差异；若 MLP 不稳定，以 linear_e
 **P2-holdout**：
 
 * 直接复用 5 折 chart-disjoint：每张图的 `d_base` 来自没看过该图的折模型；
-* 现有 `p2_hold_d2v_signals.parquet` 是 D2V 的 OOF 分数，但**不是** legacy MLP+ext 的；
-  需要为 legacy 基线重新跑一次 5 折。
+* 现有 `results/d2v_main/p2_hold_d2v_signals.parquet` 是 D2V 的 OOF 分数，但**不是**
+  legacy 基线的；需要为 `mlp_extra` 与 `linear_extra` **各**跑一次 5 折。
 
 **P4-holdout**：
 
 * 在每个 seed 的 6×6 训练块内，把训练图分成 5 折（按 popularity / 难度分层）；
 * 对每折，用其余 4 折的训练行拟合基线，预测该折图的 `d_base`；
-* 得到所有 6×6 图的 OOF 基线分数；
-* test 图的 `d_base` 用全部 6×6 行拟合的基线（或 5 折模型平均；主实验用全量拟合）。
+* 得到所有 6×6 图的 OOF 基线分数；两个基线各做一遍；
+* test 图的 `d_base` 用全部 6×6 行拟合的基线（或 5 折模型平均；主表默认全量拟合）。
 
 **修正拟合**：
 
@@ -718,13 +799,14 @@ L(w) = BT_NLL(train pairs; d) + λ_w * ||w||^2
 
 ### 3.5 评价与判据
 
-**主评价**：
+**评价（2 基线 × 2 口径，不分主次）**：
 
-* 整体 test 上的 paired ΔNLL（corrected − baseline），P2-holdout 为主，P4-holdout 5 seeds
-  为稳健性；
+* 整体 test 上的 paired ΔNLL（corrected − baseline），对
+  `mlp_extra`/`linear_extra` × P2-holdout/P4-holdout 的 2×2 表分别报；
 * 近分对 ΔNLL；
 * LN 子集 ΔNLL；
-* 每个都按 `player_id_base` cluster bootstrap；报 5/5（P4）/ 单划分 CI（P2）。
+* 每个都按 `player_id_base` cluster bootstrap；P4 报 5/5，P2 报单划分 CI；
+* 四列编码器的投入门槛：至少 3/4 格同向，且近分/LN 的结论不被某一个基线单独驱动。
 
 **判据树**：
 
@@ -739,10 +821,14 @@ L(w) = BT_NLL(train pairs; d) + λ_w * ||w||^2
 **多重比较**：整体、近分、LN 是三个预先指定的子集；不要把更多子集的结果当确认性证据。
 P2 与 P4 不可互比，各自报。
 
-### 3.6 计算量与功效
+**2×2 一致性**：上面的 Δ 要在 `mlp_extra`/`linear_extra` × P2/P4 的 2×2 表中至少
+3/4 格同向；若只有 MLP 或只有 P4 有，标为“directional”，不直接投入四列编码器。
 
-* 基线：P2 5 折 + P4 5 seeds × 5 折 = 30 次 MLP 拟合（小数据，CPU 分钟级到十几分钟）；
-* 修正：凸问题，512d × ~1–4 万 pair，秒级到分钟级；λ grid × seeds 也很快；
+### 3.6 计算量与功效（全部提交 HPC）
+
+* 基线：2 个模型 ×（P2 5 折 + P4 5 seeds × 5 折）= **60 次拟合**（小数据，CPU
+  分钟级到十几分钟）；按 (model, protocol, seed/fold) 拆 job array。
+* 修正：凸问题，512d × ~1–4 万 pair，秒级到分钟级；λ grid × seeds 也很快。
 * 无 GPU。
 
 **功效**：P2-holdout 54,721 比较，P4-holdout 31,962；近分 25% 约 13.7k / 8.0k；LN 至少一张
@@ -756,7 +842,8 @@ P2 与 P4 不可互比，各自报。
 1. **样本小**：1,365 图 / 3.5k–7.3k test 行；近分/LN 子集更小。
 2. **基线不对称**：CM3P 可能在预训练中见过这些图；D2V 没有。D2V 的残差增益是保守估计；
    若 D2V 失败，不能直接说“D2V 没信息”，可能是基线太强。
-3. **MLP 过拟合**：小训练集上 98 epoch 可能过拟合；用 validation/早停或 linear fallback。
+3. **MLP 过拟合**：小训练集上 98 epoch 可能过拟合；用 validation/早停，保留 `linear_extra`
+   作为稳定对照。不因为 MLP 过拟合就只报 linear；两个都报，方向不一致标为“不一致”。
 4. **近分阈值选择**：25% 是预注册的默认；如果换阈值结果翻转，说明效应不稳健。
 5. **LN 定义**：`ln_ratio ≥ 0.15` 包含 Mix；纯 LN 只有 128 张，单独评测 pair 不够。
 6. **“四列”不是直接可识别**：D2V 是 8 通道 piano roll 的 512d 表示，不是显式的四列 token；
@@ -768,24 +855,50 @@ P2 与 P4 不可互比，各自报。
 
 | 阶段 | 内容 | 依赖 | 计算 | 产物 |
 |---|---|---|---|---|
-| 0 | 写 3 个新脚本 + smoke test | 无 | 本机 CPU | 单元测试通过 |
-| 1 | Experiment 2a：新 set 子集重算 | 无 | 本机 CPU，分钟 | `results/audio_newset/subset_*` |
-| 2 | Experiment 1a：randommerge P4 s1 pilot | first2 标签 | 本机/ HPC CPU，小时 | `results/first2_aux/pilot` |
-| 3 | Experiment 1b：randommerge P2/P4 5 seeds | 1a | HPC CPU，1–2 h | `results/first2_aux` |
-| 4 | Experiment 1c：VSRG 4 模型 | 1b 为正 | HPC CPU + 本机校准 | `results/first2_aux/vsrg` |
-| 5 | Experiment 2b：整 set P4 | split 脚本 | 本机 CPU，1–2 h | `results/audio_newset/p4sets` |
-| 6 | Experiment 3：基线 OOF | D2V holdout | 本机 CPU，1–2 h | `results/d2v_residual/baseline` |
-| 7 | Experiment 3：残差 + 对照 | 6 | 本机 CPU，小时 | `results/d2v_residual` |
-| 8 | 汇总报告 | 1–7 | — | 3 篇 docs + 总表 |
+| 0a | 写脚本 + smoke test | 无 | HPC debug | 单元测试通过 |
+| 0b | 10k/full P2/P4 splits + 四数据集 first2 标签 | 0a | HPC CPU，每数据集一作业 | `data/processed/step1_*_first2`、`*_p{2,4}_s*` |
+| 1 | Experiment 2a：新 set 子集重算 | 无 | HPC CPU，分钟 | `results/audio_newset/subset_*` |
+| 2 | Experiment 1a：randommerge P4 s1 pilot | 0b | HPC CPU，小时 | `results/first2_aux/pilot` |
+| 3 | Experiment 1b：四数据集 × P2/P4 × 5 seeds | 0b/2 | HPC CPU，job array | `results/first2_aux/{dataset}` |
+| 4 | Experiment 1c：VSRG 8 模型 | ≥3/4 数据集 DCR 为正 | HPC CPU | `results/first2_aux/vsrg` |
+| 5 | Experiment 2b：整 set P4 | split 脚本 | HPC CPU，job array | `results/audio_newset/p4sets` |
+| 6 | Experiment 3：两基线 OOF（60 fits） | D2V holdout | HPC CPU，job array | `results/d2v_residual/baseline` |
+| 7 | Experiment 3：残差 + 对照 | 6 | HPC CPU，小时 | `results/d2v_residual` |
+| 8 | 汇总报告 | 1–7 | HPC summarize / 本地读 | 3 篇 docs + 总表 |
 
-**并行性**：2a 可以立即开始；1 与 2b、3 相互独立；2b 不依赖 1；3 不依赖 1/2。
-HPC 只用于 randommerge 全量 fit、VSRG、以及（如果 2 通过）音频编码。
+**并行性**：0b、2a、Exp3 基线可以立即提交；Exp1 的四个数据集、P2/P4、5 seeds 都是独立
+作业；Exp2b 不依赖 Exp1；Exp3 不依赖 Exp1/2。只有“汇总/报告”依赖前面完成。
 
-### 4.1 不能说的话
+### 4.1 全部 CPU 任务提交 HPC
 
-* **Experiment 1**：不能说“first2 让模型更懂谱面难度”；只能说“在这批 1k/randommerge 的
-  historical-best ACC 序上，辅助训练使 paired ΔNLL 变好/不变”。也不能把 DCR 的改善直接
-  说成 VSRG 泛化改善；VSRG 必须单独报。
+按你的要求，**包括 CPU 任务在内，全部提交 HPC**，本地只改代码、读结果：
+
+* **环境**：`$HOME/.conda/envs/DCR/bin/python`，`PYTHONNOUSERSITE=1`；仓库在
+  `$HOME/DCR`，`data/processed` 已同步；每个 job `OMP_NUM_THREADS=4`（或 8），
+  避免 40 个 job 同时抢核。
+* **作业粒度**：一个 job 只做 (dataset, protocol, seed) 或 (dataset, stage)；
+  10k/full 的 P4 **一次只跑一个 seed**，避免单进程内存峰值。
+* **job array**：
+  * Exp1：4 数据集 × 2 协议 × 5 seeds × 4 臂（A0/A1/A2/A3）= 160 个训练 job；
+    建议按臂拆 4 个 array（每个 0–39），或一个 `--array=0-159`；
+  * Exp2b：4 方法 × 2 臂 × 5 seeds = 40 个 job（`--array=0-39`）；
+  * Exp3：2 基线 × 30 fits = 60 个 job（`--array=0-59`）；
+  * 用 `%` 限制并发（例如 `--array=0-39%12`），先跑 smoke 再放开。
+* **队列/资源**：CPU 任务用 `i64m512u` 或 `emergency_cpu`，8–16 核 / 64–128G / 12h；
+  短作业用 `debug` 做 smoke。10k/full 的 P4 fit 若超过 12h，拆成 per-seed 或 per-fold。
+* **数据交换**：HPC 上生成 labels/splits/signals；只把 JSON/MD/小 CSV `rsync` 回本地；
+  大 parquet 留在 HPC，本地通过 `sshfs`/按需拷贝读取。
+* **日志**：每个 job 写 `results/.../logs/<stage>_<dataset>_<protocol>_s<seed>.log`；
+  失败先看 `tail -50`，不要重跑整个 array。
+* **新增 slurm 脚本**（建议）：
+  `scripts/slurm/first2_labels.slurm`、`first2_aux_train.slurm`、
+  `first2_aux_eval.slurm`、`audio_newset.slurm`、`d2v_residual.slurm`。
+
+### 4.2 不能说的话
+
+* **Experiment 1**：不能说“first2 让模型更懂谱面难度”；只能说“在这四个数据集的
+  historical-best ACC 序上，辅助训练使 paired ΔNLL / 相关性变好或不变”。也不能把 DCR
+  的改善直接说成 VSRG 泛化改善；VSRG 必须单独报。
 * **Experiment 2**：set-P4 不通过时，不能说“audio 没有信息”；只能说“现有增益主要来自
   监督训练侧的同 set 图”。set-P4 通过时，也不能说“编码器没在预训练中见过这些歌”；
   只能排除“监督同 set 泄漏”。
@@ -810,11 +923,15 @@ HPC 只用于 randommerge 全量 fit、VSRG、以及（如果 2 通过）音频�
 | `scripts/step1_p4_split_sets.py` | 2b 的整 set P4（或扩展现有脚本） |
 | `scripts/fit_d2v_residual.py` | 3 的 OOF 基线 + 残差拟合 |
 | `scripts/eval_d2v_residual.py` | 3 的整体/近分/LN/对照评测 |
+| `scripts/slurm/first2_*.slurm` | 0b/1a/1b/1c 的 HPC job array |
+| `scripts/slurm/audio_newset.slurm` | 2a/2b 的 HPC job |
+| `scripts/slurm/d2v_residual.slurm` | 3 的 HPC job array |
 
 **数据产物**：
 
-* `data/processed/step1_randommerge_first2.parquet`
-* `data/processed/step1_1k_pairbest_nogap_first2.parquet`
+* `data/processed/step1_{1k,10k,randommerge,full}_first2.parquet`
+* `data/processed/step1_10k_pairbest_p{2,4}_s{1..5}.parquet`
+* `data/processed/step1_full_pairbest_p{2,4}_s{1..5}.parquet`
 * `data/processed/step1_1k_pairbest_p4sets_s{1..5}.parquet`
 * `data/processed/d2v_residual/{p2,p4}/…`（OOF baseline、修正权重、信号）
 
@@ -826,51 +943,36 @@ HPC 只用于 randommerge 全量 fit、VSRG、以及（如果 2 通过）音频�
 
 ---
 
-## 6. 需要确认的问题
+## 6. 已确认与仍需确认
 
-### 阻塞（会影响实验定义）
+### 已确认（本轮）
 
-**Q1. 评价口径**：确认 Experiment 1 的正式主指标仍是“历史最佳 ACC 的 rank-NLL”，
-first2 只作训练辅助？还是你想把 first2 也变成共同主指标（那需要重定义 test 标签/ceiling）？
-> 默认：保持历史最佳主指标；first2 只作训练辅助 + 诊断。
+1. **Q1 评价口径**：历史最佳 rank-NLL 是主指标；first2 只作训练辅助。**另加相关性系数**：
+   Pearson/Spearman/逐玩家 Spearman，与 ΔNLL 并列报。
+2. **Q2 数据集**：1k / 10k / randommerge / full **四个数据集分别跑**，不设主数据集，
+   不合并 NLL。
+3. **Q3 辅助损失范围**：**A1（全部 pair）作字面实现**；A2/A3 只作敏感性；first2 ACC ≤0.90
+   的 5.5% 保留、不截断。最终看 A1 相对 A0 的 ΔNLL 与相关性是否提升。
+4. **Q4/Q5 VSRG**：指仓库里的 VSRG Dan Benchmark；作为 second gate。
+5. **Q6 Experiment 2 训练侧**：只算 6×6 监督训练图，不含 6×4/4×6 的 dropped 行；
+   ceiling 仍可用全部行。
+6. **Q7 音频数据边界**：randommerge/full 音频**不补**（网络/磁盘限制）；Experiment 2
+   只汇报 1k 的 6,819 图结果，不外推到 randommerge/full。
+7. **Q8 Experiment 3**：`mlp_extra` 与 `linear_extra` **同等对待**；P2-holdout 与
+   P4-holdout **同等对待**，不预设主次。
+8. **执行**：所有 CPU 任务提交 HPC 并行；本地只改代码、读结果。
 
-**Q2. 主数据集**：Experiment 1 的确认性实验以 randommerge 为主，还是 1k/full 为主？
-> 默认：randommerge P2/P4 5 seeds 为主（17.2% 在这里测的，样本大）；1k P4 5 seeds 作稳健性；
-> full 只在 positive 后跑。
+### 仍需确认（不阻塞，先按默认）
 
-**Q3. 辅助损失范围**：A1（全部 pair）是主实验，A2（仅 n_plays>2）、A3（first2 支撑内）
-是敏感性——接受吗？first2 ACC ≤0.90 的 5.5% 保留、mask 还是截断？
-> 默认：A1 保留全部；A2/A3 只作敏感性；不截断。
+* **Q9 set-P4 图数平衡**：popularity 分层内按图数贪心 60/40；分配图数 59.3/40.7，
+  实际有行图 63/37 需要修。默认。
+* **Q10 近分阈值**：训练集 bottom 25% 的 abs(Δz)；10%/33% 敏感性。默认。
+* **Q11 长押定义**：`ln_ratio ≥ 0.15` 至少一张图；`patt_mode_tag ∈ {Mix,LN}` 为次；
+  both-LN 样本够就报。默认。
+* **Q12 四列编码器门槛**：近分 Δ ≤ −0.005 + 对照为 0 才投入；整体增益是加分项。
+  默认。
 
-**Q4. VSRG 的角色**：VSRG Dan MAE 是“secondary gate（不能明显变差）”，还是只作描述？
-> 默认：secondary gate；DCR 赢但 VSRG 同特征集变差 >0.01，不声称 VSRG 泛化。
-
-**Q5. “向 VSRG 泛化”的含义**：指仓库里的 VSRG Dan Benchmark，还是更广的其他 VSRG 游戏/
-键型分布？如果是后者，当前只有一个外部 benchmark，需要另找数据。
-
-**Q6. Experiment 2 的“训练侧”**：新 set 定义用 6×6 监督训练图（不含 6×4/4×6 的 dropped
-行）——确认？
-> 默认：是；ceiling 仍可用全部行。
-
-**Q7. Experiment 2 的通过阈值**：Δ_setP4 ≤ −0.004、≥4/5 为负、≥4/5 CI 排除 0、
-跨 set ≤ −0.003——接受这个“稳定”定义，还是你有更具体的阈值？
-
-**Q8. Experiment 3 的主基线/主口径**：
-* 基线：MLP+ext 主、linear_extra 备——还是反过来？
-* 口径：P2-holdout 主（比较数多）、P4-holdout 稳健——还是 P4 主？
-> 默认：MLP+ext 主、linear_extra 备；P2-holdout 主、P4-holdout 稳健。
-
-### 非阻塞（可用默认先跑）
-
-**Q9. 整 set P4 的图数平衡**：接受“popularity 分层内按图数贪心 60/40”，而不是简单的
-set 数 60/40？模拟的“实际有行图数”63/37 需要修（分配图数已是 59.3/40.7）。
-
-**Q10. 近分阈值**：训练集 bottom 25% 的 |Δz| 为主，10%/33% 敏感性——接受？
-**Q11. 长押定义**：`ln_ratio ≥ 0.15` 至少一张图为主，`patt_mode_tag ∈ {Mix,LN}` 为次，
-both-LN 样本够就报——接受？
-**Q12. 四列编码器的门槛**：近分 Δ ≤ −0.005 + 对照为 0 才投入；还是整体 Δ ≤ −0.002
-就投入？
-> 默认：近分是主门槛（这正是旗舰模型的问题）；整体增益是加分项。
+Q9–Q12 不改，我就按这些默认实现。
 
 ---
 
@@ -878,7 +980,7 @@ both-LN 样本够就报——接受？
 
 ### A.1 first2 标签
 
-关键点（randommerge）：
+四个数据集用同一实现，只换 `--step0` / `--pairs`。以 randommerge 为例：
 
 1. 读 `step0_randommerge.parquet`；
 2. 先删 `player_id` 记录数 < 20 的玩家；
@@ -890,6 +992,8 @@ both-LN 样本够就报——接受？
    “两种标签都无 tie 且顺序相反”的比例。
 
 复现数字：9,415,648 / 1,623,767 / 17.245%；`n_plays` 分桶见 §0.4a。
+1k / 10k / full 的 step0 分别是 `step0_1k.csv` / `step0_10k.parquet` /
+`step0_full.parquet`；同一脚本在 HPC 上按数据集拆作业。
 
 ### A.2 新 set 子集
 
@@ -900,8 +1004,8 @@ test pair 要求两张图的 set 都不在 train_sets；在子集内用 `rank_me
 ### A.3 整 set P4 模拟
 
 关键点：set popularity = set 内 distinct `player_id_base`；玩家侧 `_stratified` 60/40；
-set 侧先按 popularity 分层，再按图数平衡。模拟 s1 得到 3,509/2,058 图、924,384 test 比较、
-跨 set 98.8%。
+set 侧先按 popularity 分层，再按图数平衡。模拟 s1 得到分配图 4,045/2,774、实际有行图
+3,509/2,058、924,384 test 比较、跨 set 98.8%。
 
 ---
 

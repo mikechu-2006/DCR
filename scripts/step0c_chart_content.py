@@ -702,6 +702,40 @@ def from_osu_dir(dirs, want, rev, audio, batch, device, args):
             "hydra-core, slider) -- see requirements-cm3p.txt and legacy/docs/cm3p_hpc_slurm.md "
             f"section 1; import failed with: {exc}{hint}")
 
+    # Some slider distributions treat mania's standard `endTime:hitSample`
+    # payload as one integer and reject hold notes.  Match the local parser that
+    # produced the existing CM3P table by splitting endTime from its hit sample.
+    try:
+        from datetime import timedelta
+        from slider.beatmap import HoldNote
+        try:
+            probe = HoldNote._parse(None, None, 0, False, 0, ["1234:0:0:0:0:"])
+            if probe.end_time != timedelta(milliseconds=1234):
+                raise ValueError("unexpected mania hold end_time")
+        except Exception:
+            @classmethod
+            def _parse_mania_hold(cls, position, time, hitsound, new_combo, combo_skip, rest):
+                if not rest:
+                    raise ValueError("missing end_time")
+                try:
+                    pieces = rest[0].split(":")
+                    end_time, *sample = pieces
+                    rest = [":".join(sample), *rest[1:]]
+                    end_time = timedelta(milliseconds=int(end_time))
+                except (IndexError, TypeError, ValueError) as exc:
+                    raise ValueError("invalid mania end_time/hitSample") from exc
+                if len(rest) > 1:
+                    raise ValueError(f"extra data in mania hold note: {rest!r}")
+                return cls(position, time, hitsound, end_time, new_combo, combo_skip, *rest)
+
+            HoldNote._parse = _parse_mania_hold
+            probe = HoldNote._parse(None, None, 0, False, 0, ["1234:0:0:0:0:"])
+            if probe.end_time != timedelta(milliseconds=1234):
+                raise SystemExit("failed to install mania hold-note parser compatibility")
+            print("[osu] patched slider's mania endTime:hitSample parser", flush=True)
+    except ImportError:
+        pass
+
     if device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"[osu] device={device}  audio={audio}  dirs={[str(d) for d in dirs]}")
@@ -890,6 +924,8 @@ def parse_args(argv=None):
     ap.add_argument("--allow-mixed-crop", action="store_true",
                     help="allow merging rows from a different crop/cfg into --out")
     ap.add_argument("--hf-path", default="data/raw/cm3p_embeddings/beatmap_embeddings.parquet")
+    ap.add_argument("--model-repo", default=CM3P_REPO,
+                    help="CM3P model repo id or local from_pretrained directory")
     ap.add_argument("--osu-dir", action="append", default=None,
                     help="directory (or .osu/.osz file) to embed; repeatable; --source osu-dir")
     ap.add_argument("--audio", default="off", choices=["on", "off"],
@@ -947,7 +983,7 @@ def main() -> None:
             target = want if not args.limit else want.head(args.limit)
             print(f"main table complete; exporting/verifying the T2 window store for "
                   f"{len(target):,} charts", flush=True)
-            new, meta = from_osu_dir(args.osu_dir, target, CM3P_REPO,
+            new, meta = from_osu_dir(args.osu_dir, target, args.model_repo,
                                      args.audio == "on", args.infer_batch,
                                      args.device, args)
         else:
@@ -961,7 +997,7 @@ def main() -> None:
     else:
         if not args.osu_dir:
             raise SystemExit("--source osu-dir needs at least one --osu-dir")
-        new, meta = from_osu_dir(args.osu_dir, missing, CM3P_REPO, args.audio == "on",
+        new, meta = from_osu_dir(args.osu_dir, missing, args.model_repo, args.audio == "on",
                                  args.infer_batch, args.device, args)
 
     if meta is not None:

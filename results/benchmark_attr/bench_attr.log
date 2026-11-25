@@ -1,0 +1,112 @@
+=== bench-attr start Wed Nov 25 08:13:47 PM CST 2026
+=== [1/4] relay a0d checkpoint old->new (Wed Nov 25 08:13:47 PM CST 2026)
+[relay] old md5=5b11f5ccdfa428295ab6cce5368b53f8
+[relay] streaming...
+[relay] md5 OK
+=== [2/4] sync code + reference predictions (Wed Nov 25 08:17:59 PM CST 2026)
+[sync] done
+=== [3/4] submit GPU extraction jobs (Wed Nov 25 08:18:04 PM CST 2026)
+[extract] a0d job=14127872
+[extract] a17d job=14127873
+[extract] a20d job=14127874
+=== [4/4] submit CPU probe+calibration job (Wed Nov 25 08:18:06 PM CST 2026)
+[probe] job=14127875
+=== waiting (Wed Nov 25 08:18:06 PM CST 2026)
+[wait] Wed Nov 25 08:18:07 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:20:08 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:22:09 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:24:10 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:26:10 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:28:11 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:30:12 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:32:13 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:34:13 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:36:14 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:38:15 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:40:16 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:42:18 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:44:19 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:46:19 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:48:20 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:50:21 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:52:22 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:54:23 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:56:24 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 08:58:26 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:00:26 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:02:27 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:04:28 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:06:29 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:08:31 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:10:31 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:12:32 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:14:33 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:16:34 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:18:34 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:20:35 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:22:36 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:24:37 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:26:37 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:28:38 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:30:39 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:32:40 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:34:40 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:36:41 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:38:42 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:40:42 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:42:43 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:44:44 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:46:44 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:48:45 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:50:47 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:52:48 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 09:54:49 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 09:56:49 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 09:58:50 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 10:00:51 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 10:02:52 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 10:04:52 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 10:06:53 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 10:08:54 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 10:10:54 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 10:12:55 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 10:14:56 PM CST 2026 active=4 streak=0
+[wait] Wed Nov 25 10:16:57 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:18:57 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:20:58 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:23:00 PM CST 2026 active=0 streak=1
+[wait] Wed Nov 25 10:25:02 PM CST 2026 active=0 streak=2
+=== collecting (Wed Nov 25 10:25:02 PM CST 2026)
+14127872|bench-attr-ext|FAILED|1:0|00:27:26
+14127872.batch|batch|FAILED|1:0|00:27:26
+14127872.extern|extern|COMPLETED|0:0|00:27:26
+14127873|bench-attr-ext|FAILED|1:0|00:27:30
+14127873.batch|batch|FAILED|1:0|00:27:30
+14127873.extern|extern|COMPLETED|0:0|00:27:30
+14127874|bench-attr-ext|FAILED|1:0|00:29:24
+14127874.batch|batch|FAILED|1:0|00:29:24
+14127874.extern|extern|COMPLETED|0:0|00:29:24
+14127875|bench-attr-probe|PENDING|0:0|00:00:00
+=== DONE Wed Nov 25 10:25:03 PM CST 2026
+=== bench-attr start Wed Nov 25 10:25:32 PM CST 2026
+=== [1/4] relay a0d checkpoint old->new (Wed Nov 25 10:25:32 PM CST 2026)
+[relay] old md5=5b11f5ccdfa428295ab6cce5368b53f8
+[relay] already present with matching md5
+=== [2/4] sync code + reference predictions (Wed Nov 25 10:25:38 PM CST 2026)
+[sync] done
+=== [3/4] submit GPU extraction jobs (Wed Nov 25 10:25:42 PM CST 2026)
+[extract] a0d job=14129298
+[extract] a17d job=14129299
+[extract] a20d job=14129300
+=== [4/4] submit CPU probe+calibration job (Wed Nov 25 10:25:44 PM CST 2026)
+[probe] job=14129303
+=== waiting (Wed Nov 25 10:25:45 PM CST 2026)
+[wait] Wed Nov 25 10:25:46 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:27:46 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:29:47 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:31:48 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:33:49 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:35:50 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:37:51 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:39:52 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 10:41:54 PM CST 2026 active=1 streak=0

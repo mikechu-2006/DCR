@@ -1,0 +1,322 @@
+=== [1/4] sync inputs to HPC (Wed Nov 25 05:18:04 PM CST 2026)
+[rsync] attempt 1 failed Wed Nov 25 05:18:35 PM CST 2026; sleep 120
+[rsync] ok attempt 2 Wed Nov 25 05:20:53 PM CST 2026
+[rsync] ok attempt 1 Wed Nov 25 05:21:08 PM CST 2026
+[rsync] ok attempt 1 Wed Nov 25 05:21:09 PM CST 2026
+[rsync] ok attempt 1 Wed Nov 25 05:21:09 PM CST 2026
+[rsync] ok attempt 1 Wed Nov 25 05:21:11 PM CST 2026
+[rsync] ok attempt 1 Wed Nov 25 05:21:12 PM CST 2026
+=== [2/4] submit product build job (Wed Nov 25 05:21:12 PM CST 2026)
+[submit] attempt 1: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 2: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 3: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 4: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 5: 
+[submit] attempt 6: Connection timed out during banner exchange
+[submit] attempt 7: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 8: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 9: Connection timed out during banner exchange
+[submit] attempt 10: Connection timed out during banner exchange
+[submit] attempt 11: Connection timed out during banner exchange
+[submit] attempt 12: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 13: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 14: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 15: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 16: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 17: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 18: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 19: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 20: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 21: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 22: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 23: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 24: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 25: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 26: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 27: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 28: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 29: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 30: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 31: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 32: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 33: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 34: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 35: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 36: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 37: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 38: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 39: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 40: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 41: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 42: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 43: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 44: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 45: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 46: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 47: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 48: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 49: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 50: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 51: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 52: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 53: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 54: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 55: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 56: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 57: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 58: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 59: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 60: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 61: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 62: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 63: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 64: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 65: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 66: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 67: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 68: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 69: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 70: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 71: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 72: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 73: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 74: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 75: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 76: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 77: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 78: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 79: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 80: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 81: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 82: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 83: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 84: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 85: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 86: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 87: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 88: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 89: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 90: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 91: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 92: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 93: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 94: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 95: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 96: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 97: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 98: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 99: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 100: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 101: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 102: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 103: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 104: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 105: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 106: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 107: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 108: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 109: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 110: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 111: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 112: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 113: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 114: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 115: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 116: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 117: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 118: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 119: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 120: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 121: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 122: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 123: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 124: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 125: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 126: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 127: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 128: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 129: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 130: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 131: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 132: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 133: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 134: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 135: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 136: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 137: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 138: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 139: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 140: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 141: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 142: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 143: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 144: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 145: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 146: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 147: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 148: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 149: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 150: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 151: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 152: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 153: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 154: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 155: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 156: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 157: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 158: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)
+[submit] attempt 159: sbatch: error: AssocGrpSubmitJobsLimit
+sbatch: error: Batch job submission failed: Job violates accounting/QOS policy (job submit limit, user's size and/or time limits)

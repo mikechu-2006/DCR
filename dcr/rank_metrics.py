@@ -332,6 +332,8 @@ class Ceiling:
     n_clusters: int
     fold_of_cluster: np.ndarray
     seen_folds: list | None = None
+    cluster_ids: np.ndarray | None = None
+    map_ids: np.ndarray | None = None
 
 
 def cross_fit_bt(groups: Sequence[np.ndarray], item: np.ndarray, perf: np.ndarray,
@@ -518,7 +520,8 @@ def cross_fit_bt(groups: Sequence[np.ndarray], item: np.ndarray, perf: np.ndarra
                    nll_by_cluster=nll_by_cluster, n_by_cluster=n_by_cluster,
                    n_clusters=n_clusters,
                    fold_of_cluster=fold_of_cluster,
-                   seen_folds=seen_folds)
+                   seen_folds=seen_folds,
+                   cluster_ids=eval_cluster_ids)
 
 
 # --------------------------------------------------------------------- evaluation
@@ -673,10 +676,10 @@ def pairwise_rank_loss(pred, entity, target, beta: float = 1.0,
         return pred.sum() * 0.0
     pa, pb = p[valid], p[partner[valid]]
     ta, tb = t[valid], t[partner[valid]]
-    y = (ta < tb).to(pred.dtype)              # a performed better (lower loss)
+    y = (ta < tb).to(torch.float32)            # a performed better (lower loss)
     if ties == "half":
         y = torch.where(ta == tb, torch.full_like(y, 0.5), y)
-    q = torch.sigmoid(beta * (pb - pa))       # P(a beats b)
-    q = q.clamp(eps, 1.0 - eps)
-    ll = y * torch.log(q) + (1.0 - y) * torch.log1p(-q)
-    return -ll.mean()
+    # BCEWithLogits is stable for large |logits|; sigmoid+clamp+log is not.
+    logits = (beta * (pb - pa)).float()
+    return torch.nn.functional.binary_cross_entropy_with_logits(
+        logits, y, reduction="mean")

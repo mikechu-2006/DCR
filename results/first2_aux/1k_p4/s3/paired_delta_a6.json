@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "in": "data/processed/step1_1k_pairbest_p4_s3.parquet",
+    "signal_table": "results/first2_aux/1k_p4/s3/signals_a6.parquet",
+    "split": "test",
+    "n_rows": 17936,
+    "n_maps": 2116,
+    "n_pairs": 388225,
+    "n_instances": 876758,
+    "n_clusters": 365,
+    "bootstrap": 400,
+    "seed": 0,
+    "seconds": 0.8
+  },
+  "signals": {
+    "first2_a0": {
+      "beta": 0.8673038337831172,
+      "rate": 0.5905631715665646
+    },
+    "first2_a6": {
+      "beta": 0.8502165386333453,
+      "rate": 0.5913156982048153
+    }
+  },
+  "pairs": {
+    "first2_a6:first2_a0": {
+      "delta": 0.0007525266382507612,
+      "ci": [
+        0.00011350218768040876,
+        0.001397389101318391
+      ],
+      "p_delta_lt_0": 0.0075,
+      "nll_a": 0.5913156982048153,
+      "nll_b": 0.5905631715665646
+    }
+  }
+}

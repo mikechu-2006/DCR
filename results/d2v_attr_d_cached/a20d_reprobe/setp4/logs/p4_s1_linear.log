@@ -1,0 +1,6 @@
+/hpc2hdd/home/aiaa3111_l01_066/.conda/envs/DCR/bin/python scripts/step2_cm3p_rank.py --in data/processed/step1_mclean25_p4sets_cached_s1.parquet --content-path data/processed/chart_content_d2v_a20d-mclean.parquet --signal-table data/processed/rank_signals_1k.parquet --extra-signals msd_overall,sunny_star --val-frac 0 --seed 0 --threads 8 --name cm3p_linear --out-signals results/d2v_attr_d_cached/a20d_reprobe/setp4/p4/s1/signals/cm3p_linear.parquet --out-json results/d2v_attr_d_cached/a20d_reprobe/setp4/p4/s1/signals/cm3p_linear.json --model linear --lam 1e-3
+
+[data] maps=5,204 (content coverage 100.0% of step1 maps) train_rows=162,524 test_rows=79,551
+[pairs] train 667,256 (3,168,390 comparisons) | test 279,834 (1,155,915)
+[val] 10241 fit players / 0 val players; fit pairs 667,256
+[done] test_nll=0.57573 bits=0.1694 beta=0.856 -> cm3p_linear.parquet / cm3p_linear.json (80.1s)

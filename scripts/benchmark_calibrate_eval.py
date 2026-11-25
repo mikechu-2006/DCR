@@ -38,6 +38,16 @@ RUNS = {
              "arm": "legacy"},
     "M2_C": {"display": "DCR-CM3P-MLP-Canon", "method": "CM3P MLP h64 L2",
              "arm": "canon"},
+    # data2vec structured-attribute ablation (mapset-disjoint D protocol, 1 seed)
+    "A0D": {"display": "DCR-D2V-A0D-8ch",
+            "method": "D2V 8ch (mapset-disjoint, randommerge linear_extra)",
+            "arm": "d2v_attr"},
+    "A17D": {"display": "DCR-D2V-A17D-no-SVkiai",
+             "method": "D2V 17ch = base+release+tempo (a20 minus SV/kiai)",
+             "arm": "d2v_attr"},
+    "A20D": {"display": "DCR-D2V-A20D-with-SVkiai",
+             "method": "D2V 20ch = base+release+tempo+sv+kiai",
+             "arm": "d2v_attr"},
 }
 
 
