@@ -1,0 +1,106 @@
+=== local probe trio start Wed Nov 25 11:49:57 PM CST 2026
+[local-probe] a17d_rerun Wed Nov 25 11:49:57 PM CST 2026
+OMP: Warning #179: Function Can't set size of SHM failed:
+[23:49:59] === p4 seed 1 (5,204 charts) ===
+[23:49:59] p4 s1 linear: train
+[23:50:57] p4 s1 linear_extra: train
+[23:51:45] p4 s1: signals 5204 charts x 5 cols (cm3p_linear, cm3p_linear_extra, sunny_star, daniel_star, star) -> results/d2v_attr_d_cached/a17d_rerun/setp4/p4/s1/signals.parquet
+[23:51:45] p4 s1: eval
+[23:54:52] aggregate -> results/d2v_attr_d_cached/a17d_rerun/setp4/summary.csv / summary_mean_std.csv / summary.md
+# P2 / P4 multi-seed summary
+
+Seeds are train/test split seeds; model seed is fixed at 0.
+
+## P4（新玩家 + 新 chart，6×6 / 4×4）
+
+ceiling NLL = 0.52449 ± 0.00000 （1 seeds）
+
+| 方法 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|
+| CM3P + external 线性 | 0.58704 ± 0.00000 | 0.7324 ± 0.0000 | 0.5570 ± 0.0000 |
+| CM3P 线性 (λ1e-3) | 0.59891 ± 0.00000 | 0.6810 ± 0.0000 | 0.4677 ± 0.0000 |
+| Sunny | 0.61090 ± 0.00000 | 0.6651 ± 0.0000 | 0.5949 ± 0.0000 |
+| Daniel | 0.62272 ± 0.00000 | 0.6317 ± 0.0000 | 0.5442 ± 0.0000 |
+| star | 0.64639 ± 0.00000 | 0.6174 ± 0.0000 | 0.5440 ± 0.0000 |
+
+[local-probe] a19d Wed Nov 25 11:54:55 PM CST 2026
+OMP: Warning #179: Function Can't set size of SHM failed:
+[23:54:55] === p4 seed 1 (5,204 charts) ===
+[23:54:55] p4 s1 linear: train
+[23:56:14] p4 s1 linear_extra: train
+[23:57:24] p4 s1: signals 5204 charts x 5 cols (cm3p_linear, cm3p_linear_extra, sunny_star, daniel_star, star) -> results/d2v_attr_d_cached/a19d/setp4/p4/s1/signals.parquet
+[23:57:24] p4 s1: eval
+[23:58:14] aggregate -> results/d2v_attr_d_cached/a19d/setp4/summary.csv / summary_mean_std.csv / summary.md
+# P2 / P4 multi-seed summary
+
+Seeds are train/test split seeds; model seed is fixed at 0.
+
+## P4（新玩家 + 新 chart，6×6 / 4×4）
+
+ceiling NLL = 0.52449 ± 0.00000 （1 seeds）
+
+| 方法 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|
+| CM3P + external 线性 | 0.57018 ± 0.00000 | 0.7991 ± 0.0000 | 0.6485 ± 0.0000 |
+| CM3P 线性 (λ1e-3) | 0.58350 ± 0.00000 | 0.7674 ± 0.0000 | 0.5939 ± 0.0000 |
+| Sunny | 0.61090 ± 0.00000 | 0.6651 ± 0.0000 | 0.5949 ± 0.0000 |
+| Daniel | 0.62272 ± 0.00000 | 0.6317 ± 0.0000 | 0.5442 ± 0.0000 |
+| star | 0.64639 ± 0.00000 | 0.6174 ± 0.0000 | 0.5440 ± 0.0000 |
+
+[local-probe] a20d_rerun Wed Nov 25 11:58:15 PM CST 2026
+OMP: Warning #179: Function Can't set size of SHM failed:
+[23:58:18] === p4 seed 1 (5,204 charts) ===
+[23:58:18] p4 s1 linear: train
+[23:59:25] p4 s1 linear_extra: train
+[00:00:28] p4 s1: signals 5204 charts x 5 cols (cm3p_linear, cm3p_linear_extra, sunny_star, daniel_star, star) -> results/d2v_attr_d_cached/a20d_rerun/setp4/p4/s1/signals.parquet
+[00:00:28] p4 s1: eval
+[00:01:02] aggregate -> results/d2v_attr_d_cached/a20d_rerun/setp4/summary.csv / summary_mean_std.csv / summary.md
+# P2 / P4 multi-seed summary
+
+Seeds are train/test split seeds; model seed is fixed at 0.
+
+## P4（新玩家 + 新 chart，6×6 / 4×4）
+
+ceiling NLL = 0.52449 ± 0.00000 （1 seeds）
+
+| 方法 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|
+| CM3P + external 线性 | 0.56327 ± 0.00000 | 0.8023 ± 0.0000 | 0.6505 ± 0.0000 |
+| CM3P 线性 (λ1e-3) | 0.57559 ± 0.00000 | 0.7780 ± 0.0000 | 0.6104 ± 0.0000 |
+| Sunny | 0.61090 ± 0.00000 | 0.6651 ± 0.0000 | 0.5949 ± 0.0000 |
+| Daniel | 0.62272 ± 0.00000 | 0.6317 ± 0.0000 | 0.5442 ± 0.0000 |
+| star | 0.64639 ± 0.00000 | 0.6174 ± 0.0000 | 0.5440 ± 0.0000 |
+
+=== C3/C4 diagnostics a19d Thu Nov 26 12:01:03 AM CST 2026
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] content=data/processed/chart_content_d2v_a19d-mclean.parquet n=5,462 dim=512 md5=d72ce53a
+[split] set-disjoint: train 3,835 charts / 1,189 sets | test 1,627 charts / 510 sets
+[scale] standardised on train charts; 0 near-constant dims
+/home/mikechu/anaconda3/lib/python3.13/site-packages/joblib/_multiprocessing_helpers.py:44: UserWarning: [Errno 13] Permission denied.  joblib will operate in serial mode
+  warnings.warn("%s.  joblib will operate in serial mode" % (e,))
+[C3] mapper top1=0.1191 (chance 0.0200, majority 0.0404) n_test=470 -> results/d2v_attr_diag/mapper_probe_a19d.json (5.6s)
+[C4] attribute decodability (test R2):
+  log1p_n_sv_changes   R2= 0.7430  (train  0.8899, alpha=1, pearson= 0.8719)
+  kiai_frac            R2= 0.0598  (train  0.2994, alpha=10, pearson= 0.2864)
+  log2_bpm_p50         R2= 0.8437  (train  0.9493, alpha=1, pearson= 0.9202)
+  hold_frac_gt1s       R2= 0.2961  (train  0.4447, alpha=10, pearson= 0.5730)
+  vol_resolved_p50     R2=-0.2216  (train  0.3692, alpha=1, pearson= 0.2319)
+  hs_any_ext_frac      R2= 0.1837  (train  0.4622, alpha=1, pearson= 0.4719)
+  -> results/d2v_attr_diag/attr_decodability_a19d.json (14.7s)
+[done] 20.8s
+=== C3/C4 diagnostics a17d_rerun (sanity) Thu Nov 26 12:01:25 AM CST 2026
+[split] set-disjoint: train 3,835 charts / 1,189 sets | test 1,627 charts / 510 sets
+[scale] standardised on train charts; 0 near-constant dims
+/home/mikechu/anaconda3/lib/python3.13/site-packages/joblib/_multiprocessing_helpers.py:44: UserWarning: [Errno 13] Permission denied.  joblib will operate in serial mode
+  warnings.warn("%s.  joblib will operate in serial mode" % (e,))
+[C3] mapper top1=0.1447 (chance 0.0200, majority 0.0404) n_test=470 -> results/d2v_attr_diag/mapper_probe_a17d.json (10.7s)
+[C4] attribute decodability (test R2):
+  log1p_n_sv_changes   R2= 0.2471  (train  0.4351, alpha=10, pearson= 0.5056)
+  kiai_frac            R2= 0.0331  (train  0.3079, alpha=10, pearson= 0.2678)
+  log2_bpm_p50         R2= 0.8430  (train  0.9431, alpha=1, pearson= 0.9210)
+  hold_frac_gt1s       R2= 0.3337  (train  0.4307, alpha=10, pearson= 0.5948)
+  vol_resolved_p50     R2=-0.0206  (train  0.3764, alpha=1, pearson= 0.2452)
+  hs_any_ext_frac      R2= 0.2054  (train  0.4662, alpha=1, pearson= 0.4905)
+  -> results/d2v_attr_diag/attr_decodability_a17d.json (10.7s)
+[done] 21.8s
+=== local probe trio DONE Thu Nov 26 12:01:48 AM CST 2026

@@ -30,12 +30,19 @@ else
     --ckpt "$CKPT" --out "$ALL" \
     --device cuda --batch-size 32 --num-workers 6 --tag "$TAG-all"
 fi
-$PY -m d2v_main.extract --config configs/audio_style_base.yaml \
-  --ckpt "$CKPT" --osu-dir data/benchmark_d2v_osu \
-  --ids-file ../data/processed/benchmark_d2v_ids.txt \
-  --out "../data/processed/benchmark_content_$ARM-raw.parquet" \
-  --device cuda --batch-size 32 --num-workers 6 --tag "benchmark_$ARM"
+RAW="../data/processed/benchmark_content_$ARM-raw.parquet"
+if [ -f "$RAW" ]; then
+  echo "[bench-ext] benchmark raw already present: $RAW"
+else
+  $PY -m d2v_main.extract --config configs/audio_style_base.yaml \
+    --ckpt "$CKPT" --osu-dir data/benchmark_d2v_osu \
+    --ids-file ../data/processed/benchmark_d2v_ids.txt \
+    --out "$RAW" \
+    --device cuda --batch-size 32 --num-workers 6 --tag "benchmark_$ARM"
+fi
+# finalize runs from data2vec_main/, so both --inp and --map must be ../data/...
 $PY ../scripts/finalize_benchmark_d2v.py \
-  --inp "../data/processed/benchmark_content_$ARM-raw.parquet" \
+  --inp "$RAW" \
+  --map ../data/processed/benchmark_d2v_map.parquet \
   --out "../data/processed/benchmark_content_$ARM.parquet"
 echo "[bench-ext] DONE arm=$ARM $(date)"

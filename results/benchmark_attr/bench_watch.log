@@ -1,0 +1,7 @@
+=== watching bench-attr-probe job 14130198 (Wed Nov 25 11:51:00 PM CST 2026)
+[wait] Wed Nov 25 11:51:01 PM CST 2026 active=1 streak=0
+[wait] Wed Nov 25 11:52:32 PM CST 2026 active=0 streak=1
+[wait] Wed Nov 25 11:54:03 PM CST 2026 active=0 streak=2
+=== collecting (Wed Nov 25 11:54:03 PM CST 2026)
+14130198|bench-attr-probe|CANCELLED by 205745|0:0|00:00:00
+=== DONE Wed Nov 25 11:54:05 PM CST 2026

@@ -117,6 +117,12 @@ Protocol S/D 分开提交（Gate 决定是否花 D 的 GPU）。
 * **组内拆分（2026-11-25 补跑）**：a20d − SV/kiai（a17d，17ch）显示 SV+kiai 承担几乎全部增益
   （相对 a20d +0.0233/+0.0238），tempo/beat/bar 单独近零；a17d 的 masked loss 反而更低
   → 自监督 loss 不能作为难度有用性的代理。单 seed，无 CI。
+
+* **SV vs kiai 拆分（2026-11-26 补跑）**：a19d = a20d − kiai（19ch）。三点分解
+  a17d→a19d→a20d：加 SV 使 NLL 降 −0.0154/−0.0169，再加 kiai 降 −0.0079/−0.0069；
+  SV 单独不抬高 C3 mapper 指纹（a19d 0.1191 < a0d 0.1340），kiai 是抬高指纹的成分
+  （a20d 0.1532）。SV 更像读谱/视觉难度，kiai 更偏风格/段落。单 seed，无 CI。
+
 * **C3/C4**：属性通道确实被编码（SV/kiai/BPM 可解码性 0.07–0.16 → 0.67–0.88），
   但 mapper 指纹同步上升 2.7–5pt（meta 臂最高），与“风格元数据”先验一致。
 * **仍缺**：5 split seeds 的 CI、shuffle 负对照结果（HPC 账号触发 AssocGrpSubmitJobsLimit：队列空、连 trivial job 也无法提交，且 job 被外部 scancel，需要账号或管理员处理；重试链 scripts/hpc_attr_shuffle_retry.sh 待额度恢复）、mapper-disjoint 复核、组内拆分。

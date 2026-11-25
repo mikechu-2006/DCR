@@ -94,7 +94,8 @@ def parse_difficulty(version: str) -> tuple[str, float] | tuple[None, None]:
         return f"regular_{n}", n + 3.5
     for name, index in GREEK_LOOKUP.items():
         if re.search(rf"\b{name}\b", s):
-            return f"greek_{name}", 14.5 + index
+            # The client subtracts 4 from the Reform scale: Alpha is 11.5.
+            return f"greek_{name}", 15.5 + index
     return None, None
 
 

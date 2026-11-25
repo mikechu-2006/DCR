@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Fit isotonic raw-score -> Reform Dan mappings from the anchor manifest."""
+"""Fit raw-score to Reform Dan mappings from the anchor manifest."""
 from __future__ import annotations
 
 import argparse
@@ -9,10 +9,17 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.interpolate import BSpline
+from scipy.optimize import minimize
 from sklearn.isotonic import IsotonicRegression
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_METHODS = ["Sunny", "DCR", "CM3P_ext"]
+SPLINE_DEGREE = 3
+SPLINE_INTERVALS = 6
+SPLINE_MIN_SLOPE = 0.05
+SPLINE_EXPORT_POINTS = 513
+DEFAULT_SMOOTHNESS = 0.0001
 SPECS = {
     "Sunny": {"method": "Sunny", "model_id": "SunnyRework", "raw_column": "Sunny"},
     "DCR": {"method": "DCR", "model_id": "DCR_A20D_P", "raw_column": "DCR"},
@@ -37,13 +44,70 @@ def fit_one(raw: np.ndarray, target: np.ndarray) -> tuple[dict, float]:
     return knots, float(np.mean(np.abs(fitted - target)))
 
 
+def fit_monotone_spline(raw: np.ndarray, target: np.ndarray,
+                        smoothness: float) -> tuple[dict, float]:
+    """Fit the curve with positive slope inside the anchor range."""
+    raw_min, raw_max = float(raw.min()), float(raw.max())
+    target_min = float(target.min())
+    raw_span, target_span = raw_max - raw_min, float(target.max()) - target_min
+    if raw_span <= 0 or target_span <= 0:
+        raise ValueError("spline calibration requires a nonconstant score and target")
+
+    scores = (raw - raw_min) / raw_span
+    labels = (target - target_min) / target_span
+    breaks = np.linspace(0.0, 1.0, SPLINE_INTERVALS + 1)
+    knots = np.pad(breaks, SPLINE_DEGREE, mode="edge")
+    count = len(knots) - SPLINE_DEGREE - 1
+    basis = BSpline(knots, np.eye(count), SPLINE_DEGREE)
+
+    # Increasing coefficients keep the spline monotone. At the Greville sites
+    # these coefficients reproduce the identity, giving a floor on its slope.
+    greville = np.array([knots[i + 1:i + 1 + SPLINE_DEGREE].mean() for i in range(count)])
+    linear_steps = np.diff(greville)
+    min_steps = SPLINE_MIN_SLOPE * linear_steps
+    cumulative = np.tril(np.ones((count - 1, count - 1)))
+    export_grid = np.linspace(0.0, 1.0, SPLINE_EXPORT_POINTS)
+    observations = basis(scores)[:, 1:] @ cumulative
+    curvature = basis(export_grid, nu=2)[:, 1:] @ cumulative
+    design = np.vstack((observations / np.sqrt(len(scores)),
+                        curvature * np.sqrt(smoothness / len(export_grid))))
+    truth = np.r_[labels / np.sqrt(len(scores)), np.zeros(len(export_grid))]
+
+    def objective(steps):
+        residual = design @ steps - truth
+        return float(residual @ residual), 2.0 * (design.T @ residual)
+
+    result = minimize(objective, linear_steps, method="SLSQP", jac=True,
+                      bounds=[(step, 1.0) for step in min_steps],
+                      constraints={"type": "eq", "fun": lambda steps: steps.sum() - 1.0,
+                                   "jac": lambda steps: np.ones_like(steps)},
+                      options={"ftol": 1e-12, "maxiter": 200})
+    if not result.success:
+        raise ValueError(f"monotone spline fit failed: {result.message}")
+    coefficients = np.r_[0.0, np.cumsum(result.x)]
+    coefficients[-1] = 1.0
+    spline = BSpline(knots, coefficients, SPLINE_DEGREE)
+    x = raw_min + raw_span * export_grid
+    y = target_min + target_span * spline(export_grid)
+    x[-1], y[-1] = raw_max, float(target.max())
+    if not (np.all(np.diff(x) > 0) and np.all(np.diff(y) > 0)):
+        raise ValueError("exported spline calibration is not strictly increasing")
+    fitted = target_min + target_span * spline(scores)
+    return {"x": x.tolist(), "y": y.tolist()}, float(np.mean(np.abs(fitted - target)))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw-scores", type=Path, default=ROOT / "data/reform/raw_scores.csv")
     ap.add_argument("--out", type=Path, default=ROOT / "data/reform/calibration.json")
     ap.add_argument("--methods", default=",".join(DEFAULT_METHODS),
                     help="comma-separated raw score columns; default fits all supported methods")
+    ap.add_argument("--fit", choices=("monotone-spline", "isotonic"), default="monotone-spline")
+    ap.add_argument("--smoothness", type=float, default=DEFAULT_SMOOTHNESS,
+                    help="curvature penalty for the monotone spline on normalized scores and labels")
     args = ap.parse_args()
+    if not np.isfinite(args.smoothness) or args.smoothness <= 0:
+        ap.error("--smoothness must be positive and finite")
 
     raw = pd.read_csv(args.raw_scores)
     anchors_path = ROOT / "data/reform/anchors.jsonl"
@@ -75,7 +139,10 @@ def main() -> int:
         if not np.isfinite(values).all():
             n_missing = int((~np.isfinite(values)).sum())
             raise SystemExit(f"{col} has {n_missing} missing/non-finite anchor scores")
-        knots, mae = fit_one(values, target)
+        if args.fit == "monotone-spline":
+            knots, mae = fit_monotone_spline(values, target, args.smoothness)
+        else:
+            knots, mae = fit_one(values, target)
         model_id = spec["model_id"]
         if name == "DCR":
             model_id = raw_meta.get("model_ids", {}).get(name) or model_id
@@ -93,7 +160,9 @@ def main() -> int:
     payload = {
         "schema_version": 1,
         "target": "Reform Dan course label",
-        "fit": "isotonic regression (increasing), equal weight per anchor, endpoint clipping",
+        "fit": ("penalized monotone cubic spline, equal weight per anchor, endpoint clipping"
+                if args.fit == "monotone-spline" else
+                "isotonic regression (increasing), equal weight per anchor, endpoint clipping"),
         "n_anchors": int(len(raw)),
         "difficulty_range": [float(targets.min()), float(targets.max())],
         "tier_fraction_bounds": [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
@@ -106,6 +175,13 @@ def main() -> int:
                                   if name in raw},
         "methods": methods,
     }
+    if args.fit == "monotone-spline":
+        payload["fit_parameters"] = {
+            "degree": SPLINE_DEGREE, "intervals": SPLINE_INTERVALS,
+            "normalized_minimum_slope": SPLINE_MIN_SLOPE,
+            "normalized_curvature_penalty": args.smoothness,
+            "export_points": SPLINE_EXPORT_POINTS,
+        }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
                         encoding="utf-8")

@@ -1,13 +1,13 @@
 # MMA 三种难度估值器与 Reform Dan 封装实施计划
 
-2026-11-25 · Reform 曲包清单、117 个锚点和 Sunny、DCR、CM3P_ext 三方法的正式 isotonic 校准已生成。DCR 使用 a20d 线性头；CM3P_ext 首发仅包含 RM-L 线性头。点击只为当前选中的方法补算，客户端默认 CPU 推理。
+2026-11-26 · Reform 曲包清单、117 个锚点和 Sunny、DCR、CM3P_ext 三方法的校准已生成。发布曲线使用单调三次样条。DCR 使用 a20d 线性头，CM3P_ext 首发使用 RM-L 线性头。点击只为当前选中的方法补算，客户端默认 CPU 推理。
 
 首版以 MMA fork 为宿主，面向 osu!mania 4K。玩家在原生 **Estimator Algorithm** 设置里切换 **Sunny、DCR、CM3P_ext**，卡片显示当前方法的 **Reform Dan 估计**。客户端随包带 CM3P 与 D2V a20d 内容向量，以及 CM3P_ext RM-L 线性头。DCR 或 CM3P_ext 缺少当前谱面条件所需的特征时，卡片显示「计算难度」，计算完成并写入本机后自动刷新。三个方法都调用一个按方法选择 isotonic 参数的公共函数，输入 raw score，返回一个代表锚定难度的实数。
 
 ### 当前结果
 
 - [原始锚点分数](../../data/reform/raw_scores.csv) 与[正式校准曲线](../../data/reform/calibration.json) 均覆盖 117/117 个锚点。模型 ID：Sunny `SunnyRework`、DCR `471bdaba847d36b2`、CM3P_ext `RM_L`。
-- 等权 isotonic 的锚点拟合 MAE 为 Sunny **0.3006**、DCR **0.4356**、CM3P_ext/RM-L **0.3572**。这些是在拟合用锚点上的误差，不是留出评估。
+- 修正希腊字段位刻度后，等权 isotonic 的锚点拟合 MAE 为 Sunny **0.3234**、DCR **0.4429**、CM3P_ext/RM-L **0.3572**。这是拟合用锚点上的误差。修正移动了 50 个锚点的目标值，三种方法的原始分保持一致。
 - DCR 产品头在 1,382 行 VSRG benchmark 上的 5 折 chart-group isotonic OOF MAE 为 **0.4294**；DCR 部署 JSON 与 512 维头前向的最大差为 `3.88e-7`。
 - 首发不包含 M1-L。`M1_L_full.pt` 仍是研究检查点，不进入客户端清单和 calibration。
 
@@ -52,7 +52,7 @@ D2V a20d 的难度序结果来自单个 split seed 的 mapset-disjoint Protocol 
 | --- | ---: |
 | Intro 1 / 2 / 3 | 1.5 / 2.5 / 3.5 |
 | Regular x | x + 3.5 |
-| Alpha、Beta、Gamma 等希腊字母段 | Alpha = 14.5，之后每段递增 1 |
+| Alpha、Beta、Gamma 等希腊字母段 | Alpha = 15.5，之后每段递增 1。Beta = 16.5，Gamma = 17.5，本批锚点最高为 Kappa = 24.5 |
 
 **同一难度中的所有锚点共享该难度中心值**。每张分谱及总谱各贡献一条 raw score → 同一个 Reform 中心值的观测。常规难度为 5 条，第六段为 7 条。第六段两版的 7 个锚点仍映射至同一个第六段中心值。manifest 记录锚点角色、版本和来源，避免去重时删掉同版但内容不同的谱。
 
@@ -66,9 +66,9 @@ D2V a20d 的难度序结果来自单个 split seed 的 mapset-disjoint Protocol 
 | [.6, .8) | mid/high |
 | [.8, 1.0) | high |
 
-三个方法分别用同一组锚点、各自的 raw score 拟合 isotonic。超出锚点目标值范围时 clip 到最低或最高目标值，再按同一档位规则显示。五档边界已确认：`[.0,.2)` low、`[.2,.4)` low/mid、`[.4,.6)` mid、`[.6,.8)` mid/high、`[.8,1.0]` high。校准按方法、模型、曲包清单和输入合同版本化，并导出 Python 与客户端 JS 共用的 knots。
+三个方法分别用同一组锚点、各自的 raw score 拟合带曲率惩罚的单调三次样条。锚点内按密集采样节点插值，两端继续夹取到最低或最高目标值。五档边界已确认：`[.0,.2)` low、`[.2,.4)` low/mid、`[.4,.6)` mid、`[.6,.8)` mid/high、`[.8,1.0)` high。校准按方法、模型、曲包清单和输入合同版本化，并导出 Python 与客户端 JS 共用的 knots。
 
-产品侧统一调用 `anchor_difficulty(method, raw_score) -> float`。函数按当前方法和生效模型加载 isotonic knots、插值并夹取到训练目标范围，返回连续 Reform 数值。low、mid 等标签由卡片按数值区间格式化，不由函数提前取整。线性头默认用 CPU 推理。
+产品侧统一调用 `anchor_difficulty(raw_score, method) -> float`。函数按当前方法和生效模型加载校准节点、插值并夹取到目标范围，返回连续 Reform 数值。卡片按数值区间格式化 low、mid 等标签。线性头默认用 CPU 推理。
 
 ### 数据处理与评测
 

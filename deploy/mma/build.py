@@ -32,7 +32,7 @@ def write_json(path, data):
     path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n")
 
 
-def make_release(out, checkpoint_sha):
+def make_release(out, checkpoint_sha, calibration_path):
     out.mkdir()
     whitelist = pd.read_csv(ROOT / "manifests/whitelist_1k.csv", dtype={"checksum": str})
     ids = whitelist.set_index("beatmap_id", verify_integrity=True)["checksum"].str.lower()
@@ -42,7 +42,7 @@ def make_release(out, checkpoint_sha):
                               columns=["beatmap_id", *EXTRAS]).set_index("beatmap_id", verify_integrity=True)
     anchor_map = pd.read_json(REFORM / "feature_id_map.json").set_index("feature_beatmap_id", verify_integrity=True)
     anchor_signals = pd.read_parquet(REFORM / "signals.parquet").set_index("bid", verify_integrity=True)
-    calibration = json.loads((REFORM / "calibration.json").read_text())
+    calibration = json.loads(calibration_path.read_text())
     for key, fname in (("anchor_manifest_sha256", "anchors.jsonl"), ("raw_scores_sha256", "raw_scores.csv")):
         if calibration[key] != digest(REFORM / fname):
             raise ValueError(f"Reform calibration does not match {fname}")
@@ -123,7 +123,7 @@ def make_release(out, checkpoint_sha):
         }
         print(method, counts, "total", len(keys))
     manifest = {"schema": 1, "asset_base": BASE, "shard_rows": SHARD_ROWS,
-                "calibration_sha256": digest(REFORM / "calibration.json"),
+                "calibration_sha256": digest(calibration_path),
                 "methods": methods}
     manifest["release"] = hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()
     write_json(out / "manifest.json", manifest)
@@ -132,6 +132,7 @@ def make_release(out, checkpoint_sha):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, default=ROOT / "data/reform/mma_release")
+    parser.add_argument("--calibration", type=Path, default=REFORM / "calibration.json")
     parser.add_argument("--d2v-checkpoint-sha256", default="9039f55a242a2af53dec05e09af62472dbf0ae594e88f82fc67d768e672b4173")
     args = parser.parse_args()
     if not re.fullmatch("[0-9a-f]{64}", args.d2v_checkpoint_sha256):
@@ -153,7 +154,7 @@ def main():
         shutil.copytree(HERE / "client", plugin / "js/reform")
         shutil.copy2(stage / "LICENSE", plugin / "LICENSE")
         shutil.copy2(HERE / "README.md", plugin / "README.md")
-        make_release(plugin / "reform-data", args.d2v_checkpoint_sha256)
+        make_release(plugin / "reform-data", args.d2v_checkpoint_sha256, args.calibration)
         plugin.rename(stage / RELEASE_DIR)
         shutil.make_archive(str(stage / "DCR-Reform-tosu"), "zip", root_dir=stage, base_dir=RELEASE_DIR)
         (stage / "LICENSE").unlink()

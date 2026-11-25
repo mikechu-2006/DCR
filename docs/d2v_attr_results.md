@@ -33,6 +33,15 @@ tempo/beat/bar 单独几乎没有可检测效应；而 a17d 的 masked loss 反�
 （0.0263 < a20d 0.0352 < a0d 0.0588），说明自监督 loss 不能作为难度有用性的代理。
 详见 §3.4。
 
+**SV vs kiai 拆分（a19d = a20d − kiai，19 通道，2026-11-26 补跑）**：三点分解
+a17d（−SV−kiai）→ a19d（+SV）→ a20d（+kiai）显示 **SV 贡献更大**：
+加 SV 使 NLL 降 **−0.0154（linear）/ −0.0169（+ext）**，再加 kiai 再降
+**−0.0079 / −0.0069**；SV 单独就把 a19d 拉到接近 a20d 的位置（相对 a0d −0.0167/−0.0222）。
+C3 mapper 指纹上 a19d（0.1191）不高于 8ch 基线 a0d（0.1340），而 a20d 最高（0.1532）；
+C4 上 a19d 的 SV-change R2 达 0.743 而 kiai R2 只有 0.060。即：
+**SV 的增益更像读谱/视觉难度；kiai 增益较小且同步抬高 mapper 指纹（更像风格/段落代理）**。
+详见 §3.5。
+
 在“从已有 8ch checkpoint 续训 5 epoch”的快速筛选协议（S）上，同一 a20 组的效应小得多
 （P2 +ext -0.0055、P4 -0.0017、P4-hold -0.0014），方向一致但均在单 seed 噪声内。
 **结论以 D 协议为准**：S 的 P4/P4-hold 仍受 mapset 泄漏与续训预算限制。
@@ -178,6 +187,47 @@ C3/C4（同 5,462 图 eval 池、同 set-disjoint probe split）：
 4. **局限**：单 seed、无 CI；a17d 与 a20d 是不同训练 run（同 config/seed/数据，
    a20d_reprobe 证明 probe 可复现）；差值 0.023 远大于预期 run-to-run 噪声，但无正式 CI。
 
+### 3.5 SV vs kiai 拆分：a19d（a20d − kiai，19 通道）
+
+**实验**：a19d = a20d 删掉 kiai 通道（1 条），保留 SV（level + change），即
+base 8 + release 4 + tempo 5 + sv 2 = **19 通道**。D 协议同池同 split 从零 20 epoch
+（HPC job 14128340 训练 / 14128341 抽取，masked loss 0.0309，w_sv 0.0569）。
+HPC CPU probe 队列卡在 Priority，**probe 改在本地 CPU** 用同一 cached set-P4 split、
+同 runner 重跑三臂（a17d/a19d/a20d）；a17d/a20d 与 HPC 结果差 <= 1.5e-5（BLAS 噪声）。
+
+三点分解（同 runner、同 split、seed 1）：
+
+| 臂 | 通道 | masked loss | NLL linear | NLL +ext | 相对 a0d (lin/ext) | 阶梯增量 (lin/ext) |
+|---|---:|---:|---:|---:|---:|---:|
+| a0d（8ch） | 8 | 0.0588 | 0.60023 | 0.59242 | — | — |
+| a17d（−SV−kiai） | 17 | 0.0263 | 0.59891 | 0.58704 | -0.00132 / -0.00538 | — |
+| **a19d（+SV，−kiai）** | **19** | **0.0309** | **0.58350** | **0.57018** | **-0.01673 / -0.02223** | **-0.01541 / -0.01686（加 SV）** |
+| a20d（+SV+kiai） | 20 | 0.0352 | 0.57559 | 0.56327 | -0.02464 / -0.02915 | -0.00791 / -0.00691（加 kiai） |
+
+C3/C4（同 5,462 图 eval 池、同 set-disjoint probe split；C3 test n=470，二项 SE 约 1.5pt）：
+
+| 臂 | C3 mapper top-1 | C4 kiai R2 | C4 SV-change R2 | C4 BPM R2 |
+|---|---:|---:|---:|---:|
+| a0d | 0.1340 | 0.047 | 0.065 | 0.294 |
+| a17d | 0.1447 | 0.033 | 0.247 | 0.843 |
+| **a19d** | **0.1191** | **0.060** | **0.743** | 0.844 |
+| a20d | 0.1532 | 0.675 | 0.730 | 0.876 |
+
+**读法**：
+
+1. **SV 是更大的贡献者**：约 2/3 的 SV+kiai 增益来自 SV（-0.015/-0.017），kiai 约 1/3
+   （-0.008/-0.007）。SV 单独就把 a19d 拉到相对 a0d -0.017/-0.022，接近 a20d 的 -0.025/-0.029。
+   这与“SV 影响手感/读谱难度”的机制假设一致。
+2. **风格指纹不同**：a19d（SV-only）的 C3 mapper top-1 = 0.1191，不高于 8ch 基线
+   （0.1340）；a20d 最高（0.1532）。C4 上 a19d 把 SV-change 编码到 R2=0.743，但 kiai R2
+   只有 0.060（a20d 0.675）。即 **kiai 是同时抬高 mapper 指纹的那个成分**，SV 不是。
+3. **解释（谨慎）**：SV 的增益更像“视觉滚动/读谱结构”的真实难度信息；kiai 增益较小，
+   且与 song-section/mapper 风格纠缠（kiai = 副歌/段落）。但 C3 test 集只有 470 图、
+   单 seed，C3 的 1-3pt 差异接近 1-2σ；不能据此单独定罪或洗白。
+4. **局限**：单 seed、无 CI；a17/a19/a20 是三次独立训练（同 config family/seed/数据）；
+   probe 本地 vs HPC 的复算差 <=1.5e-5。sv/kiai 的交互无法从三点分解中排除（例如
+   SV 的作用依赖 tempo 通道存在）。
+
 ## 4. C3/C4 诊断（泄漏与可解码性）
 
 C3 = 512d 内容向量到 mapper_id 线性分类（top-50 mapper，按 beatmapset 切分 train/test）；
@@ -236,6 +286,10 @@ C4 = 512d 到 chart 级属性的 Ridge 回归 test R2。
    Python 3.11 建 venv、pip 安装 torch 2.5.1(CUDA) 等，并 rsync 1.2 GB osu_cache +
    小表；因此 a17d 在另一账号训练/抽取/probe。为消除环境差异，a20d 在同一账号重跑
    （与旧账号逐位一致 0.575584 / 0.563269），配对有效。
+
+9. **HPC CPU probe 队列拥堵**：a19d 的 CPU probe（14128342）在 i64m512u 排队
+   Priority 超过 1 h，改为**本地 CPU** 完成（同一 split/runner；a17d/a20d 复算差
+   <=1.5e-5）。后续轻量 probe 优先本地或 debug 队列（30 min 限制内）。
 
 ## 6. 能说什么 / 不能说什么
 

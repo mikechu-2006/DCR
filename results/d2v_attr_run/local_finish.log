@@ -1,0 +1,56 @@
+=== local CPU finish start Wed Nov 25 11:51:53 PM CST 2026
+=== [1/5] a21d + a20d set-P4 probe
+[probe] a21d
+OMP: Warning #179: Function Can't set size of SHM failed:
+[23:51:53] === p4 seed 1 (5,204 charts) ===
+[23:51:53] p4 s1 linear: train
+[23:52:45] p4 s1 linear_extra: train
+[23:53:32] p4 s1: signals 5204 charts x 5 cols (cm3p_linear, cm3p_linear_extra, sunny_star, daniel_star, star) -> results/d2v_attr_d_cached/a21d/setp4/p4/s1/signals.parquet
+[23:53:32] p4 s1: eval
+[23:57:13] aggregate -> results/d2v_attr_d_cached/a21d/setp4/summary.csv / summary_mean_std.csv / summary.md
+# P2 / P4 multi-seed summary
+
+Seeds are train/test split seeds; model seed is fixed at 0.
+
+## P4（新玩家 + 新 chart，6×6 / 4×4）
+
+ceiling NLL = 0.52449 ± 0.00000 （1 seeds）
+
+| 方法 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|
+| CM3P + external 线性 | 0.56814 ± 0.00000 | 0.8003 ± 0.0000 | 0.6493 ± 0.0000 |
+| CM3P 线性 (λ1e-3) | 0.58390 ± 0.00000 | 0.7614 ± 0.0000 | 0.5794 ± 0.0000 |
+| Sunny | 0.61090 ± 0.00000 | 0.6651 ± 0.0000 | 0.5949 ± 0.0000 |
+| Daniel | 0.62272 ± 0.00000 | 0.6317 ± 0.0000 | 0.5442 ± 0.0000 |
+| star | 0.64639 ± 0.00000 | 0.6174 ± 0.0000 | 0.5440 ± 0.0000 |
+
+[probe] a20d_reprobe
+OMP: Warning #179: Function Can't set size of SHM failed:
+[23:57:18] === p4 seed 1 (5,204 charts) ===
+[23:57:18] p4 s1 linear: exists, skip
+[23:57:18] p4 s1 linear_extra: exists, skip
+[23:57:18] p4 s1: signals 5204 charts x 5 cols (cm3p_linear, cm3p_linear_extra, sunny_star, daniel_star, star) -> results/d2v_attr_d_cached/a20d_reprobe/setp4/p4/s1/signals.parquet
+[23:57:18] p4 s1: eval exists, skip (pass --force-eval to redo)
+[23:57:19] aggregate -> results/d2v_attr_d_cached/a20d_reprobe/setp4/summary.csv / summary_mean_std.csv / summary.md
+# P2 / P4 multi-seed summary
+
+Seeds are train/test split seeds; model seed is fixed at 0.
+
+## P4（新玩家 + 新 chart，6×6 / 4×4）
+
+ceiling NLL = 0.52448 ± 0.00000 （1 seeds）
+
+| 方法 | test NLL | Pearson(d,b) | Spearman(d,b) |
+|---|---|---|---|
+| CM3P + external 线性 | 0.56327 ± 0.00000 | 0.8024 ± 0.0000 | 0.6505 ± 0.0000 |
+| CM3P 线性 (λ1e-3) | 0.57558 ± 0.00000 | 0.7780 ± 0.0000 | 0.6105 ± 0.0000 |
+| Sunny | 0.61090 ± 0.00000 | 0.6652 ± 0.0000 | 0.5950 ± 0.0000 |
+| Daniel | 0.62272 ± 0.00000 | 0.6317 ± 0.0000 | 0.5443 ± 0.0000 |
+| star | 0.64639 ± 0.00000 | 0.6175 ± 0.0000 | 0.5442 ± 0.0000 |
+
+=== [2/5] benchmark fits + inference
+[fit] a0d
+OMP: Warning #179: Function Can't set size of SHM failed:
+[data] maps=20,388 (content coverage 100.0% of step1 maps) train_rows=453,406 test_rows=0
+[pairs] train 20,158,819 (39,654,821 comparisons) | test skipped (--fit-all)
+[val] 12758 fit players / 0 val players; fit pairs 20,158,819
