@@ -14,7 +14,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[2]
 MMA = ROOT / "external/osumania_map_analyser"
 PLUGIN = "ManiaMapAnalyser by Leo_Black"
-RELEASE_DIR = "DCR Reform for tosu"
+RELEASE_DIR = "DCR-Reform-tosu"
 BASE = "448ed7c789af3d715acfb8370e41244cc3c00865"
 HERE = Path(__file__).resolve().parent
 DATA = ROOT / "data/processed"

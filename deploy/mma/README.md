@@ -1,6 +1,14 @@
 # DCR Reform for tosu
 
-Copy the `DCR Reform for tosu` folder from `DCR-Reform-tosu.zip` into tosu's configured counters directory. Open the counter in the tosu dashboard and choose **Sunny**, **DCR**, or **CM3P_ext** under **Estimator Algorithm**. The card shows the selected method's Reform Dan estimate and tier.
+Copy the `DCR-Reform-tosu` folder from `DCR-Reform-tosu.zip` into tosu's configured counters directory (`static/` by default). If you installed an earlier bundle, rename its `DCR Reform for tosu` folder to `DCR-Reform-tosu` and update any saved overlay URLs to `/DCR-Reform-tosu/`. The space-free folder name lets tosu route WebSocket settings to the counter.
+
+## 切换难度算法 / Switch estimator
+
+1. 打开 [tosu Dashboard](http://127.0.0.1:24050/)，找到 **DCR Reform**，点击这张卡片上的 **Settings**。 Open **Settings** on the **DCR Reform** card in the tosu dashboard.
+2. 向下找到 **Estimator Algorithm**，选 **Sunny**、**DCR** 或 **CM3P_ext**。 Scroll to **Estimator Algorithm** and select a method.
+3. 点击设置窗口底部的 **Update settings**，在确认窗口里点击 **确定**。左上角的标签会显示 **Sunny**、**DCR** 或 **CM3P**。 Click **Update settings** at the bottom of the dialog and confirm. The top-left badge shows the active method.
+
+若想恢复右侧五格，把同一窗口的 **Top-right Content** 设为 **Difficulty**。五格从下往上对应 `low`、`low/mid`、`mid`、`mid/high`、`high`。 Set **Top-right Content** to **Difficulty** to show the five tier bars. For example, a calibrated value of `7.55` displays `3.55` on the left and `Reform 3 mid` with three lit bars on the right.
 
 The ZIP contains both sets of chart vectors, the DCR a20d and CM3P_ext RM-L heads, and the three Reform calibration curves. Sunny and covered 1.0× charts work with the ZIP alone. The existing host provides chart files to the overlay.
 

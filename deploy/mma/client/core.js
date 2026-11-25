@@ -69,10 +69,17 @@ export function calibrate(raw, { x, y }) {
 }
 
 export function displayDifficulty(value) {
-    // Truncate the display so rounding cannot suggest the wrong tier.
     const [whole, decimals = ""] = value.toString().split(".");
-    const shown = decimals.padEnd(2, "0").slice(0, 2);
-    return `${whole}.${shown} · ${tiers[Math.floor(Number(shown[0]) / 2)]}`;
+    const hundredths = decimals.padEnd(2, "0").slice(0, 2);
+    const tier = tiers[Math.floor(Number(hundredths[0]) / 2)];
+    const intro = value < 4;
+    const dan = Number(whole) - (intro ? 0 : 4);
+    return {
+        number: dan + Number(hundredths) / 100,
+        intro,
+        paletteValue: value / (intro ? 1.5 : 2),
+        tierLabel: `${intro ? "Intro" : "Reform"} ${dan} ${tier}`,
+    };
 }
 
 export function chartRequest(bytes, text, hostIdentity, speedRate, mods) {

@@ -36,16 +36,24 @@ index f838b6e..dd6d085 100644
                          <svg id="rework-diff-graph" class="star-graph" viewBox="0 0 260 86" preserveAspectRatio="none" aria-label="Difficulty graph" role="img">
                              <defs>
 diff --git a/ManiaMapAnalyser by Leo_Black/js/app/analysis.js b/ManiaMapAnalyser by Leo_Black/js/app/analysis.js
-index 070b06b..a90fad2 100644
+index 070b06b..b0337f5 100644
 --- a/ManiaMapAnalyser by Leo_Black/js/app/analysis.js	
 +++ b/ManiaMapAnalyser by Leo_Black/js/app/analysis.js	
 @@ -1,3 +1,5 @@
-+import { chartRequest, isReformMethod } from "../reform/core.js";
++import { chartRequest, displayDifficulty, isReformMethod } from "../reform/core.js";
 +import { renderReformCard, resetReformCard } from "../reform/card.js";
  import { runAnalysisPipeline } from "../pipeline/runAnalysisPipeline.js";
  import { calculateReworkPp } from "../rework/reworkPerformance.js";
  import { applyCompanellaToMixedResult } from "../estimator/mixedEstimator.js";
-@@ -281,6 +283,7 @@ function shouldShowBodySkeletonDuringExpand(previousCardHeight, activeContentBar
+@@ -23,7 +25,6 @@ import {
+     mainCardEl,
+     patternClustersEl,
+     ppBarsEl,
+-    reworkDiffEl,
+     reworkMetaEl,
+     reworkRightCapsuleEl,
+     reworkStarEl,
+@@ -281,6 +282,7 @@ function shouldShowBodySkeletonDuringExpand(previousCardHeight, activeContentBar
  }
  
  export function resetReworkDisplay() {
@@ -53,7 +61,18 @@ index 070b06b..a90fad2 100644
      state.actualEstimatorAlgorithm = state.estimatorAlgorithm;
      state.ppMetrics = null;
      clearReworkPpBody();
-@@ -377,6 +380,7 @@ export { toTelemetryActualAlgorithm } from "./telemetrySpec.js";
+@@ -288,8 +290,8 @@ export function resetReworkDisplay() {
+     setNumericDifficultyValue(null);
+     setForceHideNumericDifficulty(false);
+     reworkStarEl.textContent = "-";
+-    reworkStarEl.classList.remove("category-mode");
+-    reworkDiffEl.textContent = "-";
++    reworkStarEl.classList.remove("category-mode", "reform-capsule", "reform-intro");
++    setEstimateDifficultyText("-");
+     if (reworkRightCapsuleEl) {
+         reworkRightCapsuleEl.textContent = "-";
+         reworkRightCapsuleEl.classList.remove("category-mode", "numeric-mode", "high-contrast", "has-unit");
+@@ -377,6 +379,7 @@ export { toTelemetryActualAlgorithm } from "./telemetrySpec.js";
  export async function fetchBeatmapFile(reason) {
      const requestSeq = (state.analysisRequestSeq || 0) + 1;
      state.analysisRequestSeq = requestSeq;
@@ -61,7 +80,7 @@ index 070b06b..a90fad2 100644
      // 离线圈模式守卫：仅当页面本身就是壳离线页（端口 24061）且无 tosu 数据面
      // 时才跳过 osu 抓取（避免 "Failed to fetch" 噪声）。浏览器 tosu 页
      // （其他端口）即使壳开着也绝不挡——否则首图/背景/切图会被吞。
-@@ -488,8 +492,13 @@ export async function fetchBeatmapFile(reason) {
+@@ -488,8 +491,13 @@ export async function fetchBeatmapFile(reason) {
      const CACHE_KEY_STAR_UNIFIED_VERSION = "star-v8";
      const cacheKey = `${CACHE_KEY_STAR_UNIFIED_VERSION}|${state.estimatorAlgorithm}|${state.lastBeatmapIdentity}|${state.modSignature}`;
      const isMetaDegraded = String(state.lastBeatmapIdentity || "").startsWith("meta:");
@@ -76,7 +95,7 @@ index 070b06b..a90fad2 100644
          const snapshot = resultCache.get(cacheKey);
          if (snapshot
              && snapshot.computed.graph === needComputed.graph
-@@ -504,6 +513,8 @@ export async function fetchBeatmapFile(reason) {
+@@ -504,6 +512,8 @@ export async function fetchBeatmapFile(reason) {
      try {
          let parsedInfo = null;
          let rawText = null;
@@ -85,7 +104,7 @@ index 070b06b..a90fad2 100644
          // 内容栏遵循用户设置：任何键数都不再强制降级为 Pattern。
          // （Graph 对任意键数均可渲染——star 序列为键数无关的 estimator 输出。）
          // 唯一例外：Etterna 容器内的 osu 谱（externalSourceOsuLike）没有 Etterna
-@@ -549,7 +560,12 @@ export async function fetchBeatmapFile(reason) {
+@@ -549,7 +559,12 @@ export async function fetchBeatmapFile(reason) {
                  throw new Error(`Request failed with status ${response.status}`);
              }
  
@@ -99,7 +118,7 @@ index 070b06b..a90fad2 100644
              if (isStaleRequest()) return;
              if (!rawText || !rawText.trim()) {
                  throw new Error("Empty beatmap content.");
-@@ -596,7 +612,15 @@ export async function fetchBeatmapFile(reason) {
+@@ -596,7 +611,15 @@ export async function fetchBeatmapFile(reason) {
                      etternaVersion: state.etternaVersion,
                      companellaEtternaVersion: state.companellaEtternaVersion,
                  };
@@ -116,7 +135,7 @@ index 070b06b..a90fad2 100644
                  const wp = runInWorker(pipelineInput);
                  try {
                      pipelineResult = wp ? await wp : await runAnalysisPipeline(pipelineInput);
-@@ -1085,7 +1109,7 @@ export async function fetchBeatmapFile(reason) {
+@@ -1085,7 +1108,7 @@ export async function fetchBeatmapFile(reason) {
  
              // 写缓存：companella 完成后、SV/auto-profile 段之前。
              // 门控：miss && 开关开 && 全成功 && generation 未变（防 clear 后旧分析写回）。
@@ -125,12 +144,74 @@ index 070b06b..a90fad2 100644
                  && errors.length === 0
                  && rework && !isStaleRequest()
                  && genAtStart === resultCacheGeneration()) {
-@@ -1290,6 +1314,14 @@ export async function fetchBeatmapFile(reason) {
+@@ -1122,17 +1145,19 @@ export async function fetchBeatmapFile(reason) {
+                 }, { skip: isMetaDegraded });
+             }
+ 
+-            if (Number.isFinite(resolvedNumericDifficulty) && resolvedNumericDifficulty >= 18.5) {
+-                if (resolvedEstDiff) {
+-                    const strList = resolvedEstDiff.split("||");
+-                    strList[0] = "> Cloverwisp Theta high";
+-                    setEstimateDifficultyText(formatDiffForDisplay(strList.join("||")));
+-                }
+-                else {
+-                    setEstimateDifficultyText("> Cloverwisp Theta high");
++            if (!isReform) {
++                if (Number.isFinite(resolvedNumericDifficulty) && resolvedNumericDifficulty >= 18.5) {
++                    if (resolvedEstDiff) {
++                        const strList = resolvedEstDiff.split("||");
++                        strList[0] = "> Cloverwisp Theta high";
++                        setEstimateDifficultyText(formatDiffForDisplay(strList.join("||")));
++                    }
++                    else {
++                        setEstimateDifficultyText("> Cloverwisp Theta high");
++                    }
+                 }
++                else setEstimateDifficultyText(formatDiffForDisplay(resolvedEstDiff));
+             }
+-            else setEstimateDifficultyText(formatDiffForDisplay(resolvedEstDiff));
+         }
+ 
+         const fallbackModeTag = modeTagFromLnRatio(Number(rework?.lnRatio ?? parsedInfo.lnRatio));
+@@ -1211,11 +1236,25 @@ export async function fetchBeatmapFile(reason) {
+ 
+         // PP capsule fixed width: tabular-nums + measured width kills horizontal flicker.
+         // Toggling the class off (SR/MSD) restores auto width.
+-        reworkStarEl.classList.toggle("pp-capsule", state.srText === "ReworkPP");
++        reworkStarEl.classList.toggle("pp-capsule", !isReform && state.srText === "ReworkPP");
++        const reformResult = pipelineResult?.reformResult;
++        const reformDifficulty = isReform && reformResult?.state === "ready"
++            ? displayDifficulty(reformResult.value) : null;
++        reworkStarEl.classList.toggle("reform-capsule", isReform);
++        reworkStarEl.classList.toggle("reform-intro", reformDifficulty?.intro === true);
+ 
+         // 6K 定数: force override left capsule when enabled and map is 6K —
+         // but never override an explicit ReworkPP srText selection (PP wins).
+-        if (sixKConst !== null && state.srText !== "ReworkPP") {
++        if (isReform) {
++            leftCapsuleUnit = method === "CM3P_ext" ? "CM3P" : method;
++            if (reformDifficulty) {
++                const { number, intro, paletteValue } = reformDifficulty;
++                showNumericStarValue(number, paletteValue, intro ? value => "Intro " + value.toFixed(2) : undefined);
++            } else {
++                showCategoryValue("-");
++            }
++            setEstimateDifficultyText(reformDifficulty?.tierLabel ?? "-");
++        } else if (sixKConst !== null && state.srText !== "ReworkPP") {
+             show6KConstValue(sixKConst);
+             leftCapsuleUnit = "LV";
+         } else if (state.srText === "Pattern") {
+@@ -1286,10 +1325,18 @@ export async function fetchBeatmapFile(reason) {
+ 
+         renderFullModeSeparators(ettOverallValue);
+ 
+-        if (isVibroMap && state.diffText === "Difficulty") {
++        if (!isReform && isVibroMap && state.diffText === "Difficulty") {
              setEstimateDifficultyText("VIBRO");
          }
  
 +        if (isReform && !isStaleRequest()) {
-+            renderReformCard(pipelineResult?.reformResult, reformChart, rawBytes,
++            renderReformCard(reformResult, reformChart, rawBytes,
 +                () => !isStaleRequest() && chartIdentity === state.lastBeatmapIdentity
 +                    && modSignature === state.modSignature && method === currentEstimatorAlgorithm(),
 +                () => scheduleRecompute("Reform calculation complete", false),
@@ -140,7 +221,7 @@ index 070b06b..a90fad2 100644
          // 主体渲染完成：auto 高度下内容撑开是瞬时的，这里从渲染前高度补过渡动画。
          // 放在 refreshAutoDisplayProfile 之后，避免 profile 切换已触发的动画被打断重播。
          animateCardHeightTransition(heightBeforeBodyRender);
-@@ -1311,7 +1343,7 @@ export async function fetchBeatmapFile(reason) {
+@@ -1311,7 +1358,7 @@ export async function fetchBeatmapFile(reason) {
              hideOverlay();
          }
  
@@ -149,28 +230,61 @@ index 070b06b..a90fad2 100644
              // 数值化难度（Reform 段位体系，.0 = mid）：Azusa/Roxy 的原生值已是
              // 标准尺度，直接用；其余算法（Sunny/Companella/Daniel——Daniel 的
              // 原生值是其 DP 尺度，比标准约高 0.5）用 estDiff 标签反向换算。
+diff --git a/ManiaMapAnalyser by Leo_Black/js/app/display.js b/ManiaMapAnalyser by Leo_Black/js/app/display.js
+index 3c5d2b6..0c2c4b7 100644
+--- a/ManiaMapAnalyser by Leo_Black/js/app/display.js	
++++ b/ManiaMapAnalyser by Leo_Black/js/app/display.js	
+@@ -235,6 +235,7 @@ function restartAnimationClass(element, className) {
+ const RC_SUFFIX_LEVELS = {
+     "low": 1,
+     "mid/low": 2,
++    "low/mid": 2,
+     "mid": 3,
+     "mid/high": 4,
+     "high": 5,
+@@ -421,12 +422,12 @@ export function playStarBlockEntrance(changeKind) {
+     reworkBlockEl.classList.add("song-enter");
+ }
+ 
+-export function showNumericStarValue(starValue) {
++export function showNumericStarValue(value, paletteValue = value, format) {
+     reworkStarEl.classList.remove("category-mode");
+-    animateNumericCapsuleValue(reworkStarEl, starValue);
+-    const starBg = starColorFor(starValue);
+-    const preferredText = starTextColorFor(starValue);
+-    const starText = pickReadableTextColor(starValue, starBg, preferredText);
++    animateNumericCapsuleValue(reworkStarEl, value, format);
++    const starBg = starColorFor(paletteValue);
++    const preferredText = starTextColorFor(paletteValue);
++    const starText = pickReadableTextColor(paletteValue, starBg, preferredText);
+     reworkStarEl.style.backgroundColor = starBg;
+     reworkStarEl.style.color = starText;
+     reworkStarEl.style.textShadow = "none";
+@@ -546,6 +547,7 @@ function measurePpCapsuleWidth() {
+ }
+ 
+ export function showReworkPpValue(ppValue) {
++    if (reworkStarEl.classList.contains("reform-capsule")) return;
+     reworkStarEl.classList.remove("category-mode");
+     reworkStarEl.style.setProperty("--pp-capsule-width", `${measurePpCapsuleWidth()}px`);
+     const from = lastShownPp != null ? lastShownPp : 0;
 diff --git a/ManiaMapAnalyser by Leo_Black/js/app/graph.js b/ManiaMapAnalyser by Leo_Black/js/app/graph.js
-index 9860fcb..0fb38c5 100644
+index 9860fcb..f449859 100644
 --- a/ManiaMapAnalyser by Leo_Black/js/app/graph.js	
 +++ b/ManiaMapAnalyser by Leo_Black/js/app/graph.js	
-@@ -750,7 +750,7 @@ export function refreshGraphTimeline() {
+@@ -1,3 +1,4 @@
++import { isReformMethod } from "../reform/core.js";
+ import {
+     APP_CONFIG,
+     estDiffCaptionEl,
+@@ -218,6 +219,7 @@ function trimSeriesStartToFirstObject(series) {
  
- export function updateDiffTextVisibility() {
-     const mode = state.diffText;
--    const showDiffText = mode === "Difficulty";
-+    const showDiffText = mode === "Difficulty" && !["Sunny", "DCR", "CM3P_ext"].includes(state.estimatorAlgorithm);
-     const showHeaderGraph = mode === "Graph";
-     const showRightCapsule = mode === "MSD"
-         || mode === "Pattern"
-@@ -773,7 +773,7 @@ export function updateDiffTextVisibility() {
-         }
-     }
- 
--    estDiffCaptionEl.hidden = mode === "None";
-+    estDiffCaptionEl.hidden = mode === "None" || (mode === "Difficulty" && !showDiffText);
-     if (mode === "Graph") {
-         estDiffCaptionEl.textContent = "Difficulty Graph";
-     } else if (showRightCapsule) {
+ function formatEstimateDifficultyCaption() {
+     const selectedAlgorithm = String(state.estimatorAlgorithm || "").trim();
++    if (state.activeSource === "osu" && isReformMethod(selectedAlgorithm)) return "Reform Dan";
+     const actualAlgorithm = String(state.actualEstimatorAlgorithm || selectedAlgorithm || "").trim();
+     const prefix = actualAlgorithm && selectedAlgorithm && actualAlgorithm !== selectedAlgorithm
+         ? `[${actualAlgorithm}] `
 diff --git a/ManiaMapAnalyser by Leo_Black/js/parser/settingsParser.js b/ManiaMapAnalyser by Leo_Black/js/parser/settingsParser.js
 index cbe7151..d5529fe 100644
 --- a/ManiaMapAnalyser by Leo_Black/js/parser/settingsParser.js	
@@ -257,13 +371,14 @@ index 4c3f917..385aec5 100644
 +Notes: Reform Dan difficulty for osu!mania 4K using Sunny, DCR, and CM3P_ext. Based on ManiaMapAnalyser by Leo_Black.
 \ No newline at end of file
 diff --git a/ManiaMapAnalyser by Leo_Black/settings.json b/ManiaMapAnalyser by Leo_Black/settings.json
-index 0800132..8a4c545 100644
+index 0800132..3f0dd60 100644
 --- a/ManiaMapAnalyser by Leo_Black/settings.json	
 +++ b/ManiaMapAnalyser by Leo_Black/settings.json	
-@@ -368,15 +368,8 @@
+@@ -367,16 +367,9 @@
+ 		"uniqueID": "estimatorAlgorithm",
  		"type": "options",
  		"title": "Estimator Algorithm",
- 		"description": "Select estimator algorithm.",
+-		"description": "Select estimator algorithm.",
 -		"options": [
 -			"Mixed",
 -			"Azusa",
@@ -273,20 +388,28 @@ index 0800132..8a4c545 100644
 -			"Companella"
 -		],
 -		"value": "Mixed"
++		"description": "Choose the method for the Reform Dan badge. Sunny runs locally in the overlay. DCR and CM3P_ext use bundled features or the local CPU companion when needed.",
 +		"options": ["Sunny", "DCR", "CM3P_ext"],
 +		"value": "Sunny"
  	},
  	{
  		"uniqueID": "etternaVersion",
 diff --git a/ManiaMapAnalyser by Leo_Black/styles/main.css b/ManiaMapAnalyser by Leo_Black/styles/main.css
-index 7f2f0e7..9a540c5 100644
+index 7f2f0e7..ab323fb 100644
 --- a/ManiaMapAnalyser by Leo_Black/styles/main.css	
 +++ b/ManiaMapAnalyser by Leo_Black/styles/main.css	
-@@ -10,3 +10,22 @@
+@@ -10,3 +10,29 @@
  @import "./responsive.css";
  @import "./theme.css";
  @import "./osu-font.css";
 +
++#rework-star.reform-intro {
++    font-size: clamp(18px, 5vw, 35px);
++    white-space: nowrap;
++}
++#rework-star.reform-capsule.has-unit::after {
++    right: -8px;
++}
 +#reform-rating {
 +    text-align: right;
 +    color: inherit;

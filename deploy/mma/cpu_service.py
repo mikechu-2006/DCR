@@ -228,7 +228,12 @@ def handler(encoders, origins):
 
 def main():
     parser = ArgumentParser(description=__doc__)
-    parser.add_argument("--manifest", type=Path, default=ROOT / "data/reform/mma_release/DCR Reform for tosu/reform-data/manifest.json")
+    release = ROOT / "data/reform/mma_release"
+    manifest = release / "DCR-Reform-tosu/reform-data/manifest.json"
+    legacy_manifest = release / "DCR Reform for tosu/reform-data/manifest.json"
+    if not manifest.is_file() and legacy_manifest.is_file():
+        manifest = legacy_manifest
+    parser.add_argument("--manifest", type=Path, default=manifest)
     parser.add_argument("--d2v-checkpoint", type=Path, default=ROOT / "data2vec_main/runs/product/a20_full/checkpoints/last.pt")
     parser.add_argument("--cm3p-dir", type=Path, default=ROOT / ".cache/cm3p_model_26cc694")
     parser.add_argument("--cm3p-python", type=Path, default=ROOT / ".cache/cm3p_venv/bin/python")

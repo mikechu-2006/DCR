@@ -1,4 +1,4 @@
-import { displayDifficulty, requestFeatures } from "./core.js";
+import { requestFeatures } from "./core.js";
 
 const jobs = new Map();
 
@@ -18,17 +18,14 @@ export function resetReformCard() {
 
 export function renderReformCard(result, chart, bytes, isCurrent, refresh, canStart) {
     resetReformCard();
-    if (!result) return;
+    if (!result || result.state === "ready") return;
     const [root, value, button] = elements();
     root.hidden = false;
-    const label = `Reform Dan · ${result.method}`;
     if (result.state !== "missing") {
-        value.textContent = result.state === "ready" ? `${label} · ${displayDifficulty(result.value)}`
-            : `${label} · ${result.error || "4K or selected mods/rate unsupported"}`;
+        value.textContent = result.error || "4K or selected mods/rate unsupported";
         return;
     }
 
-    value.textContent = label;
     button.hidden = false;
     button.textContent = "计算难度";
     const follow = pending => {
@@ -38,7 +35,7 @@ export function renderReformCard(result, chart, bytes, isCurrent, refresh, canSt
             if (isCurrent()) refresh();
         }, error => {
             if (!isCurrent()) return;
-            value.textContent = `${label} · ${error.message}`;
+            value.textContent = error.message;
             button.disabled = false;
             button.textContent = "重试计算";
         });
@@ -46,7 +43,7 @@ export function renderReformCard(result, chart, bytes, isCurrent, refresh, canSt
     button.onclick = () => {
         if (!isCurrent() || button.disabled) return;
         if (!canStart()) {
-            value.textContent = `${label} · 曲目结束后可计算`;
+            value.textContent = "曲目结束后可计算";
             return;
         }
         const pending = requestFeatures(result, chart, bytes).finally(() => jobs.delete(result.key));
